@@ -40,10 +40,12 @@ function measure(route) {
     );
   const html = readFileSync(htmlPath, "utf8");
   const srcs = new Set();
-  for (const m of html.matchAll(/<script\b([^>]*)>/g)) {
+  // 自分たちのビルドの出力を数えるだけで、HTML の無害化には使わない。
+  // タグや属性の大文字・小文字は区別しない
+  for (const m of html.matchAll(/<script\b([^>]*)>/gi)) {
     const attrs = m[1];
-    if (/\bnoModule\b|\bnomodule\b/.test(attrs)) continue; // 古いブラウザ向けの polyfill は除く
-    const src = /\bsrc="([^"]+\.js)"/.exec(attrs)?.[1];
+    if (/\bnomodule\b/i.test(attrs)) continue; // 古いブラウザ向けの polyfill は除く
+    const src = /\bsrc\s*=\s*"([^"]+\.js)"/i.exec(attrs)?.[1];
     if (src?.startsWith("/_next/")) srcs.add(src);
   }
   let kb = 0;
