@@ -5,13 +5,15 @@ ARG NODE_VERSION=26
 
 FROM node:${NODE_VERSION}-slim AS deps
 WORKDIR /app
-RUN corepack enable
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
-RUN pnpm install --frozen-lockfile
+# Node.js 25 から corepack が入らなくなったので、package.json の packageManager の版の pnpm を npm で入れる
+RUN npm install -g "$(node -p "require('./package.json').packageManager")" \
+ && pnpm install --frozen-lockfile
 
 FROM node:${NODE_VERSION}-slim AS build
 WORKDIR /app
-RUN corepack enable
+COPY package.json ./
+RUN npm install -g "$(node -p "require('./package.json').packageManager")"
 ARG GIT_SHA=dev
 ENV GIT_SHA=${GIT_SHA} NEXT_TELEMETRY_DISABLED=1
 COPY --from=deps /app/node_modules ./node_modules
