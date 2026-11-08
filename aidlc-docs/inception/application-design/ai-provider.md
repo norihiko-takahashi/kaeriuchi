@@ -58,7 +58,8 @@ const MistakeAnalysis = z.object({
     childAnswer: z.number().min(0).max(1),
     correctAnswer: z.number().min(0).max(1),
   }),
-  piiDetected: z.boolean(),       // 名前・学校名などが写っていたか
+  piiDetected: z.boolean(),       // 名前・学校名などが写っていたか（扱いは課題 R1）
+  gradingMarksFound: z.boolean(), // 丸付け（赤ペン）があったか（課題 R2）。false なら、正しい答えの確認を必須にする
 });
 ```
 
@@ -87,6 +88,7 @@ flowchart TD
 | `POST /api/analyze` | 画像（multipart、2MB まで）、学年、教科（任意） | `MistakeAnalysis` | 画像はメモリ上だけで扱い、保存しない |
 | `POST /api/generate` | `MistakeAnalysis`、学年、件数、モード、出題済みの問題文 | `Problem` を NDJSON でストリーミング | |
 | `POST /api/grade` | `Problem`、答え、学年 | `{ correct, feedback }` | 短い文の答えだけ |
+| `POST /api/report` | 問題（文字）、ミスモンの文字の情報、理由、プロンプトの版、プロバイダーの名前 | `{ ok }` | 「もんだいが おかしい？」の報告。画像とニックネームは受け付けない |
 | `POST /api/summarize` | 集計値（個人を特定できる情報なし） | `{ summary }` | 保護者ダッシュボード用 |
 
 共通：`Authorization: Bearer <端末トークン>`、`X-Request-Id`。端末ごと・プロフィールごとにレート制限をかける。
