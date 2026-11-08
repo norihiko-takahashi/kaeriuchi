@@ -22,7 +22,7 @@
 
 | ユニット | Functional Design | NFR | Infrastructure | Code | Build & Test |
 |---|---|---|---|---|---|
-| U1 基盤・プロフィール | ✅ 承認済み | ✅ 承認済み | ✅ 承認済み | 🟡 レビュー待ち（`construction/u1-foundation/code/code-summary.md`） | 🟡 ローカルは成功、CI で確認中 |
+| U1 基盤・プロフィール | ✅ 承認済み | ✅ 承認済み | ✅ 承認済み | 🟡 レビュー待ち（`construction/u1-foundation/code/code-summary.md`） | ✅ CI ですべて成功（7c2f042。WebKit のオフラインでの移動は実機で確認する） |
 | U2〜U8 | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |
 
 
