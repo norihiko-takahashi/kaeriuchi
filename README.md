@@ -17,4 +17,5 @@ AI-DLC（AI-Driven Development Lifecycle）の **Inception フェーズ** が終
 | [aidlc-docs/inception/application-design/](aidlc-docs/inception/application-design/) | アプリケーション設計 |
 | [aidlc-docs/inception/units/unit-of-work.md](aidlc-docs/inception/units/unit-of-work.md) | 作業ユニットへの分割 |
 | [aidlc-docs/inception/plans/execution-plan.md](aidlc-docs/inception/plans/execution-plan.md) | Construction フェーズの実行計画 |
-| [aidlc-docs/inception/requirements/open-questions.md](aidlc-docs/inception/requirements/open-questions.md) | 未決事項と、その決定（回答済み） |
+| [aidlc-docs/inception/requirements/data-inventory.md](aidlc-docs/inception/requirements/data-inventory.md) | 扱うデータの一覧（プライバシー） |
+| [aidlc-docs/inception/requirements/open-questions.md](aidlc-docs/inception/requirements/open-questions.md) | 未決事項の決定と、検証が必要な課題（R1） |
