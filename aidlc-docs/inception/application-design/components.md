@@ -6,7 +6,9 @@
 flowchart LR
   subgraph Client["PWA（ブラウザ / Next.js のクライアント）"]
     UI["画面（App Router のページ）"]
-    Capture["Capture<br/>撮影・切り抜き・圧縮"]
+    Capture["Capture<br/>撮影・枠の編集・圧縮"]
+  Mark["Mark Detector<br/>赤ペンの印を検知（Web Worker）"]
+  Capture --> Mark
     Battle["Battle Engine<br/>出題・採点"]
     Game["Gamification<br/>XP・図鑑・連続記録・ボス"]
     Sched["Review Scheduler<br/>再来の日程"]
@@ -69,7 +71,8 @@ flowchart LR
 |---|---|---|---|
 | C1 | App Shell / UI | client | 画面、ルーティング、表示モード（低学年・高学年・中学生）、ふりがなと読み上げ |
 | C2 | Profile & Consent | client | 保護者の同意、子どものプロフィール、保護者用 PIN |
-| C3 | Capture | client | カメラ・写真の取り込み、切り抜き、向きの補正、縮小と JPEG 圧縮、名前などの写り込みの簡易チェック |
+| C3 | Capture | client | カメラ・写真の取り込み、複数の枠の編集（広げる・狭める・動かす・消す・追加）、向きの補正、縮小と JPEG 圧縮。元の写真は登録が終わったら消す |
+| C14 | Mark Detector | client（Web Worker） | 赤ペンの印を見つけて、枠の候補を出す。縮小 → 赤い部分の抽出 → かたまりへの分割 → 形での判定（○ / ✗ / ✓ / ／）。足りなければ、ブラウザの中で動く小さなモデルを足す。写真は端末の外に出さない |
 | C4 | API Client | client | `/api/*` の呼び出し、再試行、タイムアウト、ストリーミングの受け取り |
 | C5 | Battle Engine | client | バトルの状態の管理、出題の順番、ヒントの出し方、HP の計算、途中からの再開 |
 | C6 | Answer Checker | client | 答え方の形式ごとのルール採点（数値の正規化、同じ意味の答えの一覧、並べ替え） |

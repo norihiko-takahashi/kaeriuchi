@@ -5,6 +5,8 @@
 ```mermaid
 erDiagram
   Guardian ||--o{ ChildProfile : "管理する"
+  ChildProfile ||--o{ Sheet : "撮る"
+  Sheet ||--|{ Mistake : "まとめる"
   ChildProfile ||--o{ Mistake : "持つ"
   Mistake ||--o{ Battle : "戦う"
   Battle ||--|{ Problem : "出す"
@@ -47,10 +49,21 @@ interface ChildProfile extends SyncMeta {
   createdAt: string;
 }
 
+/** 1回の撮影でまとめて登録した間違いのまとまり（テスト1枚・プリント1枚） */
+interface Sheet extends SyncMeta {
+  id: string;
+  childId: string;
+  title: string;              // 例: "2学期 算数 分数のテスト"。自動で付け、変更できる
+  subject?: Subject;          // 複数の教科が混ざっていれば空
+  takenOn: string;            // 撮った日付（時刻は持たない）
+  mistakeIds: string[];
+}
+
 /** 撮影した1つの間違い = 1匹のミスモン */
 interface Mistake extends SyncMeta {
   id: string;
   childId: string;
+  sheetId: string;            // どのテストから登録したか
   subject: Subject;
   unit: string;               // 単元。例: "分数のたし算"
   question: string;           // 問題文（読み取ったものか、手で入力したもの）
@@ -99,7 +112,8 @@ interface Problem {
 interface Battle {
   id: string;
   mistakeId: string;
-  kind: "first" | "revisit" | "boss";
+  kind: "first" | "revisit" | "boss" | "sheet"; // sheet = 溜めたテストの復習
+  sheetId?: string;
   problems: Problem[];
   monsterHp: number;
   currentIndex: number;
