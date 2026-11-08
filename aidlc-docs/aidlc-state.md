@@ -3,7 +3,7 @@
 - **プロジェクト**: かえりうち
 - **プロジェクト種別**: Greenfield（新規）
 - **開始日**: 2026-11-08
-- **現在のフェーズ**: 🟢 CONSTRUCTION — U1 の Functional Design（承認済み）
+- **現在のフェーズ**: 🟢 CONSTRUCTION — U1 の Functional Design（承認待ち）
 - **Inception の承認**: 2026-11-08（課題 R1・R2 は Construction の中で検証する）
 
 ## INCEPTION フェーズ
