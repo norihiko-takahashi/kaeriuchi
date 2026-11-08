@@ -32,7 +32,7 @@
 **ローカルで確かめられなかったもの**（CI で確かめる）
 - WebKit（iOS Safari に近いもの）での E2E：この開発環境には WebKit が入っていないため
 - Docker のイメージのビルドと起動：この開発環境では Docker が動かないため
-- 実機（iPhone・Android）での確認：U3 の前に行う。**iPhone・iPad でのオフラインでの画面の移動は、実機でしか確かめられません**。Playwright の WebKit では、オフラインにすると Service Worker が返すはずのページの読み込みまで止まるため（2通りの方法で確認）、WebKit の E2E では「画面がキャッシュされること」までを確かめています
+- 実機（iPhone・Android）での確認：U3 の前に行う。**iPhone・iPad でのオフラインでの画面の移動は、実機でしか確かめられません**。Playwright の WebKit では、オフラインにすると Service Worker が返すはずのページの読み込みまで止まるため（2通りの方法で確認）、WebKit の E2E では「画面がキャッシュされること」までを確かめています。確認する項目は Issue https://github.com/norihiko-takahashi/kaeriuchi/issues/8 にまとめた
 
 ## 3. 設計から変えたこと
 
