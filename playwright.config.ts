@@ -13,6 +13,11 @@ export default defineConfig({
   retries: process.env.CI ? 1 : 0,
   reporter: process.env.CI ? [["github"], ["list"]] : "list",
   use: {
+    // ブラウザを指定したいとき（あらかじめブラウザが入っている開発環境など）は、
+    // PW_CHROMIUM_PATH に Chromium の場所を入れる。CI では Playwright が入れたものを使う
+    ...(process.env.PW_CHROMIUM_PATH
+      ? { launchOptions: { executablePath: process.env.PW_CHROMIUM_PATH } }
+      : {}),
     baseURL: `http://127.0.0.1:${PORT}`,
     locale: "ja-JP",
     trace: "off",

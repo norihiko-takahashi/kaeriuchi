@@ -1,7 +1,7 @@
 # かえりうち：standalone ビルドを動かすイメージ（infrastructure-design.md §3）
 # 依存ライブラリ → ビルド → 実行、の3段階
 
-ARG NODE_VERSION=22
+ARG NODE_VERSION=26
 
 FROM node:${NODE_VERSION}-slim AS deps
 WORKDIR /app

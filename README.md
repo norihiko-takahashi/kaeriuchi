@@ -16,7 +16,7 @@ AI-DLC（AI-Driven Development Lifecycle）で開発しています。
 
 ## 動かし方
 
-Node.js 22 と pnpm が必要です。
+Node.js 26 と pnpm が必要です（バージョンは `.nvmrc`）。
 
 ```bash
 pnpm install
