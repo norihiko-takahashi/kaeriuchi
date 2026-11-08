@@ -21,7 +21,7 @@ jobs:
     name: lint・型チェック・単体テスト
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v4
         with:
@@ -39,7 +39,7 @@ jobs:
     name: ビルド・大きさの予算・E2E・アクセシビリティ
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v4
         with:
@@ -71,7 +71,7 @@ jobs:
     name: Docker のイメージ
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: ビルド（push はしない）
         run: docker build --build-arg GIT_SHA=${{ github.sha }} -t kaeriuchi:ci .
       - name: 起動してヘルスチェック
@@ -88,7 +88,7 @@ jobs:
     name: 脆弱性と秘密情報のスキャン
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
       - uses: pnpm/action-setup@v4
