@@ -1,0 +1,9 @@
+node_modules
+.next
+.git
+coverage
+test-results
+playwright-report
+aidlc-docs
+*.md
+.env*

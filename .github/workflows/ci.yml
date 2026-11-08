@@ -1,0 +1,105 @@
+# CI（infrastructure-design.md §2）
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  NEXT_TELEMETRY_DISABLED: "1"
+
+jobs:
+  check:
+    name: lint・型チェック・単体テスト
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: lint（Biome）
+        run: pnpm lint
+      - name: 型チェック
+        run: pnpm typecheck
+      - name: 単体テストとカバレッジ（domain/ は 90% 以上）
+        run: pnpm test:coverage
+
+  build-e2e:
+    name: ビルド・大きさの予算・E2E・アクセシビリティ
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: ビルド（standalone）
+        run: pnpm build
+        env:
+          GIT_SHA: ${{ github.sha }}
+      - name: JavaScript の大きさの予算（子ども向けの画面は 200KB 以内）
+        run: pnpm check:bundle
+      - name: Playwright のブラウザを入れる
+        run: pnpm exec playwright install --with-deps chromium webkit
+      - name: E2E（Chromium と WebKit）と axe
+        run: pnpm e2e --trace off
+        env:
+          CI: "true"
+      - name: Lighthouse（モバイル）
+        run: pnpm dlx @lhci/cli@0.16.0 autorun
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-results
+          path: test-results/
+          retention-days: 7
+
+  docker:
+    name: Docker のイメージ
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: ビルド（push はしない）
+        run: docker build --build-arg GIT_SHA=${{ github.sha }} -t kaeriuchi:ci .
+      - name: 起動してヘルスチェック
+        run: |
+          docker run -d --name app -p 3000:3000 kaeriuchi:ci
+          for i in $(seq 1 30); do
+            if curl -fsS http://127.0.0.1:3000/api/health; then exit 0; fi
+            sleep 1
+          done
+          docker logs app
+          exit 1
+
+  security:
+    name: 脆弱性と秘密情報のスキャン
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: 依存ライブラリの脆弱性（high 以上で失敗）
+        run: pnpm audit --audit-level high --prod
+      - name: 秘密情報のスキャン（gitleaks）
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

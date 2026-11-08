@@ -1,0 +1,27 @@
+# 依存ライブラリの自動更新（2026-11-08 に決定：週に1回）
+# - 小さな更新（minor・patch）は、週に1回、1つの PR にまとめる
+# - 大きな版の更新（major）は、互換性が崩れることがあるので、1つずつ別の PR にする
+# - セキュリティの修正は、この設定とは別に、見つかるとすぐ PR が作られる
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: "06:00"
+      timezone: Asia/Tokyo
+    open-pull-requests-limit: 10
+    groups:
+      minor-and-patch:
+        update-types: [minor, patch]
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: "06:00"
+      timezone: Asia/Tokyo
+    groups:
+      actions:
+        patterns: ["*"]
