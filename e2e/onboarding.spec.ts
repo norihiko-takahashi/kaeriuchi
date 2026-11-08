@@ -16,6 +16,32 @@ async function expectNoA11yViolations(page: Page) {
 const PARENT_PIN = "482915";
 
 /**
+ * CSP の違反を集める（U1-SEC-2）。どのテストでも、違反が1件でもあれば失敗にする。
+ * 違反があると、画面が動かなくなるか、守りが効いていないことになるため。
+ */
+test.beforeEach(async ({ context }) => {
+  await context.addInitScript(() => {
+    const w = window as unknown as { __cspViolations: string[] };
+    w.__cspViolations = [];
+    document.addEventListener("securitypolicyviolation", (e) => {
+      w.__cspViolations.push(`${e.violatedDirective} ${e.blockedURI}`);
+    });
+  });
+});
+
+test.afterEach(async ({ page }) => {
+  if (page.isClosed()) return;
+  const violations = await page
+    .evaluate(
+      () =>
+        (window as unknown as { __cspViolations?: string[] }).__cspViolations ??
+        [],
+    )
+    .catch(() => []);
+  expect(violations).toEqual([]);
+});
+
+/**
  * 画面が操作できる状態になるまで待つ。
  * 開き直したページで、ボタンが動く前に押してしまわないようにする。
  */
@@ -187,16 +213,31 @@ test("一度開いたあとは、オフラインでもホームまで進める�
   ).toBeVisible();
 });
 
-test("セキュリティのヘッダーが付き、外部のスクリプトを許可しない（U1-SEC）", async ({
+test("セキュリティのヘッダーが付き、ページの中のスクリプトは nonce が付いたものだけ（U1-SEC）", async ({
   request,
 }) => {
-  const res = await request.get("/login");
-  const csp = res.headers()["content-security-policy"];
+  const first = await request.get("/login");
+  const csp = first.headers()["content-security-policy"];
   expect(csp).toContain("default-src 'self'");
   expect(csp).toContain("connect-src 'self'");
+  expect(csp).toMatch(
+    /script-src 'self' 'nonce-[A-Za-z0-9+/=]+' 'strict-dynamic'/,
+  );
+  expect(csp).not.toMatch(/script-src[^;]*'unsafe-inline'/);
   expect(csp).not.toMatch(/https?:\/\//);
-  expect(res.headers()["permissions-policy"]).toContain("camera=(self)");
-  expect(res.headers()["x-powered-by"]).toBeUndefined();
+  expect(first.headers()["permissions-policy"]).toContain("camera=(self)");
+  expect(first.headers()["x-powered-by"]).toBeUndefined();
+
+  // nonce はリクエストごとに変わる
+  const second = await request.get("/login");
+  expect(second.headers()["content-security-policy"]).not.toBe(csp);
+
+  // ページの中のスクリプトには、すべて nonce が付いている
+  const html = await first.text();
+  const nonce = /'nonce-([^']+)'/.exec(csp)?.[1];
+  const scripts = [...html.matchAll(/<script\b[^>]*>/gi)].map((m) => m[0]);
+  expect(scripts.length).toBeGreaterThan(0);
+  for (const tag of scripts) expect(tag).toContain(`nonce="${nonce}"`);
 });
 
 test("ヘルスチェック", async ({ request }) => {

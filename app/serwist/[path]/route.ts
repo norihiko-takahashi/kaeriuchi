@@ -1,6 +1,11 @@
 import { createSerwistRoute } from "@serwist/turbopack";
 
-/** オフラインでも開けるようにする画面（アプリの外枠） */
+/**
+ * オフラインでも開けるようにする画面。
+ * 画面はリクエストのたびにサーバーで描画される（CSP の nonce のため）ので、
+ * Service Worker を入れたときにサーバーから取得してキャッシュする。
+ * キャッシュには、その画面の CSP のヘッダーも一緒に保存される（nonce が合う）。
+ */
 const APP_ROUTES = [
   "/",
   "/login",

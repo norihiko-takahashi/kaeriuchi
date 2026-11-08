@@ -44,7 +44,7 @@
 
 ### Content Security Policy（U1-SEC-2）
 
-> **実装で変更**：nonce ではなく `script-src 'self' 'unsafe-inline'` にしました（外部のドメインは許可しない、は同じ）。理由は `code/code-summary.md` §3 を見てください。
+> **実装**：設計どおり nonce にしました（`proxy.ts`）。そのため、すべての画面をリクエストのたびに描画し、オフライン用の画面は Service Worker を入れたときに取得します。スタイルは `'unsafe-inline'` を許可しています。経緯と、残っている弱いところは `code/code-summary.md` §6 を見てください。
 
 ```
 default-src 'self';
@@ -58,7 +58,7 @@ base-uri 'self';
 form-action 'self';
 ```
 - 外部のドメインは1つも許可しない。もし後で外部のサービスが必要になったら、`data-inventory.md` の更新とレビューを先に行う。
-- `style-src` の `'unsafe-inline'` は、アニメーションのライブラリが直接スタイルを書き込むために必要です。スクリプトは nonce で守ります。
+- `style-src` の `'unsafe-inline'` は、React の style 属性や、ライブラリが直接スタイルを書き込むために必要です。スクリプトは nonce で守ります。
 
 ### そのほかのヘッダー
 - `Strict-Transport-Security: max-age=63072000; includeSubDomains`

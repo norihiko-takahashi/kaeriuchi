@@ -1,5 +1,6 @@
 import { SerwistProvider } from "@serwist/turbopack/react";
 import type { Metadata, Viewport } from "next";
+import { connection } from "next/server";
 import { AppStateProvider } from "@/components/app-state";
 import { SwUpdateProvider } from "@/components/sw-update";
 import "./globals.css";
@@ -23,7 +24,13 @@ export const viewport: Viewport = {
   initialScale: 1,
 };
 
-export default function RootLayout({ children }: LayoutProps<"/">) {
+/**
+ * すべての画面を、リクエストのたびにサーバーで描画する。
+ * CSP の nonce をリクエストごとに変えるため（U1-SEC-2）。
+ * オフライン用には、Service Worker がアプリを入れたときに画面を取得してキャッシュする（app/sw.ts）。
+ */
+export default async function RootLayout({ children }: LayoutProps<"/">) {
+  await connection();
   return (
     <html lang="ja" data-mode="junior">
       <body className="min-h-dvh">
