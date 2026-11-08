@@ -43,6 +43,9 @@
 ## 4. セキュリティ
 
 ### Content Security Policy（U1-SEC-2）
+
+> **実装で変更**：nonce ではなく `script-src 'self' 'unsafe-inline'` にしました（外部のドメインは許可しない、は同じ）。理由は `code/code-summary.md` §3 を見てください。
+
 ```
 default-src 'self';
 script-src 'self' 'nonce-{リクエストごとの値}';

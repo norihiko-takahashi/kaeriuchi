@@ -3,7 +3,7 @@
 - **プロジェクト**: かえりうち
 - **プロジェクト種別**: Greenfield（新規）
 - **開始日**: 2026-11-08
-- **現在のフェーズ**: 🟢 CONSTRUCTION — U1 の NFR とインフラ設計（承認待ち）
+- **現在のフェーズ**: 🟢 CONSTRUCTION — U1 のコードの作成（レビュー待ち・CI で Build & Test）
 - **Inception の承認**: 2026-11-08（課題 R1・R2 は Construction の中で検証する）
 
 ## INCEPTION フェーズ
@@ -22,7 +22,7 @@
 
 | ユニット | Functional Design | NFR | Infrastructure | Code | Build & Test |
 |---|---|---|---|---|---|
-| U1 基盤・プロフィール | ✅ 承認済み | 🟡 承認待ち | 🟡 承認待ち | ⬜ | ⬜ |
+| U1 基盤・プロフィール | ✅ 承認済み | ✅ 承認済み | ✅ 承認済み | 🟡 レビュー待ち（`construction/u1-foundation/code/code-summary.md`） | 🟡 ローカルは成功、CI で確認中 |
 | U2〜U8 | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |
 
 

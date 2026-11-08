@@ -1,0 +1,95 @@
+@import "tailwindcss";
+
+/*
+ * デザイントークン。表示モード（data-mode）で切り替える。
+ * 色は WCAG 2.2 AA のコントラスト（本文 4.5:1 以上）を満たす組み合わせにする。
+ */
+:root {
+  --bg: #fffaf0;
+  --surface: #ffffff;
+  --text: #1f2937;
+  --text-muted: #4b5563;
+  --primary: #c2410c;
+  --primary-text: #ffffff;
+  --accent: #0f766e;
+  --danger: #b91c1c;
+  --border: #e5e7eb;
+  --tap: 48px;
+  --radius: 16px;
+  --font-size: 1rem;
+}
+
+:root[data-mode="lower"] {
+  --tap: 56px;
+  --radius: 24px;
+  --font-size: 1.25rem;
+}
+
+:root[data-mode="junior"] {
+  --bg: #f8fafc;
+  --primary: #1e40af;
+  --accent: #334155;
+  --tap: 44px;
+  --radius: 10px;
+  --font-size: 1rem;
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-text: var(--text);
+  --color-muted: var(--text-muted);
+  --color-primary: var(--primary);
+  --color-on-primary: var(--primary-text);
+  --color-accent: var(--accent);
+  --color-danger: var(--danger);
+  --color-line: var(--border);
+}
+
+html {
+  font-size: var(--font-size);
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family:
+    "Hiragino Maru Gothic ProN", "Hiragino Sans", "BIZ UDPGothic",
+    "Noto Sans JP", system-ui, sans-serif;
+  line-height: 1.7;
+}
+
+/* タッチする部分の最小の大きさ（U1-A11Y-2） */
+.tap {
+  min-height: var(--tap);
+  min-width: var(--tap);
+}
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+ruby rt {
+  font-size: 0.55em;
+}
+
+:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* 視差効果を減らす設定（U1-A11Y-4） */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    /* biome-ignore lint/complexity/noImportantStyles: 視差効果を減らす設定は、どの指定よりも優先させる */
+    animation-duration: 0.01ms !important;
+    /* biome-ignore lint/complexity/noImportantStyles: 同上 */
+    animation-iteration-count: 1 !important;
+    /* biome-ignore lint/complexity/noImportantStyles: 同上 */
+    transition-duration: 0.01ms !important;
+  }
+}

@@ -1,0 +1,15 @@
+# ローカルで動かす：docker compose up --build
+# U1 ではアプリだけ。Postgres は U8 で追加する。
+services:
+  app:
+    build:
+      context: .
+      args:
+        GIT_SHA: local
+    ports:
+      - "3000:3000"
+    environment:
+      APP_ENV: local
+      AI_PROVIDER: mock
+      SYNC_STORE: memory
+      AUTH_PROVIDER: dev

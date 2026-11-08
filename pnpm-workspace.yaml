@@ -1,0 +1,8 @@
+ignoredBuiltDependencies:
+  - sharp
+  - unrs-resolver
+
+# @serwist/turbopack が固定している zod 4.6.5 には、high の脆弱性（GHSA-mrhx-c7xc-m3w5）がある。
+# 同じ 4.6 系の修正版にそろえる。外すのは、serwist が 4.6.6 以上に上げたとき。
+overrides:
+  zod@4.6.5: 4.6.7
