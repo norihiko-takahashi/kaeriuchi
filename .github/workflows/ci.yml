@@ -100,6 +100,6 @@ jobs:
       - name: 依存ライブラリの脆弱性（high 以上で失敗）
         run: pnpm audit --audit-level high --prod
       - name: 秘密情報のスキャン（gitleaks）
-        uses: gitleaks/gitleaks-action@v2
+        uses: gitleaks/gitleaks-action@v3
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
