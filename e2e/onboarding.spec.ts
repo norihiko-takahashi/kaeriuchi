@@ -15,6 +15,14 @@ async function expectNoA11yViolations(page: Page) {
 
 const PARENT_PIN = "482915";
 
+/**
+ * 画面が操作できる状態になるまで待つ。
+ * 開き直したページで、ボタンが動く前に押してしまわないようにする。
+ */
+async function ready(page: Page) {
+  await expect(page.locator("html[data-hydrated]")).toBeAttached();
+}
+
 async function typePin(page: Page, label: string | RegExp, pin: string) {
   await page.getByLabel(label).fill(pin);
 }
@@ -101,6 +109,7 @@ test("保護者メニューは PIN がないと開けない。間違えると入
 }) => {
   await onboard(page);
   await page.getByRole("button", { name: "あとで" }).click();
+  await expect(page).toHaveURL(/\/profiles$/);
   await page.goto("/parent");
   await expect(page).toHaveURL(/\/parent\/unlock$/);
   await typePin(page, "保護者の PIN（6桁）", "000001");
@@ -123,6 +132,7 @@ test("保護者メニューは PIN がないと開けない。間違えると入
 test("一度開いたあとは、オフラインでもホームまで進める（U1-PWA-2）", async ({
   page,
   context,
+  browserName,
 }) => {
   await onboard(page);
   await page.getByRole("button", { name: "あとで" }).click();
@@ -145,9 +155,22 @@ test("一度開いたあとは、オフラインでもホームまで進める�
     )
     .toBe(true);
 
-  await context.setOffline(true);
+  if (browserName === "webkit") {
+    // Playwright の WebKit では setOffline にすると、Service Worker が返すページの読み込みも
+    // 失敗する（"WebKit encountered an internal error"）。そこで WebKit では、
+    // ネットワークへのリクエストだけを失敗させ、ブラウザにはオフラインだと伝えて、同じ状態を作る
+    await context.route("**/*", (route) => route.abort("internetdisconnected"));
+    await context.addInitScript(() => {
+      Object.defineProperty(Navigator.prototype, "onLine", {
+        get: () => false,
+      });
+    });
+  } else {
+    await context.setOffline(true);
+  }
   await page.goto("/");
   await expect(page).toHaveURL(/\/profiles$/);
+  await ready(page);
   await page.getByRole("button", { name: /ほのおのきつね/ }).click();
   await expect(page).toHaveURL(/\/home$/);
   await expect(

@@ -52,6 +52,11 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
   );
   const [parentUnlockedAt, setUnlocked] = useState<number | null>(null);
 
+  // E2E テストで「画面が操作できる状態になった」ことを確かめるための目印
+  useEffect(() => {
+    document.documentElement.dataset.hydrated = "true";
+  }, []);
+
   useEffect(() => {
     document.documentElement.dataset.mode = view.mode;
   }, [view.mode]);
