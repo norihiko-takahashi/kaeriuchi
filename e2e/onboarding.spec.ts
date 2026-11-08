@@ -232,8 +232,12 @@ test("セキュリティのヘッダーが付き、ページの中のスクリ�
   const second = await request.get("/login");
   expect(second.headers()["content-security-policy"]).not.toBe(csp);
 
-  // ページの中のスクリプトには、すべて nonce が付いている
   const html = await first.text();
+  // タイトルは、後から送られず、最初の HTML の <head> に入っている（アクセシビリティ）
+  const head = html.slice(0, html.indexOf("</head>"));
+  expect(head).toContain("<title>かえりうち</title>");
+
+  // ページの中のスクリプトには、すべて nonce が付いている
   const nonce = /'nonce-([^']+)'/.exec(csp)?.[1];
   const scripts = [...html.matchAll(/<script\b[^>]*>/gi)].map((m) => m[0]);
   expect(scripts.length).toBeGreaterThan(0);

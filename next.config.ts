@@ -23,6 +23,10 @@ const nextConfig: NextConfig = {
   // Node.js だけで動く形にビルドする（U1-PORT-1）
   output: "standalone",
   poweredByHeader: false,
+  // ページのタイトルなどを、後から送らず最初の HTML の <head> に入れる。
+  // 画面はリクエストのたびに描画するので、後から送るとタイトルがない瞬間ができ、
+  // スクリーンリーダーやアクセシビリティのチェックで問題になる。メタデータは静的なので遅くならない
+  htmlLimitedBots: /.*/,
   turbopack: {
     rules: {
       "*.css": {
