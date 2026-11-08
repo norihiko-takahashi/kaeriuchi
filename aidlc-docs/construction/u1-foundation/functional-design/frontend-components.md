@@ -65,5 +65,5 @@ flowchart TD
 | `ProfileTile` | プロフィールを選ぶ画面のアイコン |
 | `AvatarPicker` | プリセットのアバターを選ぶ（写真のアップロードはなし） |
 | `NicknameGuide` | 名前の説明の3コマ |
-| `PinPad` | PIN の入力（保護者用と、子どもの任意の PIN） |
-| `GradePicker` | 学年を選ぶ |
+| `PinPad` | PIN の入力（保護者用は6桁、子どもの任意の PIN は4桁） |
+| `GradePicker` | 学年を選ぶ（小1〜中3。Phase 2 で高1〜高3を足す） |

@@ -21,7 +21,7 @@ erDiagram
 
 ```ts
 type Subject = "math" | "japanese" | "english" | "science" | "social";
-type Grade = "e1" | "e2" | "e3" | "e4" | "e5" | "e6" | "j1" | "j2" | "j3";
+type Grade = "e1" | "e2" | "e3" | "e4" | "e5" | "e6" | "j1" | "j2" | "j3"; // Phase 2 で "h1" | "h2" | "h3" を足す
 type DisplayMode = "lower" | "upper" | "junior"; // 低学年・高学年・中学生
 
 /** 同期するデータすべてに付ける項目 */
