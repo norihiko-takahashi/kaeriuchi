@@ -22,7 +22,23 @@ type Subject = "math" | "japanese" | "english" | "science" | "social";
 type Grade = "e1" | "e2" | "e3" | "e4" | "e5" | "e6" | "j1" | "j2" | "j3";
 type DisplayMode = "lower" | "upper" | "junior"; // 低学年・高学年・中学生
 
-interface ChildProfile {
+/** 同期するデータすべてに付ける項目 */
+interface SyncMeta {
+  guardianId: string;         // 保護者ごとのデータの境界（テナント）
+  updatedAt: string;          // 最後に更新した時刻（サーバーの時刻）
+  version: number;            // 更新するたびに1つ増える
+  deletedAt?: string;         // 削除の印（論理削除。決めた期間が過ぎたら、本当に消す）
+}
+
+interface Guardian {
+  id: string;
+  email: string;
+  consentVersion: string;     // 同意した同意事項の版
+  consentedAt: string;
+  settings: { dailyCaptureLimit: number; allowedHours?: [string, string]; syncImages: boolean };
+}
+
+interface ChildProfile extends SyncMeta {
   id: string;
   nickname: string;
   grade: Grade;
@@ -32,7 +48,7 @@ interface ChildProfile {
 }
 
 /** 撮影した1つの間違い = 1匹のミスモン */
-interface Mistake {
+interface Mistake extends SyncMeta {
   id: string;
   childId: string;
   subject: Subject;
@@ -44,7 +60,7 @@ interface Mistake {
   explanation: string;        // なぜ間違えたかの説明
   confidence: number;         // 0〜1
   editedByUser: boolean;
-  thumbnail?: Blob;           // 端末内だけに保存する（サーバーには残らない）
+  thumbnail?: Blob;           // 端末内だけに保存する（同期しない。保護者が画像の同期をオンにしたときを除く）
   status: "active" | "defeated" | "mastered";
   createdAt: string;
 }
@@ -130,3 +146,17 @@ interface GameState {
 | 再来の間隔 | 1日 → 3日 → 7日 → 14日 → 30日。5回目の撃破で「完全撃破」（`mastered`） |
 | 再来で負けたとき | 間隔を最初の段階（0）に戻す |
 | ボスの出現 | 同じ単元で `active` か `defeated` のミスモンが5匹以上になったら出る |
+
+## 同期のまとめ方（複数の端末で変更したとき）
+
+| データ | ルール | 理由 |
+|---|---|---|
+| `Attempt`、`Battle` の結果 | 追記だけ（同じ ID は1回だけ反映する） | 記録は消えてはいけない |
+| `GameState.xp`、`coins` | 保存するのは「増えた量・減った量」の出来事にして、合計はそこから計算する | 2つの端末で同時にもらった XP が、両方とも残る |
+| `GameState.dex` | 状態の強い方を採用する（`gold` > `defeated` > `seen`） | 図鑑の登録は戻らない |
+| `GameState.streak` | `Attempt` の日付から計算し直す | 出来事から計算すれば、食い違いが起きない |
+| `ReviewState` | `Attempt` から計算し直す（再来の結果の順番どおりに当てはめる） | 同じ |
+| `ChildProfile`、`Mistake` の編集、`Guardian.settings` | 最後に更新したものを採用する（`updatedAt` で比べる） | 同時に編集することがほとんどない |
+| 削除 | 削除の印（`deletedAt`）を優先する | 消したものが復活しないようにする |
+
+**ポイント**：成績やゲームの状態は「出来事の記録（`Attempt` など）」から計算できるようにしておき、同期では出来事の記録だけを確実に送ります。こうすると、食い違いをまとめる処理が単純になります。

@@ -14,9 +14,12 @@ flowchart LR
     SW["Service Worker<br/>オフライン対応"]
   end
 
-  subgraph Server["Next.js サーバー（Route Handler・データを持たない）"]
+  subgraph Server["Next.js サーバー（Route Handler）"]
     API["/api/analyze<br/>/api/generate<br/>/api/grade"]
+    SyncAPI["/api/sync<br/>/api/account"]
     Guard["Guard<br/>認証・レート制限・サイズ制限"]
+    Auth["AuthProvider<br/>（差し替え可能）"]
+    SyncStore["SyncStore<br/>（差し替え可能）"]
     Orchestrator["Problem Pipeline<br/>解析 → 生成 → 検証"]
     Verifier["Verifier<br/>数式エンジン・検証役 AI"]
     Safety["Safety Filter<br/>不適切内容・個人情報の検知"]
@@ -25,10 +28,17 @@ flowchart LR
 
   subgraph AI["AI プロバイダー"]
     Mock["Mock"]
+    Bedrock["Amazon Bedrock（最初に検証する）"]
     Claude["Claude API"]
-    Bedrock["Amazon Bedrock"]
     Other["そのほか"]
   end
+
+  DB[("クラウドの DB<br/>（基盤はインフラ設計で決める）")]
+  Sync["Sync Client<br/>差分の送受信・まとめ方のルール"]
+  Store <--> Sync
+  Sync --> SyncAPI --> Guard
+  Guard --> Auth
+  SyncAPI --> SyncStore --> DB
 
   UI --> Capture --> API
   UI --> Battle --> Game
@@ -47,10 +57,11 @@ flowchart LR
 
 **設計の方針**
 
-1. **ローカルファースト**：学習データ（ミスモン、問題、成績、ゲームの状態）は、すべて端末の IndexedDB に置く。サーバーは AI の中継と検証だけをして、データを持たない。
-2. **AI は境界の外に置く**：AI に関わる処理は、すべてサーバーの `AIProvider` を通す。端末からは、プロバイダーに依存しない `/api/*` だけを呼ぶ。
-3. **採点はできるだけ端末で、ルールどおりに**：AI に採点させるのは、短い文の答えでルールでは判断できないときだけ。
-4. **AI の出力は信用しない**：すべてを JSON スキーマ（Zod）で検証し、正答も検算してから使う。
+1. **オフラインファースト＋クラウド同期**：画面は、端末の IndexedDB を読み書きする（オフラインでも動く）。Sync Client が、裏でクラウドと差分を送り合う。正本はクラウドに置く。
+2. **外部のサービスは境界の外に置く**：AI は `AIProvider`、同期の保存先は `SyncStore`、ログインは `AuthProvider` の後ろに隠す。どれも設定で差し替えられ、開発用の実装（Mock、メモリ上で動くもの、ローカルの Postgres）で全機能が動く。公開先（ホスティング）にも依存しない。
+3. **画像はクラウドに残さない**：画像は解析のときにメモリ上で扱うだけで、同期するのは文字の情報だけにする（保護者がオンにしたときを除く）。
+4. **採点はできるだけ端末で、ルールどおりに**：AI に採点させるのは、短い文の答えでルールでは判断できないときだけ。
+5. **AI の出力は信用しない**：すべてを JSON スキーマ（Zod）で検証し、正答も検算してから使う。
 
 ## 2. コンポーネント一覧
 
@@ -64,11 +75,15 @@ flowchart LR
 | C6 | Answer Checker | client | 答え方の形式ごとのルール採点（数値の正規化、同じ意味の答えの一覧、並べ替え） |
 | C7 | Gamification | client | XP、レベル、図鑑、連続記録、ボスの出現、コイン |
 | C8 | Review Scheduler | client | 再来の日程（決まった間隔）、今日の再来ミスモン、再来用の問題を前もって取りに行く |
-| C9 | Local Store | client | IndexedDB（Dexie）のリポジトリ層、データ構造の移行、書き出しと削除 |
+| C9 | Local Store | client | IndexedDB（Dexie）のリポジトリ層、データ構造の移行、書き出しと削除。変更を「送信待ち」として記録する |
+| C12 | Sync Client | client | 送信待ちの変更の送信、クラウドの差分の取得、データの種類ごとのまとめ方のルール（加算・最後の更新を採用・追記だけ） |
+| C13 | Auth Client | client | メールのリンクでのログイン、パスキー（WebAuthn）の登録とログイン、セッションの更新 |
 | C10 | Parent Dashboard | client | 集計、使い方のルール、傾向の要約（`/api/summarize`） |
 | C11 | Service Worker | client | アプリ本体のキャッシュ、オフラインでのバトル |
-| S1 | API Routes | server | `/api/analyze`, `/api/generate`, `/api/grade`, `/api/summarize` |
-| S2 | Guard | server | 端末トークンの検証、レート制限、入力サイズの上限、リクエスト ID |
+| S1 | API Routes | server | `/api/analyze`, `/api/generate`, `/api/grade`, `/api/summarize`, `/api/sync`, `/api/account` |
+| S2 | Guard | server | セッションの検証、保護者ごとのデータの境界の確認、レート制限、入力サイズの上限、リクエスト ID |
+| S9 | AuthProvider | server | ログインの基盤の抽象化（マジックリンク、パスキー、セッション、端末の一覧） |
+| S10 | SyncStore | server | 同期の保存先の抽象化（差分の取得・反映、データの削除、書き出し） |
 | S3 | Problem Pipeline | server | 解析 → 生成 → 検証 → 安全チェックの流れの制御、再試行、問題の入れ替え |
 | S4 | Verifier | server | 数式の検算（mathjs）、選択肢の一意性、検証役 AI での答え合わせ |
 | S5 | Safety Filter | server | 不適切な表現の検知、個人情報（名前・学校名など）の検知と伏せ字化 |
@@ -110,7 +125,13 @@ sequenceDiagram
   B->>Kid: バトル開始
 ```
 
-### 3.2 再来
+### 3.2 同期
+
+1. 画面からの変更は、IndexedDB に書き込むと同時に「送信待ち」の一覧に追加する。
+2. Sync Client は、オンラインのとき（起動したとき、画面が前面に戻ったとき、変更のあと数秒たったとき）に `/api/sync` を呼ぶ。送信待ちの変更を送り、前回の同期より後のクラウドの変更を受け取る。
+3. 受け取った変更は、データの種類ごとのルールで IndexedDB の内容とまとめる（`domain-model.md` の「同期のまとめ方」）。
+
+### 3.3 再来
 
 1. Review Scheduler が、アプリの起動時とバックグラウンドの同期のときに「明日までに再来するミスモン」を探す。
 2. それぞれについて `/api/generate`（`mode: "revisit"`）を呼び、前とは違う類題を作って IndexedDB に入れておく。
@@ -123,10 +144,13 @@ sequenceDiagram
 | フレームワーク | Next.js（App Router）+ TypeScript（strict） | 決定済み。画面とサーバー API を1つのリポジトリで作れる |
 | UI | Tailwind CSS、Radix UI | アクセシビリティに配慮された部品があり、作るのが速い |
 | アニメーション | Framer Motion（視差効果を減らす設定に対応） | バトルの演出に使う |
-| 端末の保存 | IndexedDB（Dexie） | ローカルファースト。データ構造の移行もできる |
+| 端末の保存 | IndexedDB（Dexie） | オフライン用のキャッシュと送信待ちの一覧。データ構造の移行もできる |
+| クラウドの保存 | `SyncStore` の後ろに隠す。最初の実装は Postgres（Drizzle ORM）を想定 | Postgres ならどのクラウドにもある。DynamoDB などの実装も足せる |
+| ログイン | `AuthProvider` の後ろに隠す。候補は Auth.js、Cognito、Supabase Auth | マジックリンクとパスキーに対応していること |
 | スキーマ | Zod | AI の出力の検証、API の入出力の型を1か所で定義する |
 | 数式 | mathjs、KaTeX | 検算と数式の表示 |
 | PWA | Serwist（Workbox の後継） | Service Worker |
 | テスト | Vitest、Testing Library、Playwright | 単体テスト、部品のテスト、E2E テスト |
 | AI の評価 | 自前の評価スクリプト（Vitest で実行） | プロンプトの退行（品質が下がること）を確認する |
-| ホスティング | Vercel、または AWS Amplify Hosting（OQ1, OQ5 と一緒に決める） | |
+| AI | Amazon Bedrock（Claude）を最初に検証する。ほかのものにも変えられる | OQ5 |
+| ホスティング | 固定しない。`output: "standalone"` で、Docker でも Vercel でも Amplify でも動くようにする | OQ7 |

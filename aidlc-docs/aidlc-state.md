@@ -3,7 +3,7 @@
 - **プロジェクト**: かえりうち
 - **プロジェクト種別**: Greenfield（新規）
 - **開始日**: 2026-11-08
-- **現在のフェーズ**: 🔵 INCEPTION 完了 → **レビュー・承認待ち**
+- **現在のフェーズ**: 🔵 INCEPTION 完了（未決事項 OQ1〜OQ7 は回答済み） → **最終の承認待ち**
 
 ## INCEPTION フェーズ
 
@@ -15,7 +15,7 @@
 | User Stories | ✅ 完了（承認待ち） | `inception/user-stories/` |
 | Workflow Planning | ✅ 完了（承認待ち） | `inception/plans/execution-plan.md` |
 | Application Design | ✅ 完了（承認待ち） | `inception/application-design/` |
-| Units Generation | ✅ 完了（承認待ち） | `inception/units/unit-of-work.md` |
+| Units Generation | ✅ 完了（承認待ち） | `inception/units/unit-of-work.md`（U1〜U8） |
 
 ## CONSTRUCTION フェーズ（未着手）
 
