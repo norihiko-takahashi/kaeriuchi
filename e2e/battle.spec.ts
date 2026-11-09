@@ -75,7 +75,9 @@ test("手で入れた間違いのミスモンを、かえりうち問題で撃�
   await expect(page.getByText("おしい！ もう一回 やってみよう")).toBeVisible();
   await expect(page.getByText(/ヒント1：/)).toBeVisible();
   await reportMarkedWrong(page);
-  await expect(page.getByText("せいかいに したよ！ ダメージ 100！")).toBeVisible();
+  await expect(
+    page.getByText("せいかいに したよ！ ダメージ 100！"),
+  ).toBeVisible();
   await expect(
     page.getByRole("progressbar", { name: "ミスモンの HP" }),
   ).toHaveAttribute("aria-valuenow", "200");
@@ -150,7 +152,9 @@ test("途中でやめても、つづきから再開できる。3回間違える�
   await page.getByRole("button", { name: "つぎへ" }).click();
   await answerNumber(page, "5/6");
   await page.getByRole("button", { name: "けっかを みる" }).click();
-  await expect(page.getByRole("heading", { name: "あと いっぽ！" })).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: "あと いっぽ！" }),
+  ).toBeVisible();
 
   await page.getByRole("link", { name: "ホームに もどる" }).click();
   await expect(page.getByText("ブンボタッシー（あと いっぽ）")).toBeVisible();
