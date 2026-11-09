@@ -61,7 +61,16 @@ export const Guardian = z.object({
 });
 export type Guardian = z.infer<typeof Guardian>;
 
-export const SyncEntity = z.enum(["child", "guardianSettings"]);
+export const SyncEntity = z.enum([
+  "child",
+  "guardianSettings",
+  "mistake",
+  "battle",
+  /** 「あれ？おかしいかも」の報告（BR-45-8） */
+  "report",
+  /** 通信が切れていたときの答えを、AI で採点し直したもの（U45-OFF-2） */
+  "regrade",
+]);
 export type SyncEntity = z.infer<typeof SyncEntity>;
 
 /** 送信待ちの変更（U8 でクラウドに送る） */

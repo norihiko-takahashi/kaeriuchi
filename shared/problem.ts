@@ -72,3 +72,6 @@ export interface ClassifyResult {
   unit: string;
   explanation: string;
 }
+
+/** これより少なければ、戦わずに「うまく つくれなかった」にする（BR-45-2） */
+export const MIN_BATTLE_PROBLEMS = 2;

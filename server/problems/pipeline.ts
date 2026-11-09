@@ -32,8 +32,7 @@ export const ROLES: Record<"first" | "revisit", ProblemRole[]> = {
   revisit: ["same-type", "stretch"],
 };
 
-/** これより少なければ、戦わずに「うまく つくれなかった」にする（BR-45-2） */
-export const MIN_PROBLEMS = 2;
+export { MIN_BATTLE_PROBLEMS as MIN_PROBLEMS } from "@/shared/problem";
 
 export type RejectReason =
   | "invalid_shape"
