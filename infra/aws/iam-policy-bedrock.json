@@ -1,0 +1,35 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "InvokeKaeriuchiModelsInTokyoOnly",
+      "Effect": "Allow",
+      "Action": [
+        "bedrock:InvokeModel",
+        "bedrock:InvokeModelWithResponseStream"
+      ],
+      "Resource": [
+        "arn:aws:bedrock:ap-northeast-1::foundation-model/REPLACE_WITH_SONNET_MODEL_ID",
+        "arn:aws:bedrock:ap-northeast-1::foundation-model/REPLACE_WITH_HAIKU_MODEL_ID"
+      ]
+    },
+    {
+      "Sid": "ReadInvocationLoggingSettings",
+      "Effect": "Allow",
+      "Action": ["bedrock:GetModelInvocationLoggingConfiguration"],
+      "Resource": "*"
+    },
+    {
+      "Sid": "ReadInvocationLogRetention",
+      "Effect": "Allow",
+      "Action": ["logs:DescribeLogGroups"],
+      "Resource": "arn:aws:logs:ap-northeast-1:REPLACE_WITH_ACCOUNT_ID:log-group:*"
+    },
+    {
+      "Sid": "WhoAmI",
+      "Effect": "Allow",
+      "Action": ["sts:GetCallerIdentity"],
+      "Resource": "*"
+    }
+  ]
+}

@@ -32,8 +32,14 @@ jobs:
         run: pnpm lint
       - name: 型チェック
         run: pnpm typecheck
-      - name: 単体テストとカバレッジ（domain/ は 90% 以上）
+      - name: 単体テストとカバレッジ（domain/・server/ai/ は 90% 以上）
         run: pnpm test:coverage
+      - name: 評価の仕組みが動くか（偽物の AI だけ。本物の Bedrock は使わない）
+        run: |
+          pnpm eval --provider mock --suite analyze
+          pnpm eval --provider mock --suite generate
+      - name: IAM ポリシーの JSON の形
+        run: node -e "JSON.parse(require('fs').readFileSync('infra/aws/iam-policy-bedrock.json','utf8'))"
 
   build-e2e:
     name: ビルド・大きさの予算・E2E・アクセシビリティ

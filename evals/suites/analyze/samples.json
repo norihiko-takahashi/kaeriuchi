@@ -1,0 +1,41 @@
+{
+  "note": "解析の評価用のサンプル。B2（合成）。正解（expected）は、画像を作ったときの値。数は少ないので、U3〜U4 で増やす（content-data-plan.md）。",
+  "samples": [
+    {
+      "id": "math-fraction-01",
+      "image": "images/math-fraction-01.png",
+      "grade": "e5",
+      "subject": "math",
+      "expected": {
+        "subject": "math",
+        "childAnswer": "2/5",
+        "correctAnswer": "5/6",
+        "mistakeTypeId": "math.fraction.add-denominators"
+      }
+    },
+    {
+      "id": "english-3rd-person-01",
+      "image": "images/english-3rd-person-01.png",
+      "grade": "j1",
+      "subject": "english",
+      "expected": {
+        "subject": "english",
+        "childAnswer": "go",
+        "correctAnswer": "goes",
+        "mistakeTypeId": "english.verb.third-person-s"
+      }
+    },
+    {
+      "id": "japanese-reading-01",
+      "image": "images/japanese-reading-01.png",
+      "grade": "e3",
+      "subject": "japanese",
+      "expected": {
+        "subject": "japanese",
+        "childAnswer": "しょくぶち",
+        "correctAnswer": "しょくぶつ",
+        "mistakeTypeId": "japanese.kanji.reading"
+      }
+    }
+  ]
+}

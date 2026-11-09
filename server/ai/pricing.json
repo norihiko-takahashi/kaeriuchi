@@ -1,0 +1,17 @@
+{
+  "note": "モデルごとのおおよその単価（円 / 1000 トークン）。費用の目安の計算にだけ使う。実際の請求は AWS の請求書で確かめる。単価が変わったら、ここを直す。モデル ID の一部（前方一致）で引く。",
+  "jpyPerUsd": 150,
+  "models": [
+    {
+      "match": "claude-sonnet",
+      "inputUsdPer1k": 0.003,
+      "outputUsdPer1k": 0.015
+    },
+    {
+      "match": "claude-haiku",
+      "inputUsdPer1k": 0.001,
+      "outputUsdPer1k": 0.005
+    },
+    { "match": "mock", "inputUsdPer1k": 0, "outputUsdPer1k": 0 }
+  ]
+}

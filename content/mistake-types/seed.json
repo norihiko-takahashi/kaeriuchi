@@ -1,0 +1,50 @@
+{
+  "note": "U2 の動作確認のための、仮の間違いのタイプの一覧。本格的な一覧は content-data-plan.md の計画どおり、公開資料と AI の下書きから作る（U4）。",
+  "types": [
+    {
+      "id": "math.fraction.add-denominators",
+      "subject": "math",
+      "label": "分数のたし算で、分母どうしも足してしまう"
+    },
+    {
+      "id": "math.carry.missing",
+      "subject": "math",
+      "label": "たし算の繰り上がりを忘れる"
+    },
+    {
+      "id": "math.sign.error",
+      "subject": "math",
+      "label": "符号（＋・−）を間違える"
+    },
+    {
+      "id": "english.verb.third-person-s",
+      "subject": "english",
+      "label": "三人称単数現在の s が抜ける"
+    },
+    {
+      "id": "english.verb.past-tense",
+      "subject": "english",
+      "label": "過去形を間違える"
+    },
+    {
+      "id": "japanese.kanji.reading",
+      "subject": "japanese",
+      "label": "漢字の読みを間違える"
+    },
+    {
+      "id": "japanese.kanji.okurigana",
+      "subject": "japanese",
+      "label": "送りがなを間違える"
+    },
+    {
+      "id": "science.term.confusion",
+      "subject": "science",
+      "label": "用語を取り違える"
+    },
+    {
+      "id": "social.term.confusion",
+      "subject": "social",
+      "label": "用語・地名を取り違える"
+    }
+  ]
+}
