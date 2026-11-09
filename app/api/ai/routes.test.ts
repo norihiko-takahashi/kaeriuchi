@@ -1,7 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { createMockProvider } from "@/server/ai/providers/mock/index";
 import { resetRegistryForTesting } from "@/server/ai/registry";
 import { resetConfigForTesting } from "@/server/config";
 import { POST as analyze } from "./analyze/route";
+import { POST as classify } from "./classify/route";
 import { POST as generate } from "./generate/route";
 import { POST as grade } from "./grade/route";
 
@@ -133,12 +135,12 @@ const analysis = {
 };
 
 describe("POST /api/ai/generate", () => {
-  it("問題を NDJSON で1問ずつ返し、最後に done を返す", async () => {
+  it("検証に通った問題を NDJSON で1問ずつ返し、最後に done を返す", async () => {
     const res = await generate(
       new Request("http://localhost/api/ai/generate", {
         method: "POST",
         headers: { ...headers(), "content-type": "application/json" },
-        body: JSON.stringify({ analysis, grade: "e5", count: 3 }),
+        body: JSON.stringify({ analysis, grade: "e5" }),
       }),
     );
     expect(res.headers.get("content-type")).toContain("application/x-ndjson");
@@ -146,11 +148,33 @@ describe("POST /api/ai/generate", () => {
       .trim()
       .split("\n")
       .map((l) => JSON.parse(l));
-    expect(lines.filter((l) => l.problem)).toHaveLength(3);
+    const problems = lines.filter((l) => l.problem).map((l) => l.problem);
+    expect(problems).toHaveLength(3);
+    for (const p of problems)
+      expect(p.verification).toMatchObject({
+        promptVersion: "generate@2",
+        verifierPromptVersion: "solve@2",
+        provider: "mock",
+      });
     expect(lines.at(-1)).toMatchObject({
       done: true,
-      meta: { promptVersion: "generate@1" },
+      meta: { verified: 3, rejected: 0, timedOut: false },
     });
+  });
+
+  it("再来は2問", async () => {
+    const res = await generate(
+      new Request("http://localhost/api/ai/generate", {
+        method: "POST",
+        headers: headers(),
+        body: JSON.stringify({ analysis, grade: "e5", mode: "revisit" }),
+      }),
+    );
+    const lines = (await res.text())
+      .trim()
+      .split("\n")
+      .map((l) => JSON.parse(l));
+    expect(lines.filter((l) => l.problem)).toHaveLength(2);
   });
 
   it("入力が正しくなければ 400", async () => {
@@ -195,6 +219,89 @@ describe("POST /api/ai/grade", () => {
         method: "POST",
         headers: headers(),
         body: "null",
+      }),
+    );
+    expect(res.status).toBe(400);
+  });
+});
+
+describe("POST /api/ai/classify", () => {
+  const body = {
+    subject: "math",
+    grade: "e5",
+    question: "1/2 + 1/3 = ?",
+    childAnswer: "2/5",
+    correctAnswer: "5/6",
+  };
+
+  it("手で入れた間違いの、間違いのタイプを返す", async () => {
+    const res = await classify(
+      new Request("http://localhost/api/ai/classify", {
+        method: "POST",
+        headers: headers(),
+        body: JSON.stringify(body),
+      }),
+    );
+    expect(res.status).toBe(200);
+    const json = await res.json();
+    expect(json.result.mistakeTypeId).toBe("math.fraction.add-denominators");
+    expect(json.meta).toMatchObject({
+      provider: "mock",
+      promptVersion: "classify@1",
+    });
+  });
+
+  it("一覧にないタイプが返ってきたら other にする", async () => {
+    const mock = createMockProvider();
+    resetRegistryForTesting({
+      ...mock,
+      classifyMistake: async (input, ctx) => {
+        const r = await mock.classifyMistake(input, ctx);
+        return { ...r, value: { ...r.value, mistakeTypeId: "made.up" } };
+      },
+    });
+    const res = await classify(
+      new Request("http://localhost/api/ai/classify", {
+        method: "POST",
+        headers: headers(),
+        body: JSON.stringify(body),
+      }),
+    );
+    expect((await res.json()).result.mistakeTypeId).toBe("other");
+  });
+
+  it("AI が失敗したら、中の詳細を出さずにエラーを返す", async () => {
+    const mock = createMockProvider();
+    resetRegistryForTesting({
+      ...mock,
+      classifyMistake: async () => {
+        throw Object.assign(new Error("secret"), {
+          name: "InvalidOutputError",
+        });
+      },
+    });
+    const res = await classify(
+      new Request("http://localhost/api/ai/classify", {
+        method: "POST",
+        headers: headers(),
+        body: JSON.stringify(body),
+      }),
+    );
+    expect(res.status).toBe(502);
+    expect(await res.text()).not.toContain("secret");
+  });
+
+  it.each([
+    ["問題文がない", { ...body, question: " " }],
+    ["問題文が200字を超える", { ...body, question: "あ".repeat(201) }],
+    ["答えが100字を超える", { ...body, childAnswer: "1".repeat(101) }],
+    ["教科がない", { ...body, subject: undefined }],
+  ])("%s なら 400", async (_name, b) => {
+    const res = await classify(
+      new Request("http://localhost/api/ai/classify", {
+        method: "POST",
+        headers: headers(),
+        body: JSON.stringify(b),
       }),
     );
     expect(res.status).toBe(400);

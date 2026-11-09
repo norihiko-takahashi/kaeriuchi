@@ -10,6 +10,7 @@ import { z } from "zod";
 import type { BedrockModels } from "@/server/config";
 import {
   analyzePrompt,
+  classifyPrompt,
   generatePrompt,
   gradePrompt,
   type Prompt,
@@ -22,6 +23,7 @@ import type {
   WithUsage,
 } from "../../provider";
 import {
+  ClassifyResult,
   GradeResult,
   MistakeAnalysis,
   ProblemDrafts,
@@ -36,9 +38,19 @@ import {
 
 const MAX_TOKENS: Record<AiRole, number> = {
   analyze: 1200,
-  generate: 3000,
+  classify: 400,
+  generate: 1200,
   verify: 300,
   grade: 300,
+};
+
+/** 役割ごとに使うモデルの設定。間違いのタイプの判定は、解析と同じモデルを使う */
+const MODEL_OF: Record<AiRole, keyof BedrockModels> = {
+  analyze: "analyze",
+  classify: "analyze",
+  generate: "generate",
+  verify: "verify",
+  grade: "grade",
 };
 
 /** やり直しの回数（スキーマの検証の失敗と、一時的なエラー。BR-U2-3） */
@@ -97,7 +109,7 @@ export function createBedrockProvider(
     ctx: CallContext,
     image?: { mime: "image/jpeg" | "image/png"; data: Uint8Array },
   ): Promise<WithUsage<z.infer<S>>> {
-    const modelId = opts.models[role];
+    const modelId = opts.models[MODEL_OF[role]];
     const content: ContentBlock[] = [];
     if (image) {
       content.push({
@@ -196,25 +208,47 @@ export function createBedrockProvider(
       );
     },
 
-    async *generateCounterProblems(input, ctx) {
-      // U2 では1回の呼び出しでまとめて作り、1問ずつ返す。
-      // 1問目を早く出すためのストリーミング（ConverseStream）は、U4 で入れる
-      const { value, usage } = await callTool(
-        "generate",
-        generatePrompt,
-        input,
-        ProblemDrafts,
+    classifyMistake(input, ctx) {
+      const { mistakeTypeCatalog, ...rest } = input;
+      return callTool(
+        "classify",
+        classifyPrompt,
+        { ...rest, catalog: mistakeTypeCatalog },
+        ClassifyResult,
         ctx,
       );
-      for (const [i, problem] of value.problems
-        .slice(0, input.count)
-        .entries()) {
-        yield {
-          value: problem,
-          usage:
-            i === 0 ? usage : { ...usage, inputTokens: 0, outputTokens: 0 },
-        };
+    },
+
+    async *generateCounterProblems(input, ctx) {
+      // 役割ごとに1問ずつ、同時に作る。1問目は、1問目の呼び出しが終わればすぐ返す（U45-PERF-1）
+      const { roles, ...rest } = input;
+      const calls = roles.map((role) =>
+        callTool(
+          "generate",
+          generatePrompt,
+          { ...rest, role },
+          ProblemDrafts,
+          ctx,
+        )
+          .then(({ value, usage }) => ({
+            ok: true as const,
+            value: { ...value.problems[0], role },
+            usage,
+          }))
+          .catch((error: unknown) => ({ ok: false as const, error })),
+      );
+      let failures = 0;
+      let lastError: unknown;
+      for (const call of calls) {
+        const r = await call;
+        if (r.ok) yield { value: r.value, usage: r.usage };
+        else {
+          failures++;
+          lastError = r.error;
+        }
       }
+      // 全部だめなときだけ、エラーにする（一部だけなら、作り直しで補う）
+      if (failures === calls.length && lastError) throw lastError;
     },
 
     solve(input, ctx) {

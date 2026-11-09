@@ -16,7 +16,10 @@ export type Outcome =
 
 export interface AiCallLog {
   requestId: string;
-  route: "analyze" | "generate" | "verify" | "grade";
+  route: "analyze" | "classify" | "generate" | "verify" | "grade";
+  /** 生成：通った数・落とした数（中身は出さない） */
+  verified?: number;
+  rejected?: number;
   provider: string;
   promptVersion?: string;
   latencyMs: number;

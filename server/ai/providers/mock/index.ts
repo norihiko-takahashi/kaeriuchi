@@ -80,6 +80,14 @@ const ANALYSES: Record<Subject, MistakeAnalysis> = {
 const PROBLEMS: ProblemDraft[] = [
   {
     role: "same-type",
+    prompt: "1/5 + 1/2 = ?",
+    format: { kind: "numeric" },
+    answer: "7/10",
+    hints: ["まず分母をそろえよう", "5 と 2 の最小公倍数は 10"],
+    explanation: "2/10 + 5/10 = 7/10",
+  },
+  {
+    role: "same-type",
     prompt: "1/3 + 1/4 = ?",
     format: { kind: "numeric" },
     answer: "7/12",
@@ -136,17 +144,37 @@ export function createMockProvider(): AIProvider {
       };
     },
 
+    async classifyMistake(input) {
+      const a = ANALYSES[input.subject];
+      return {
+        value: {
+          mistakeTypeId: a.mistakeTypeId,
+          unit: a.unit,
+          explanation: a.explanation,
+        },
+        usage: usage("mock-classify"),
+      };
+    },
+
     async *generateCounterProblems(input) {
-      const avoid = new Set(input.avoid);
-      const pool = PROBLEMS.filter((p) => !avoid.has(p.prompt));
-      for (const problem of pool.slice(0, input.count)) {
+      // 今は算数の問題だけを返す（どの教科でも、流れを確かめられるように）
+      const used = new Set(input.avoid);
+      for (const role of input.roles) {
+        const problem = PROBLEMS.find(
+          (p) => p.role === role && !used.has(p.prompt),
+        );
+        if (!problem) continue;
+        used.add(problem.prompt);
         yield { value: problem, usage: usage("mock-generate") };
       }
     },
 
     async solve(input) {
       return {
-        value: { answer: answerOf.get(input.problem.prompt) ?? "" },
+        value: {
+          answer: answerOf.get(input.problem.prompt) ?? "",
+          appropriate: true,
+        },
         usage: usage("mock-verify"),
       };
     },
