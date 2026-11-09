@@ -44,3 +44,8 @@ next-env.d.ts
 /test-results
 /playwright-report
 /.lighthouseci
+
+# 評価の結果（PR に貼る。リポジトリには入れない）
+/evals/reports/*
+!/evals/reports/.gitkeep
+!.env*.example

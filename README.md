@@ -10,7 +10,7 @@
 AI-DLC（AI-Driven Development Lifecycle）で開発しています。
 
 - Inception：完了
-- Construction：**U1 基盤・プロフィール**を作成済み（ログインは開発用。ミスモンとバトルは U2 以降）
+- Construction：**U1 基盤・プロフィール**を作成済み。**U2 AI 基盤**を作成中（AI を呼ぶ土台。画面はまだ変わらない）
 
 進み具合は [aidlc-docs/aidlc-state.md](aidlc-docs/aidlc-state.md) を見てください。
 
@@ -53,6 +53,7 @@ docker compose up --build
 | `pnpm test` / `pnpm test:coverage` | 単体テスト（`domain/` のカバレッジは 90% 以上） |
 | `pnpm build && pnpm check:bundle` | 子ども向けの画面の JavaScript が 200KB 以内か |
 | `pnpm build && pnpm e2e` | E2E テストとアクセシビリティのチェック（Chromium と WebKit） |
+| `pnpm eval --provider mock\|bedrock --suite analyze\|generate` | AI の評価（bedrock は費用がかかる。準備は [docs/aws-account-setup.md](docs/aws-account-setup.md)） |
 
 ## ドキュメント
 

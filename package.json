@@ -12,14 +12,21 @@
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
     "e2e": "playwright test",
-    "check:bundle": "node scripts/check-bundle-size.mjs"
+    "check:bundle": "node scripts/check-bundle-size.mjs",
+    "eval": "tsx --conditions=react-server --tsconfig tsconfig.json evals/run.mts"
   },
   "dependencies": {
+    "@aws-sdk/client-bedrock": "^3.1163.0",
+    "@aws-sdk/client-bedrock-runtime": "^3.1163.0",
+    "@aws-sdk/client-cloudwatch-logs": "^3.1163.0",
+    "@aws-sdk/client-sts": "^3.1163.0",
+    "@aws-sdk/credential-providers": "^3.1163.0",
     "@serwist/turbopack": "^9.5.13",
     "dexie": "^4.4.7",
     "next": "16.4.5",
     "react": "19.3.0",
     "react-dom": "19.3.0",
+    "server-only": "^0.0.1",
     "serwist": "^9.5.13",
     "zod": "^4.6.7"
   },
@@ -36,10 +43,12 @@
     "@types/react-dom": "^19",
     "@vitejs/plugin-react": "^6.2.1",
     "@vitest/coverage-v8": "^5.1.0",
+    "aws-sdk-client-mock": "^4.1.0",
     "esbuild-wasm": "^0.28.2",
     "fake-indexeddb": "^6.2.7",
     "jsdom": "^31.0.0",
     "tailwindcss": "^4",
+    "tsx": "^4.23.15",
     "typescript": "^5",
     "vitest": "^5.1.0"
   },
