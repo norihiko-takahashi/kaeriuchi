@@ -3,7 +3,7 @@
 - **プロジェクト**: かえりうち
 - **プロジェクト種別**: Greenfield（新規）
 - **開始日**: 2026-11-08
-- **現在のフェーズ**: 🟢 CONSTRUCTION — U2（AI 基盤）のコードの作成（レビュー待ち・CI で Build & Test）
+- **現在のフェーズ**: 🟢 CONSTRUCTION — U2 完了（PR #10 をマージ）。U4・U5（問題の生成と検証、バトル）の Functional Design（レビュー中）
 - **Inception の承認**: 2026-11-08（課題 R1・R2 は Construction の中で検証する）
 
 ## INCEPTION フェーズ
@@ -23,8 +23,9 @@
 | ユニット | Functional Design | NFR | Infrastructure | Code | Build & Test |
 |---|---|---|---|---|---|
 | U1 基盤・プロフィール | ✅ 承認済み | ✅ 承認済み | ✅ 承認済み | ✅ 承認済み（`construction/u1-foundation/code/code-summary.md`） | ✅ CI ですべて成功（7c2f042。WebKit のオフラインでの移動は実機で確認する） |
-| U2 AI 基盤 | ✅ 承認済み | ✅ 承認済み | ✅ 承認済み | 🟡 レビュー待ち（`construction/u2-ai-foundation/code/code-summary.md`） | 🟡 ローカルは成功、CI で確認中 |
-| U3〜U8 | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |
+| U2 AI 基盤 | ✅ 承認済み | ✅ 承認済み | ✅ 承認済み | ✅ 承認済み（PR #10 でマージ） | ✅ CI ですべて成功 |
+| U4・U5 問題の生成と検証・バトル | 🟡 レビュー中（`construction/u4-u5-problems-battle/functional-design/`） | ⬜ | ⬜ | ⬜ | ⬜ |
+| U3・U6〜U8 | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |
 
 
 ユニットごとに次の順で進めます：Functional Design → NFR Requirements → NFR Design → Infrastructure Design → Code Generation → Build & Test。
