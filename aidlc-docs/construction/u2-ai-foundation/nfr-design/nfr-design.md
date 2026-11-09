@@ -40,10 +40,27 @@ evals/
 - **端末で**：画像を Canvas で描き直してから JPEG にする（U3 で作る）。描き直すと、EXIF などのメタデータは残らない。
 - **サーバーで**：念のため、受け取った JPEG に EXIF（APP1）などのメタデータが残っていないかを調べる。残っていたら、**受け付けない**（400）。サーバーで画像を描き直す仕組み（sharp など）は、依存が重いので入れない。
 
-## 4. 呼び出しの記録がオンになっていないか（U2-PRIV-3）
+## 4. 呼び出しの記録（U2-PRIV-3）
 
-- 起動したときと、`/api/health/ready` を開いたときに、`GetModelInvocationLoggingConfiguration` で確かめる。
-- オンになっていたら、`/api/health/ready` に警告を出し、**AI の API は 503 を返して動かさない**（写真が保存されてしまうため）。
+Bedrock の「モデルの呼び出しの記録」は、AWS アカウントとリージョンごとに1つの設定です。**オンにして使い、画像だけは記録しない**ようにします。
+
+| 設定 | 値 |
+|---|---|
+| `textDataDeliveryEnabled` | `true`（文章は記録する） |
+| `imageDataDeliveryEnabled` | **`false`（子どもの宿題の写真は記録しない）** |
+| `videoDataDeliveryEnabled`・`audioDataDeliveryEnabled`・`embeddingDataDeliveryEnabled` | `false`（使わないので記録しない） |
+| 送り先 | 東京リージョンの CloudWatch Logs（または S3） |
+| 保存期間 | 30日で自動削除（CloudWatch Logs の保持期間、S3 なら保存期間の設定） |
+| 暗号化・見られる人 | KMS で暗号化し、見られるのは監査用の役割だけにする |
+
+**アプリの確かめ方**（起動したときと、`/api/health/ready` を開いたとき）
+- `GetModelInvocationLoggingConfiguration` で設定を読む。
+- **画像が記録される設定（`imageDataDeliveryEnabled = true`）なら、AI の API は 503 を返して動かさない。**
+- 記録がオンかオフか、送り先、保存期間（CloudWatch Logs なら `DescribeLogGroups` で読む）を、`/api/health/ready` に出す。保存期間が30日より長ければ警告を出す。
+
+**アプリのログとの突き合わせ**：Converse の `requestMetadata` に `requestId` を入れる。アプリのログには中身を出さないまま、問題があったときに、同じ `requestId` で呼び出しの記録を探せる。
+
+**社用のアカウントでの注意**：会社の管理者が「画像も記録する」と決めている場合は、かえりうちだけ設定を変えることはできない。その場合は、かえりうち専用の AWS アカウントを用意してもらう（あとで個人用に移すときも、話が単純になる）。
 
 ## 5. 回数の制限（U2-COST-3）
 

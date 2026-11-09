@@ -13,7 +13,7 @@
 | # | 要件 |
 |---|---|
 | U2-SEC-1 | AWS の認証情報は、AWS の標準の仕組み（プロファイル、SSO、実行環境のロール）からだけ読む。リポジトリ・`.env`・ログに書かない |
-| U2-SEC-2 | IAM の権限は最小にする：使うモデルの呼び出し（`bedrock:InvokeModel`、`bedrock:Converse` 系）と、つながり先の確認（`sts:GetCallerIdentity`、`bedrock:GetModelInvocationLoggingConfiguration`）だけ。モデルは ARN で限る |
+| U2-SEC-2 | IAM の権限は最小にする：使うモデルの呼び出し（`bedrock:InvokeModel`、`bedrock:Converse` 系）と、つながり先と記録の設定の確認（`sts:GetCallerIdentity`、`bedrock:GetModelInvocationLoggingConfiguration`、`logs:DescribeLogGroups`）だけ。モデルは ARN で限る |
 | U2-SEC-3 | 送られた画像を検証する：中身が本当に JPEG・PNG か（先頭のバイトで判定）、2MB 以下か、縦横 4096px 以下か |
 | U2-SEC-4 | 画像の中の文字は「データ」として扱い、AI に指示として実行させない（システムプロンプトで明示し、出力は決めた形の JSON だけを受け付ける） |
 | U2-SEC-5 | エラーの返事には、中の仕組みの詳細（スタックトレース、AWS のエラーの全文）を出さない |
@@ -24,7 +24,7 @@
 |---|---|
 | U2-PRIV-1 | **写真の位置情報（EXIF の GPS など）を AI に送らない**。スマホの写真には撮った場所が入っていることが多いため |
 | U2-PRIV-2 | 画像、問題文、子どもの答え、AI の出力の中身を、ログに出さない |
-| U2-PRIV-3 | **Bedrock の「モデルの呼び出しの記録」（invocation logging）がオンになっていないことを確かめる**。オンだと、送った画像や文章が、そのアカウントの S3 や CloudWatch に保存されてしまう |
+| U2-PRIV-3 | **Bedrock の「モデルの呼び出しの記録」（invocation logging）は、オンにして使う**（不正利用の調査や監査に意味があるため）。ただし、**画像は記録しない**（`imageDataDeliveryEnabled = false`）。文章だけを、東京リージョンの、暗号化して見られる人を限った場所に、30日だけ残す。画像が記録される設定になっていたら、AI の API を止める（2026-11-09 に決定） |
 | U2-PRIV-4 | 東京リージョンだけで処理する。リージョンをまたぐ推論は使わない |
 
 ## 4. 費用
