@@ -93,3 +93,40 @@ ruby rt {
     transition-duration: 0.01ms !important;
   }
 }
+
+/* ミスモンの動き（U45-UX-1）。視差効果を減らす設定では、上の指定で止まる */
+@keyframes monster-appear {
+  from {
+    transform: scale(0.4) translateY(20px);
+    opacity: 0;
+  }
+  to {
+    transform: none;
+    opacity: 1;
+  }
+}
+@keyframes monster-bob {
+  50% {
+    transform: translateY(-6px);
+  }
+}
+@keyframes monster-hit {
+  20% {
+    transform: translateX(-10px) rotate(-6deg);
+  }
+  40% {
+    transform: translateX(10px) rotate(6deg);
+  }
+  60% {
+    transform: translateX(-6px);
+  }
+}
+.monster-appear {
+  animation: monster-appear 0.6s ease-out both;
+}
+.monster-idle {
+  animation: monster-bob 2.4s ease-in-out infinite;
+}
+.monster-hit {
+  animation: monster-hit 0.5s ease-in-out;
+}

@@ -44,7 +44,12 @@ export const MistakeAnalysis = z.object({
 export type MistakeAnalysis = z.infer<typeof MistakeAnalysis>;
 
 export const AnswerFormat = z.discriminatedUnion("kind", [
-  z.object({ kind: z.literal("numeric"), unit: z.string().optional() }),
+  z.object({
+    kind: z.literal("numeric"),
+    unit: z.string().max(20).optional(),
+    /** 答えの形の条件（BR-45-7）。問題文にも書く */
+    condition: z.enum(["reduced", "decimal", "mixed"]).optional(),
+  }),
   z.object({
     kind: z.literal("choice"),
     options: z.array(z.string().max(100)).min(2).max(6),
@@ -61,9 +66,12 @@ export const AnswerFormat = z.discriminatedUnion("kind", [
 ]);
 export type AnswerFormat = z.infer<typeof AnswerFormat>;
 
+export const ProblemRole = z.enum(["same-type", "focus", "stretch"]);
+export type ProblemRole = z.infer<typeof ProblemRole>;
+
 /** AI が作った問題（検証の前） */
 export const ProblemDraft = z.object({
-  role: z.enum(["same-type", "focus", "stretch"]),
+  role: ProblemRole,
   prompt: z.string().max(600),
   format: AnswerFormat,
   answer: z.string().max(200),
@@ -76,8 +84,20 @@ export const ProblemDrafts = z.object({
   problems: z.array(ProblemDraft).min(1).max(5),
 });
 
-export const SolveResult = z.object({ answer: z.string().max(200) });
+/** 検証役の答え。子ども向けとして適切かも、同じ呼び出しで答える（U45-SAFE-1） */
+export const SolveResult = z.object({
+  answer: z.string().max(200),
+  appropriate: z.boolean(),
+});
 export type SolveResult = z.infer<typeof SolveResult>;
+
+/** 間違いのタイプの判定（手で入れたとき）の結果 */
+export const ClassifyResult = z.object({
+  mistakeTypeId: z.string().max(100),
+  unit: z.string().max(60),
+  explanation: z.string().max(200),
+});
+export type ClassifyResult = z.infer<typeof ClassifyResult>;
 
 export const GradeResult = z.object({
   correct: z.boolean(),
@@ -90,11 +110,21 @@ export type GradeResult = z.infer<typeof GradeResult>;
 export const GenerateRequest = z.object({
   analysis: MistakeAnalysis,
   grade: Grade,
-  count: z.number().int().min(1).max(5).default(3),
-  mode: z.enum(["first", "revisit", "boss"]).default("first"),
+  /** 初回は3問、再来は2問（BR-45-3） */
+  mode: z.enum(["first", "revisit"]).default("first"),
   avoid: z.array(z.string().max(600)).max(20).default([]),
 });
 export type GenerateRequest = z.infer<typeof GenerateRequest>;
+
+/** 手で入れた間違い（BR-45-1）。正しい答えは、子どもが入れたものを使う */
+export const ClassifyRequest = z.object({
+  subject: Subject,
+  grade: Grade,
+  question: z.string().trim().min(1).max(200),
+  childAnswer: z.string().trim().min(1).max(100),
+  correctAnswer: z.string().trim().min(1).max(100),
+});
+export type ClassifyRequest = z.infer<typeof ClassifyRequest>;
 
 export const GradeRequest = z.object({
   problem: ProblemDraft,

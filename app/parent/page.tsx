@@ -196,6 +196,9 @@ export default function ParentMenu() {
             <LinkButton href="/parent/data" variant="secondary">
               データの管理
             </LinkButton>
+            <LinkButton href="/parent/reports" variant="secondary">
+              問題の報告
+            </LinkButton>
           </nav>
 
           <h2 className="text-lg font-bold">

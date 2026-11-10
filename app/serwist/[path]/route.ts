@@ -21,6 +21,10 @@ const APP_ROUTES = [
   "/parent/unlock",
   "/parent/rules",
   "/parent/data",
+  "/parent/reports",
+  "/mistakes/new",
+  "/mistakes/found",
+  "/battle",
 ];
 
 const revision = process.env.GIT_SHA ?? `${Date.now()}`;

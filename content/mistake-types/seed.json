@@ -1,50 +1,68 @@
 {
-  "note": "U2 の動作確認のための、仮の間違いのタイプの一覧。本格的な一覧は content-data-plan.md の計画どおり、公開資料と AI の下書きから作る（U4）。",
+  "note": "U2 の動作確認のための、仮の間違いのタイプの一覧。本格的な一覧は content-data-plan.md の計画どおり、公開資料と AI の下書きから作る（U4）。 monster と color は、仮のミスモンの名前と色（OQ6。U6 で図鑑の種族として作り直す）。",
   "types": [
     {
       "id": "math.fraction.add-denominators",
       "subject": "math",
-      "label": "分数のたし算で、分母どうしも足してしまう"
+      "label": "分数のたし算で、分母どうしも足してしまう",
+      "monster": "ブンボタッシー",
+      "color": "#e07a5f"
     },
     {
       "id": "math.carry.missing",
       "subject": "math",
-      "label": "たし算の繰り上がりを忘れる"
+      "label": "たし算の繰り上がりを忘れる",
+      "monster": "クリアガリン",
+      "color": "#f2cc8f"
     },
     {
       "id": "math.sign.error",
       "subject": "math",
-      "label": "符号（＋・−）を間違える"
+      "label": "符号（＋・−）を間違える",
+      "monster": "フゴウマチガエル",
+      "color": "#81b29a"
     },
     {
       "id": "english.verb.third-person-s",
       "subject": "english",
-      "label": "三人称単数現在の s が抜ける"
+      "label": "三人称単数現在の s が抜ける",
+      "monster": "エスワスレン",
+      "color": "#3d85c6"
     },
     {
       "id": "english.verb.past-tense",
       "subject": "english",
-      "label": "過去形を間違える"
+      "label": "過去形を間違える",
+      "monster": "カコケイモドキ",
+      "color": "#8e7cc3"
     },
     {
       "id": "japanese.kanji.reading",
       "subject": "japanese",
-      "label": "漢字の読みを間違える"
+      "label": "漢字の読みを間違える",
+      "monster": "ヨミチガイ",
+      "color": "#c27ba0"
     },
     {
       "id": "japanese.kanji.okurigana",
       "subject": "japanese",
-      "label": "送りがなを間違える"
+      "label": "送りがなを間違える",
+      "monster": "オクリガナクシ",
+      "color": "#e69138"
     },
     {
       "id": "science.term.confusion",
       "subject": "science",
-      "label": "用語を取り違える"
+      "label": "用語を取り違える",
+      "monster": "トリチガエモン",
+      "color": "#6aa84f"
     },
     {
       "id": "social.term.confusion",
       "subject": "social",
-      "label": "用語・地名を取り違える"
+      "label": "用語・地名を取り違える",
+      "monster": "ゴチャマゼン",
+      "color": "#a64d79"
     }
   ]
 }

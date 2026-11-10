@@ -16,6 +16,9 @@ const KID_ROUTES = [
   "profiles/new",
   "profiles/new/nickname-guide",
   "profiles/new/nickname",
+  "mistakes/new",
+  "mistakes/found",
+  "battle",
 ];
 const OTHER_ROUTES = [
   "login",
@@ -23,6 +26,7 @@ const OTHER_ROUTES = [
   "parent",
   "parent/rules",
   "parent/data",
+  "parent/reports",
 ];
 
 const root = new URL("..", import.meta.url).pathname;

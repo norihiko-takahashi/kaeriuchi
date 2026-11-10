@@ -6,6 +6,7 @@ import { mockClient } from "aws-sdk-client-mock";
 import { beforeEach, describe, expect, it } from "vitest";
 import type { AIProvider } from "../provider";
 import {
+  ClassifyResult,
   GradeResult,
   MistakeAnalysis,
   ProblemDraft,
@@ -75,14 +76,15 @@ function primeBedrock() {
     const system = input.system?.[0]?.text ?? "";
     if (system.includes("間違いを解析")) return toolResponse(analysis);
     if (system.includes("練習問題"))
+      return toolResponse({ problems: [problem] });
+    if (system.includes("検証役"))
+      return toolResponse({ answer: "7/12", appropriate: true });
+    if (system.includes("間違いのタイプを判定"))
       return toolResponse({
-        problems: [
-          problem,
-          { ...problem, role: "focus" },
-          { ...problem, role: "stretch" },
-        ],
+        mistakeTypeId: "math.fraction.add-denominators",
+        unit: "分数のたし算",
+        explanation: "分母どうしも足している",
       });
-    if (system.includes("検証役")) return toolResponse({ answer: "7/12" });
     return toolResponse({ correct: true, feedback: "せいかい" });
   });
 }
@@ -123,21 +125,47 @@ describe.each(providers)("AIProvider の契約：%s", (_name, make) => {
     expect(r.usage.model).toBeTruthy();
   });
 
-  it("generateCounterProblems は、頼んだ数までの問題を1問ずつ返す", async () => {
+  it("generateCounterProblems は、頼んだ役割の順に1問ずつ返す", async () => {
     const out: ProblemDraft[] = [];
     for await (const { value } of p.generateCounterProblems(
-      { analysis, grade: "e5", count: 3, mode: "first", avoid: [] },
+      {
+        analysis,
+        grade: "e5",
+        roles: ["same-type", "focus", "stretch"],
+        mode: "first",
+        avoid: [],
+      },
       ctx,
     )) {
       out.push(ProblemDraft.parse(value));
     }
-    expect(out).toHaveLength(3);
+    expect(out.map((q) => q.role)).toEqual(["same-type", "focus", "stretch"]);
   });
 
-  it("solve は答えだけを返す", async () => {
+  it("classifyMistake は ClassifyResult の形を返す", async () => {
+    const r = await p.classifyMistake(
+      {
+        subject: "math",
+        grade: "e5",
+        question: "1/2 + 1/3 = ?",
+        childAnswer: "2/5",
+        correctAnswer: "5/6",
+        mistakeTypeCatalog: [],
+      },
+      ctx,
+    );
+    expect(ClassifyResult.parse(r.value).mistakeTypeId).toBe(
+      "math.fraction.add-denominators",
+    );
+  });
+
+  it("solve は答えと、子ども向けとして適切かを返す", async () => {
     const { answer: _a, explanation: _e, ...rest } = problem;
     const r = await p.solve({ problem: rest, grade: "e5" }, ctx);
-    expect(SolveResult.parse(r.value).answer).toBe("7/12");
+    expect(SolveResult.parse(r.value)).toEqual({
+      answer: "7/12",
+      appropriate: true,
+    });
   });
 
   it("gradeFreeText は正誤とフィードバックを返す", async () => {
@@ -267,7 +295,9 @@ describe("Bedrock のアダプター", () => {
     });
 
     bedrockMock.reset();
-    bedrockMock.on(ConverseCommand).resolves(toolResponse({ answer: "1" }));
+    bedrockMock
+      .on(ConverseCommand)
+      .resolves(toolResponse({ answer: "1", appropriate: true }));
     const { answer: _a, explanation: _e, ...rest } = problem;
     await make().solve({ problem: rest, grade: "e5" }, ctx);
     expect(
@@ -306,7 +336,7 @@ describe("Mock の教科ごとの答え", () => {
       {
         analysis,
         grade: "e5",
-        count: 5,
+        roles: ["same-type", "stretch", "stretch", "stretch", "stretch"],
         mode: "revisit",
         avoid: ["1/3 + 1/4 = ?"],
       },
@@ -356,7 +386,7 @@ describe("Bedrock のそのほかの動き", () => {
     ).rejects.toMatchObject({ name: "InvalidOutputError" });
   });
 
-  it("問題の生成は、1問目だけにトークン数を付ける（二重に数えない）。避ける問題もプロンプトに入れる", async () => {
+  it("問題の生成は、役割ごとに1回ずつ同時に呼ぶ。避ける問題と役割もプロンプトに入れる", async () => {
     primeBedrock();
     const p = createBedrockProvider({
       region: "ap-northeast-1",
@@ -364,15 +394,61 @@ describe("Bedrock のそのほかの動き", () => {
       client: new BedrockRuntimeClient({ region: "ap-northeast-1" }),
       sleep: async () => {},
     });
-    const tokens: number[] = [];
-    for await (const { usage } of p.generateCounterProblems(
-      { analysis, grade: "e5", count: 2, mode: "revisit", avoid: ["前の問題"] },
+    const roles: string[] = [];
+    for await (const { value, usage } of p.generateCounterProblems(
+      {
+        analysis,
+        grade: "e5",
+        roles: ["same-type", "stretch"],
+        mode: "revisit",
+        avoid: ["前の問題"],
+      },
       ctx,
-    ))
-      tokens.push(usage.inputTokens);
-    expect(tokens).toEqual([100, 0]);
-    const call = bedrockMock.commandCalls(ConverseCommand)[0].args[0].input;
-    expect(JSON.stringify(call.messages)).toContain("前の問題");
+    )) {
+      roles.push(value.role);
+      expect(usage.inputTokens).toBe(100);
+    }
+    // AI が違う役割を返しても、頼んだ役割にそろえる
+    expect(roles).toEqual(["same-type", "stretch"]);
+    const calls = bedrockMock.commandCalls(ConverseCommand);
+    expect(calls).toHaveLength(2);
+    const text = JSON.stringify(calls[1].args[0].input.messages);
+    expect(text).toContain("前の問題");
+    expect(text).toContain("role は stretch");
+  });
+
+  it("問題の生成で一部の呼び出しが失敗しても、できた分は返す。全部失敗したらエラー", async () => {
+    const p = createBedrockProvider({
+      region: "ap-northeast-1",
+      models: MODELS,
+      client: new BedrockRuntimeClient({ region: "ap-northeast-1" }),
+      sleep: async () => {},
+    });
+    const boom = Object.assign(new Error("x"), { name: "ValidationException" });
+    bedrockMock.reset();
+    bedrockMock
+      .on(ConverseCommand)
+      .rejectsOnce(boom)
+      .resolves(toolResponse({ problems: [problem] }));
+    const input = {
+      analysis,
+      grade: "e5" as const,
+      roles: ["same-type" as const, "focus" as const],
+      mode: "first" as const,
+      avoid: [],
+    };
+    const out: string[] = [];
+    for await (const { value } of p.generateCounterProblems(input, ctx))
+      out.push(value.role);
+    expect(out).toEqual(["focus"]);
+
+    bedrockMock.reset();
+    bedrockMock.on(ConverseCommand).rejects(boom);
+    await expect(async () => {
+      for await (const _ of p.generateCounterProblems(input, ctx)) {
+        // 何も返らない
+      }
+    }).rejects.toMatchObject({ name: "ValidationException" });
   });
 
   it("SDK のクライアントを渡さなければ、プロファイルとリージョンで作る（待ち時間は本物の時計）", async () => {
@@ -389,7 +465,7 @@ describe("Bedrock のそのほかの動き", () => {
     bedrockMock
       .on(ConverseCommand)
       .rejectsOnce(throttle)
-      .resolves(toolResponse({ answer: "1" }));
+      .resolves(toolResponse({ answer: "1", appropriate: true }));
     const { answer: _a, explanation: _e, ...rest } = problem;
     const r = await p.solve({ problem: rest, grade: "e5" }, ctx);
     expect(r.usage.retries).toBe(1);

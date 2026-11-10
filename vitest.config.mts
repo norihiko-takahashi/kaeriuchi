@@ -19,7 +19,11 @@ export default defineConfig({
     setupFiles: ["./vitest.setup.ts"],
     coverage: {
       provider: "v8",
-      include: ["domain/**/*.ts", "server/ai/**/*.ts"],
+      include: [
+        "domain/**/*.ts",
+        "server/ai/**/*.ts",
+        "server/problems/**/*.ts",
+      ],
       exclude: ["**/*.test.ts"],
       thresholds: { lines: 90, functions: 90, branches: 90, statements: 90 },
     },

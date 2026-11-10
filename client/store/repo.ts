@@ -6,6 +6,7 @@ import {
   promoteGrade,
   schoolYearOf,
 } from "@/domain/profile/grade";
+import type { Battle, Mistake } from "@/shared/battle";
 import type {
   AvatarConfig,
   ChildProfile,
@@ -200,11 +201,33 @@ export async function deleteChild(id: string): Promise<void> {
   const db = getDB();
   const guardian = await requireGuardian();
   const { [id]: _removed, ...rules } = guardian.rules;
-  await db.transaction("rw", db.children, db.outbox, async () => {
-    // 端末の中からはすぐに消す（BR-4.3）。クラウドの削除は U8 で outbox から行う
-    await db.children.delete(id);
-    await db.outbox.add(outboxItem("child", id, "delete"));
-  });
+  await db.transaction(
+    "rw",
+    [db.children, db.mistakes, db.battles, db.outbox],
+    async () => {
+      // 端末の中からはすぐに消す（BR-4.3）。クラウドの削除は U8 で outbox から行う
+      await db.children.delete(id);
+      const mistakeIds = await db.mistakes
+        .where("childId")
+        .equals(id)
+        .primaryKeys();
+      const battleIds = await db.battles
+        .where("childId")
+        .equals(id)
+        .primaryKeys();
+      await db.mistakes.bulkDelete(mistakeIds);
+      await db.battles.bulkDelete(battleIds);
+      // まだ送っていない、この子のミスモンとバトルの変更は、送らない
+      await db.outbox
+        .filter(
+          (i) =>
+            (i.entity === "mistake" && mistakeIds.includes(i.id)) ||
+            (i.entity === "battle" && battleIds.includes(i.id)),
+        )
+        .delete();
+      await db.outbox.add(outboxItem("child", id, "delete"));
+    },
+  );
   await saveGuardian({ ...guardian, rules });
 }
 
@@ -243,6 +266,8 @@ export interface ExportData {
   schemaVersion: number;
   guardian: Omit<Guardian, "pinHash">;
   children: Omit<ChildProfile, "pinHash">[];
+  mistakes: Mistake[];
+  battles: Battle[];
 }
 
 /** JSON で書き出す。画像と PIN のハッシュは含めない */
@@ -251,13 +276,23 @@ export async function exportData(childId?: string): Promise<ExportData> {
   const children = (await listChildren())
     .filter((c) => !childId || c.id === childId)
     .map(({ pinHash: _c, ...c }) => c);
+  const ids = new Set(children.map((c) => c.id));
+  const db = getDB();
+  const mistakes = (await db.mistakes.toArray()).filter((m) =>
+    ids.has(m.childId),
+  );
+  const battles = (await db.battles.toArray()).filter((b) =>
+    ids.has(b.childId),
+  );
   return {
     exportedAt: nowIso(),
-    schemaVersion: getDB().verno,
+    schemaVersion: db.verno,
     guardian: childId
       ? { ...guardian, rules: { [childId]: guardian.rules[childId] } }
       : guardian,
     children,
+    mistakes,
+    battles,
   };
 }
 
@@ -266,13 +301,24 @@ export async function deleteAllLocalData(): Promise<void> {
   const db = getDB();
   await db.transaction(
     "rw",
-    [db.guardian, db.children, db.outbox, db.meta],
+    [
+      db.guardian,
+      db.children,
+      db.outbox,
+      db.meta,
+      db.mistakes,
+      db.battles,
+      db.regrades,
+    ],
     async () => {
       await Promise.all([
         db.guardian.clear(),
         db.children.clear(),
         db.outbox.clear(),
         db.meta.clear(),
+        db.mistakes.clear(),
+        db.battles.clear(),
+        db.regrades.clear(),
       ]);
     },
   );

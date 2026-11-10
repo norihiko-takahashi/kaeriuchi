@@ -43,11 +43,13 @@ export function errorResponse(code: ErrorCode, requestId: string) {
   );
 }
 
-export type AiRoute = "analyze" | "generate" | "grade";
+export type AiRoute = "analyze" | "classify" | "generate" | "grade";
 
 /** 1日の回数の上限（端末ごと・BR-U2-3）。U8 で保護者ごとに DB で数える形に変える */
 export const DAILY_LIMITS: Record<AiRoute, number> = {
   analyze: 30,
+  /** 手で入れた間違いの判定（U45-COST-1） */
+  classify: 30,
   generate: 60,
   grade: 200,
 };
@@ -55,6 +57,8 @@ export const DAILY_LIMITS: Record<AiRoute, number> = {
 /** 1回の AI の呼び出しの時間切れ（BR-U2-3） */
 export const TIMEOUT_MS: Record<AiRoute, number> = {
   analyze: 20_000,
+  classify: 10_000,
+  /** 生成から検証まで、全部で（U45-PERF-4） */
   generate: 30_000,
   grade: 10_000,
 };

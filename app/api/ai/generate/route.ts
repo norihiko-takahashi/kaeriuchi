@@ -1,14 +1,17 @@
 import { NextResponse } from "next/server";
 import { classifyError, errorResponse, guard } from "@/server/ai/guard";
-import { generatePrompt } from "@/server/ai/prompts";
+import { generatePrompt, solvePrompt } from "@/server/ai/prompts";
+import type { Usage } from "@/server/ai/provider";
 import { aiAllowed, getProvider } from "@/server/ai/registry";
 import { GenerateRequest } from "@/server/ai/schemas";
 import { logAiCall } from "@/server/ai/telemetry";
+import { runPipeline } from "@/server/problems/pipeline";
 
 /**
  * POST /api/ai/generate
  * JSON：GenerateRequest。結果は NDJSON（1行に1問）で返す。
- * 正答の検証（検算・検証役の AI）と安全のチェックは、U4 でこの間に入れる。
+ * 検証（検算・検証役の AI）と安全のチェックに通った問題だけを、通った順に送る（U4・BR-45-2）。
+ * 最後の行は { done, meta }。通った数が2問より少なければ、端末は「うまく つくれなかった」を出す。
  */
 export async function POST(request: Request) {
   const g = guard(request, "generate");
@@ -25,62 +28,73 @@ export async function POST(request: Request) {
   const provider = getProvider(config);
   const started = Date.now();
   const encoder = new TextEncoder();
+  const totals: Record<"generate" | "verify", Usage> = {
+    generate: { model: "", inputTokens: 0, outputTokens: 0, retries: 0 },
+    verify: { model: "", inputTokens: 0, outputTokens: 0, retries: 0 },
+  };
 
   const stream = new ReadableStream<Uint8Array>({
     async start(controller) {
-      let outputTokens = 0;
-      let inputTokens = 0;
-      let model = "";
-      let retries = 0;
+      const send = (line: unknown) =>
+        controller.enqueue(encoder.encode(`${JSON.stringify(line)}\n`));
+      let verified = 0;
+      let rejected = 0;
+      let outcome: "ok" | "timeout" | "invalid_output" | "error" = "ok";
       try {
-        for await (const { value, usage } of provider.generateCounterProblems(
+        for await (const line of runPipeline(
+          provider,
           body.data,
+          { requestId, signal },
           {
-            requestId,
-            signal,
+            onUsage: (role, u) => {
+              const t = totals[role];
+              t.model = u.model;
+              t.inputTokens += u.inputTokens;
+              t.outputTokens += u.outputTokens;
+              t.retries = Math.max(t.retries, u.retries);
+            },
           },
         )) {
-          inputTokens += usage.inputTokens;
-          outputTokens += usage.outputTokens;
-          model = usage.model;
-          retries = Math.max(retries, usage.retries);
-          controller.enqueue(
-            encoder.encode(`${JSON.stringify({ problem: value })}\n`),
-          );
+          if ("done" in line) {
+            verified = line.meta.verified;
+            rejected = line.meta.rejected;
+            if (line.meta.timedOut) outcome = "timeout";
+          }
+          send(line);
         }
-        controller.enqueue(
-          encoder.encode(
-            `${JSON.stringify({ done: true, meta: { requestId, provider: config.AI_PROVIDER, model, promptVersion: generatePrompt.id } })}\n`,
-          ),
-        );
-        logAiCall({
-          requestId,
-          route: "generate",
-          provider: config.AI_PROVIDER,
-          promptVersion: generatePrompt.id,
-          latencyMs: Date.now() - started,
-          outcome: "ok",
-          usage: { model, inputTokens, outputTokens, retries },
-        });
       } catch (e) {
         const code = classifyError(e);
-        controller.enqueue(
-          encoder.encode(`${JSON.stringify({ error: { code, requestId } })}\n`),
-        );
+        outcome =
+          code === "timeout"
+            ? "timeout"
+            : code === "invalid_output"
+              ? "invalid_output"
+              : "error";
+        send({ error: { code, requestId } });
+      } finally {
+        const latencyMs = Date.now() - started;
         logAiCall({
           requestId,
           route: "generate",
           provider: config.AI_PROVIDER,
           promptVersion: generatePrompt.id,
-          latencyMs: Date.now() - started,
-          outcome:
-            code === "timeout"
-              ? "timeout"
-              : code === "invalid_output"
-                ? "invalid_output"
-                : "error",
+          latencyMs,
+          outcome,
+          usage: totals.generate,
+          verified,
+          rejected,
         });
-      } finally {
+        if (totals.verify.model) {
+          logAiCall({
+            requestId,
+            route: "verify",
+            provider: config.AI_PROVIDER,
+            promptVersion: solvePrompt.id,
+            latencyMs,
+            outcome,
+            usage: totals.verify,
+          });
+        }
         controller.close();
       }
     },

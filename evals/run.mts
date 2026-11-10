@@ -17,6 +17,7 @@ import { getProvider } from "@/server/ai/registry";
 import type { MistakeAnalysis, Subject } from "@/server/ai/schemas";
 import { estimateCostJpy } from "@/server/ai/telemetry";
 import { parseConfig } from "@/server/config";
+import { MIN_PROBLEMS, runPipeline } from "@/server/problems/pipeline";
 import type { Grade } from "@/shared/constants";
 
 const { values } = parseArgs({
@@ -100,6 +101,11 @@ async function runAnalyze(): Promise<{
   return { rows, promptVersions: [analyzePrompt.id] };
 }
 
+/**
+ * 生成の評価：本番と同じ流れ（生成 → 安全 → 検証 → 作り直し）で動かし、
+ * 通った数、落とした理由、1問目までの時間、費用を測る（U45-Q-5、U45-COST-2）。
+ * 検証をすり抜けた誤りの率は、出た問題を人が確かめて数える（レポートの「人の確認」の欄）。
+ */
 async function runGenerate(): Promise<{
   rows: Row[];
   promptVersions: string[];
@@ -110,41 +116,49 @@ async function runGenerate(): Promise<{
   const rows: Row[] = [];
   for (const s of suite.samples) {
     const started = Date.now();
+    let firstMs = -1;
     let cost = 0;
-    const add = (u: Usage) => {
-      cost += estimateCostJpy(u) || 0;
-    };
+    const reasons: string[] = [];
     try {
-      const problems = [];
-      for await (const { value, usage } of provider.generateCounterProblems(
+      const problems: string[] = [];
+      let meta:
+        | { verified: number; rejected: number; regenerated: boolean }
+        | undefined;
+      for await (const line of runPipeline(
+        provider,
         {
           analysis: s.analysis,
           grade: s.grade,
-          count: s.count,
-          mode: "first",
+          mode: s.mode ?? "first",
           avoid: [],
         },
-        { requestId: `eval-${s.id}` },
+        { requestId: `eval-${s.id}`, signal: AbortSignal.timeout(30_000) },
+        {
+          onUsage: (_role, u: Usage) => {
+            cost += estimateCostJpy(u) || 0;
+          },
+          onReject: (r) => reasons.push(r),
+        },
       )) {
-        add(usage);
-        problems.push(value);
+        if ("problem" in line) {
+          if (firstMs < 0) firstMs = Date.now() - started;
+          problems.push(
+            `[${line.problem.verification.method}] ${line.problem.prompt} → ${line.problem.answer}`,
+          );
+        } else if ("done" in line) meta = line.meta;
       }
       const details: Record<string, boolean | string> = {
-        count: problems.length === s.count,
+        enough: (meta?.verified ?? 0) >= MIN_PROBLEMS,
+        verified: `${meta?.verified ?? 0}`,
+        rejected: reasons.join("/") || "0",
+        regenerated: meta?.regenerated ? "yes" : "no",
+        firstProblemMs: `${firstMs}`,
+        firstWithin10s: firstMs >= 0 && firstMs <= 10_000,
+        人の確認: problems.join(" ／ "),
       };
-      for (const [i, p] of problems.entries()) {
-        const { answer, explanation: _e, ...rest } = p;
-        const solved = await provider.solve(
-          { problem: rest, grade: s.grade },
-          { requestId: `eval-${s.id}-${i}` },
-        );
-        add(solved.usage);
-        details[`problem${i + 1}_verified`] =
-          norm(solved.value.answer) === norm(answer);
-      }
       rows.push({
         id: s.id,
-        ok: Object.values(details).every((v) => v === true),
+        ok: details.enough === true && details.firstWithin10s === true,
         details,
         latencyMs: Date.now() - started,
         costJpy: Math.round(cost * 100) / 100,

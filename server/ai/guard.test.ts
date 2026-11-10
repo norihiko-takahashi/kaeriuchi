@@ -45,7 +45,12 @@ describe("guard（BR-U2-3・BR-U2-4）", () => {
   });
 
   it("1日の上限を超えたら 429", () => {
-    const counter = new DailyCounter({ analyze: 1, generate: 1, grade: 1 });
+    const counter = new DailyCounter({
+      analyze: 1,
+      classify: 1,
+      generate: 1,
+      grade: 1,
+    });
     const deps = { config: parseConfig({}), counter };
     expect(guard(req("device-12345678"), "analyze", deps)).not.toBeInstanceOf(
       Response,
@@ -57,7 +62,12 @@ describe("guard（BR-U2-3・BR-U2-4）", () => {
 
 describe("DailyCounter", () => {
   it("端末ごと・API ごとに数え、日本時間の日付が変わると数え直す", () => {
-    const c = new DailyCounter({ analyze: 2, generate: 1, grade: 1 });
+    const c = new DailyCounter({
+      analyze: 2,
+      classify: 1,
+      generate: 1,
+      grade: 1,
+    });
     const day1 = new Date("2026-11-09T14:00:00Z"); // 日本時間 23:00
     expect(c.take("a", "analyze", day1)).toBe(true);
     expect(c.take("a", "analyze", day1)).toBe(true);
