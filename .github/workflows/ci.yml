@@ -21,9 +21,9 @@ jobs:
     name: lint・型チェック・単体テスト
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
         with:
           node-version-file: .nvmrc
           cache: pnpm
@@ -45,9 +45,9 @@ jobs:
     name: ビルド・大きさの予算・E2E・アクセシビリティ
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
         with:
           node-version-file: .nvmrc
           cache: pnpm
@@ -66,7 +66,7 @@ jobs:
           CI: "true"
       - name: Lighthouse（モバイル）
         run: pnpm dlx @lhci/cli@0.16.0 autorun
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: failure()
         with:
           name: playwright-results
@@ -77,7 +77,7 @@ jobs:
     name: Docker のイメージ
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: ビルド（push はしない）
         run: docker build --build-arg GIT_SHA=${{ github.sha }} -t kaeriuchi:ci .
       - name: 起動してヘルスチェック
@@ -98,11 +98,11 @@ jobs:
       contents: read
       pull-requests: read
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
-      - uses: pnpm/action-setup@v4
-      - uses: actions/setup-node@v4
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
         with:
           node-version-file: .nvmrc
           cache: pnpm
@@ -110,6 +110,6 @@ jobs:
       - name: 依存ライブラリの脆弱性（high 以上で失敗）
         run: pnpm audit --audit-level high --prod
       - name: 秘密情報のスキャン（gitleaks）
-        uses: gitleaks/gitleaks-action@v2
+        uses: gitleaks/gitleaks-action@v3
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
