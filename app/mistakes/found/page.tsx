@@ -66,7 +66,11 @@ function Found({ id }: { id: string }) {
       {choosing ? (
         <fieldset className="card flex flex-col gap-2 p-4">
           <legend className="font-bold">どの まちがいかな？</legend>
-          {mistakeTypesFor(mistake.subject).map((o) => (
+          {mistakeTypesFor(
+            mistake.subject,
+            mistake.grade,
+            mistake.mistakeTypeId,
+          ).map((o) => (
             <Button
               key={o.id}
               variant={o.id === mistake.mistakeTypeId ? "primary" : "secondary"}

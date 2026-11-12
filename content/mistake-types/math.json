@@ -1,0 +1,532 @@
+{
+  "note": "間違いのタイプの一覧（content-data-plan.md の A）。source が ai-draft のものは、AI（Claude）が学習指導要領の内容をもとに書いた下書き。全国学力・学習状況調査の報告書とはまだ照らし合わせていない。見直した人と日付を reviewedBy・reviewedOn に入れる（2026-11-12 に決定：まずユーザー、β版の前に元教員など）。monster と color は仮のミスモン（OQ6）。",
+  "types": [
+    {
+      "id": "math.carry.missing",
+      "subject": "math",
+      "unit": "たし算の筆算",
+      "grades": ["e1", "e2", "e3"],
+      "label": "たし算の繰り上がりを忘れる",
+      "example": {
+        "question": "27 + 15",
+        "wrong": "32",
+        "correct": "42"
+      },
+      "monster": "クリアガリン",
+      "color": "#e07a5f",
+      "source": "ai-draft",
+      "reviewedBy": null,
+      "reviewedOn": null
+    },
+    {
+      "id": "math.borrow.missing",
+      "subject": "math",
+      "unit": "ひき算の筆算",
+      "grades": ["e2", "e3"],
+      "label": "ひき算で、上の位から借りずに、大きい数から小さい数をひく",
+      "example": {
+        "question": "52 − 17",
+        "wrong": "45",
+        "correct": "35"
+      },
+      "monster": "カリワスレ",
+      "color": "#f2a65a",
+      "source": "ai-draft",
+      "reviewedBy": null,
+      "reviewedOn": null
+    },
+    {
+      "id": "math.place-value.align",
+      "subject": "math",
+      "unit": "たし算・ひき算の筆算",
+      "grades": ["e3", "e4"],
+      "label": "筆算で位をそろえずに計算する",
+      "example": {
+        "question": "125 + 38",
+        "wrong": "505",
+        "correct": "163"
+      },
+      "monster": "クライズレ",
+      "color": "#d1495b",
+      "source": "ai-draft",
+      "reviewedBy": null,
+      "reviewedOn": null
+    },
+    {
+      "id": "math.multiplication.table",
+      "subject": "math",
+      "unit": "かけ算九九",
+      "grades": ["e2", "e3"],
+      "label": "かけ算九九を言い間違える",
+      "example": {
+        "question": "7 × 8",
+        "wrong": "54",
+        "correct": "56"
+      },
+      "monster": "クククルリ",
+      "color": "#f2cc8f",
+      "source": "ai-draft",
+      "reviewedBy": null,
+      "reviewedOn": null
+    },
+    {
+      "id": "math.multiplication.carry",
+      "subject": "math",
+      "unit": "かけ算の筆算",
+      "grades": ["e3", "e4"],
+      "label": "かけ算の筆算で、繰り上がりを足し忘れる",
+      "example": {
+        "question": "36 × 4",
+        "wrong": "124",
+        "correct": "144"
+      },
+      "monster": "カケノボラン",
+      "color": "#e76f51",
+      "source": "ai-draft",
+      "reviewedBy": null,
+      "reviewedOn": null
+    },
+    {
+      "id": "math.division.remainder",
+      "subject": "math",
+      "unit": "あまりのあるわり算",
+      "grades": ["e3"],
+      "label": "あまりが、わる数より大きいままになっている",
+      "example": {
+        "question": "23 ÷ 4",
+        "wrong": "4 あまり 7",
+        "correct": "5 あまり 3"
+      },
+      "monster": "アマリスギ",
+      "color": "#c97b63",
+      "source": "ai-draft",
+      "reviewedBy": null,
+      "reviewedOn": null
+    },
+    {
+      "id": "math.division.zero-quotient",
+      "subject": "math",
+      "unit": "わり算の筆算",
+      "grades": ["e4"],
+      "label": "わり算の筆算で、商の 0 を書き忘れる",
+      "example": {
+        "question": "612 ÷ 6",
+        "wrong": "12",
+        "correct": "102"
+      },
+      "monster": "ゼロヌケール",
+      "color": "#e07a5f",
+      "source": "ai-draft",
+      "reviewedBy": null,
+      "reviewedOn": null
+    },
+    {
+      "id": "math.calc.order",
+      "subject": "math",
+      "unit": "計算のきまり",
+      "grades": ["e4", "e5"],
+      "label": "かけ算・わり算を先にする順番を守らない",
+      "example": {
+        "question": "2 + 3 × 4",
+        "wrong": "20",
+        "correct": "14"
+      },
+      "monster": "ジュンバンコ",
+      "color": "#f2a65a",
+      "source": "ai-draft",
+      "reviewedBy": null,
+      "reviewedOn": null
+    },
+    {
+      "id": "math.decimal.align",
+      "subject": "math",
+      "unit": "小数のたし算・ひき算",
+      "grades": ["e4", "e5"],
+      "label": "小数のたし算・ひき算で、小数点をそろえない",
+      "example": {
+        "question": "0.3 + 0.25",
+        "wrong": "0.28",
+        "correct": "0.55"
+      },
+      "monster": "テンズラシ",
+      "color": "#d1495b",
+      "source": "ai-draft",
+      "reviewedBy": null,
+      "reviewedOn": null
+    },
+    {
+      "id": "math.decimal.mul-point",
+      "subject": "math",
+      "unit": "小数のかけ算",
+      "grades": ["e5"],
+      "label": "小数のかけ算で、積の小数点の位置を間違える",
+      "example": {
+        "question": "0.3 × 0.2",
+        "wrong": "0.6",
+        "correct": "0.06"
+      },
+      "monster": "テンウツリ",
+      "color": "#f2cc8f",
+      "source": "ai-draft",
+      "reviewedBy": null,
+      "reviewedOn": null
+    },
+    {
+      "id": "math.fraction.add-denominators",
+      "subject": "math",
+      "unit": "分数のたし算",
+      "grades": ["e5"],
+      "label": "分数のたし算で、分母どうしも足してしまう",
+      "example": {
+        "question": "1/2 + 1/3",
+        "wrong": "2/5",
+        "correct": "5/6"
+      },
+      "monster": "ブンボタッシー",
+      "color": "#e76f51",
+      "source": "ai-draft",
+      "reviewedBy": null,
+      "reviewedOn": null
+    },
+    {
+      "id": "math.fraction.reduce-missing",
+      "subject": "math",
+      "unit": "分数のたし算・ひき算",
+      "grades": ["e5", "e6"],
+      "label": "約分できるのに、約分しないで答える",
+      "example": {
+        "question": "1/6 + 1/3（約分して答える）",
+        "wrong": "3/6",
+        "correct": "1/2"
+      },
+      "monster": "ヤクブンワスレ",
+      "color": "#c97b63",
+      "source": "ai-draft",
+      "reviewedBy": null,
+      "reviewedOn": null
+    },
+    {
+      "id": "math.fraction.mixed-convert",
+      "subject": "math",
+      "unit": "帯分数と仮分数",
+      "grades": ["e4", "e5"],
+      "label": "帯分数を仮分数に直すとき、整数の部分を分母とかけない",
+      "example": {
+        "question": "2と1/3 を仮分数に",
+        "wrong": "3/3",
+        "correct": "7/3"
+      },
+      "monster": "タイブンバケ",
+      "color": "#e07a5f",
+      "source": "ai-draft",
+      "reviewedBy": null,
+      "reviewedOn": null
+    },
+    {
+      "id": "math.fraction.div-not-invert",
+      "subject": "math",
+      "unit": "分数のわり算",
+      "grades": ["e6"],
+      "label": "分数のわり算で、わる数を逆数にしないで計算する",
+      "example": {
+        "question": "2/3 ÷ 1/2",
+        "wrong": "1/3",
+        "correct": "4/3"
+      },
+      "monster": "ギャクスウスルー",
+      "color": "#f2a65a",
+      "source": "ai-draft",
+      "reviewedBy": null,
+      "reviewedOn": null
+    },
+    {
+      "id": "math.unit.conversion",
+      "subject": "math",
+      "unit": "長さ・かさ・重さの単位",
+      "grades": ["e2", "e3", "e4"],
+      "label": "単位を直すときに、けたを間違える",
+      "example": {
+        "question": "1.5 m は何 cm？",
+        "wrong": "15",
+        "correct": "150"
+      },
+      "monster": "タンイカエラン",
+      "color": "#d1495b",
+      "source": "ai-draft",
+      "reviewedBy": null,
+      "reviewedOn": null
+    },
+    {
+      "id": "math.time.sixty",
+      "subject": "math",
+      "unit": "時刻と時間",
+      "grades": ["e2", "e3"],
+      "label": "時間の計算で、60分で1時間になることを忘れる",
+      "example": {
+        "question": "1時間40分 + 30分",
+        "wrong": "1時間70分",
+        "correct": "2時間10分"
+      },
+      "monster": "ロクジュッポン",
+      "color": "#f2cc8f",
+      "source": "ai-draft",
+      "reviewedBy": null,
+      "reviewedOn": null
+    },
+    {
+      "id": "math.area.perimeter-confusion",
+      "subject": "math",
+      "unit": "面積",
+      "grades": ["e4"],
+      "label": "まわりの長さと面積を取り違える",
+      "example": {
+        "question": "たて3cm、よこ5cmの長方形の面積",
+        "wrong": "16",
+        "correct": "15"
+      },
+      "monster": "マワリメンセキ",
+      "color": "#e76f51",
+      "source": "ai-draft",
+      "reviewedBy": null,
+      "reviewedOn": null
+    },
+    {
+      "id": "math.area.halve",
+      "subject": "math",
+      "unit": "三角形・平行四辺形の面積",
+      "grades": ["e5"],
+      "label": "三角形の面積で、2 でわるのを忘れる",
+      "example": {
+        "question": "底辺6cm、高さ4cmの三角形の面積",
+        "wrong": "24",
+        "correct": "12"
+      },
+      "monster": "ニブンノワスレ",
+      "color": "#c97b63",
+      "source": "ai-draft",
+      "reviewedBy": null,
+      "reviewedOn": null
+    },
+    {
+      "id": "math.angle.protractor",
+      "subject": "math",
+      "unit": "角の大きさ",
+      "grades": ["e4"],
+      "label": "分度器の目もりを、反対側から読む",
+      "example": {
+        "question": "分度器で測った角（60°）",
+        "wrong": "120",
+        "correct": "60"
+      },
+      "monster": "ブンドギャク",
+      "color": "#e07a5f",
+      "source": "ai-draft",
+      "reviewedBy": null,
+      "reviewedOn": null
+    },
+    {
+      "id": "math.ratio.base",
+      "subject": "math",
+      "unit": "割合",
+      "grades": ["e5"],
+      "label": "割合で、もとにする量とくらべる量を逆にする",
+      "example": {
+        "question": "20人のうち5人の割合",
+        "wrong": "4",
+        "correct": "0.25"
+      },
+      "monster": "モトクラベ",
+      "color": "#f2a65a",
+      "source": "ai-draft",
+      "reviewedBy": null,
+      "reviewedOn": null
+    },
+    {
+      "id": "math.speed.relation",
+      "subject": "math",
+      "unit": "速さ",
+      "grades": ["e6"],
+      "label": "速さ・時間・道のりの関係を取り違える",
+      "example": {
+        "question": "120kmを2時間で進む速さ（時速）",
+        "wrong": "240",
+        "correct": "60"
+      },
+      "monster": "ハヤサマゼ",
+      "color": "#d1495b",
+      "source": "ai-draft",
+      "reviewedBy": null,
+      "reviewedOn": null
+    },
+    {
+      "id": "math.word-problem.operation",
+      "subject": "math",
+      "unit": "文章題",
+      "grades": ["e1", "e2", "e3", "e4"],
+      "label": "文章題で、たし算かひき算かなどを取り違える",
+      "example": {
+        "question": "あめが8こ。3こ食べると、のこりは？",
+        "wrong": "11",
+        "correct": "5"
+      },
+      "monster": "シキエラビン",
+      "color": "#f2cc8f",
+      "source": "ai-draft",
+      "reviewedBy": null,
+      "reviewedOn": null
+    },
+    {
+      "id": "math.sign.error",
+      "subject": "math",
+      "unit": "正の数・負の数",
+      "grades": ["j1"],
+      "label": "符号（＋・−）を間違える",
+      "example": {
+        "question": "−3 − 5",
+        "wrong": "−2",
+        "correct": "−8"
+      },
+      "monster": "フゴウマチガエル",
+      "color": "#e76f51",
+      "source": "ai-draft",
+      "reviewedBy": null,
+      "reviewedOn": null
+    },
+    {
+      "id": "math.negative.multiply",
+      "subject": "math",
+      "unit": "正の数・負の数のかけ算",
+      "grades": ["j1"],
+      "label": "負の数どうしのかけ算で、答えの符号を間違える",
+      "example": {
+        "question": "(−3) × (−4)",
+        "wrong": "−12",
+        "correct": "12"
+      },
+      "monster": "マイナスカケル",
+      "color": "#c97b63",
+      "source": "ai-draft",
+      "reviewedBy": null,
+      "reviewedOn": null
+    },
+    {
+      "id": "math.power.square",
+      "subject": "math",
+      "unit": "累乗",
+      "grades": ["j1"],
+      "label": "累乗を、かけ算と取り違える",
+      "example": {
+        "question": "3²",
+        "wrong": "6",
+        "correct": "9"
+      },
+      "monster": "ルイジョウクン",
+      "color": "#e07a5f",
+      "source": "ai-draft",
+      "reviewedBy": null,
+      "reviewedOn": null
+    },
+    {
+      "id": "math.algebra.like-terms",
+      "subject": "math",
+      "unit": "文字式",
+      "grades": ["j1"],
+      "label": "同類項でないものを、まとめてしまう",
+      "example": {
+        "question": "2a + 3b",
+        "wrong": "5ab",
+        "correct": "2a + 3b"
+      },
+      "monster": "マトメスギ",
+      "color": "#f2a65a",
+      "source": "ai-draft",
+      "reviewedBy": null,
+      "reviewedOn": null
+    },
+    {
+      "id": "math.equation.transpose",
+      "subject": "math",
+      "unit": "一次方程式",
+      "grades": ["j1"],
+      "label": "移項するときに、符号を変え忘れる",
+      "example": {
+        "question": "x + 5 = 12",
+        "wrong": "x = 17",
+        "correct": "x = 7"
+      },
+      "monster": "イコウワスレ",
+      "color": "#d1495b",
+      "source": "ai-draft",
+      "reviewedBy": null,
+      "reviewedOn": null
+    },
+    {
+      "id": "math.distribute.partial",
+      "subject": "math",
+      "unit": "式の計算",
+      "grades": ["j1", "j2"],
+      "label": "かっこを外すとき、後ろの項にかけ忘れる",
+      "example": {
+        "question": "2(x + 3)",
+        "wrong": "2x + 3",
+        "correct": "2x + 6"
+      },
+      "monster": "カッコハズレ",
+      "color": "#f2cc8f",
+      "source": "ai-draft",
+      "reviewedBy": null,
+      "reviewedOn": null
+    },
+    {
+      "id": "math.linear-function.slope",
+      "subject": "math",
+      "unit": "一次関数",
+      "grades": ["j2"],
+      "label": "傾きと切片を取り違える",
+      "example": {
+        "question": "y = 2x + 3 の傾き",
+        "wrong": "3",
+        "correct": "2"
+      },
+      "monster": "カタムキトリ",
+      "color": "#e76f51",
+      "source": "ai-draft",
+      "reviewedBy": null,
+      "reviewedOn": null
+    },
+    {
+      "id": "math.factorization.sign",
+      "subject": "math",
+      "unit": "因数分解",
+      "grades": ["j3"],
+      "label": "因数分解で、符号を間違える",
+      "example": {
+        "question": "x² − 5x + 6",
+        "wrong": "(x + 2)(x + 3)",
+        "correct": "(x − 2)(x − 3)"
+      },
+      "monster": "インスウバラシ",
+      "color": "#c97b63",
+      "source": "ai-draft",
+      "reviewedBy": null,
+      "reviewedOn": null
+    },
+    {
+      "id": "math.sqrt.add",
+      "subject": "math",
+      "unit": "平方根",
+      "grades": ["j3"],
+      "label": "平方根のたし算で、中の数どうしを足してしまう",
+      "example": {
+        "question": "√2 + √3",
+        "wrong": "√5",
+        "correct": "√2 + √3"
+      },
+      "monster": "ルートタシタシ",
+      "color": "#e07a5f",
+      "source": "ai-draft",
+      "reviewedBy": null,
+      "reviewedOn": null
+    }
+  ]
+}

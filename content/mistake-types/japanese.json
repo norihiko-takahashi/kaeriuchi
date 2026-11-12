@@ -1,0 +1,243 @@
+{
+  "note": "間違いのタイプの一覧（content-data-plan.md の A）。source が ai-draft のものは、AI（Claude）が学習指導要領の内容をもとに書いた下書き。全国学力・学習状況調査の報告書とはまだ照らし合わせていない。見直した人と日付を reviewedBy・reviewedOn に入れる（2026-11-12 に決定：まずユーザー、β版の前に元教員など）。monster と color は仮のミスモン（OQ6）。",
+  "types": [
+    {
+      "id": "japanese.kanji.reading",
+      "subject": "japanese",
+      "unit": "漢字の読み",
+      "grades": ["e1", "e2", "e3", "e4", "e5", "e6", "j1", "j2", "j3"],
+      "label": "漢字の読みを間違える",
+      "example": {
+        "question": "「植物」の読み",
+        "wrong": "しょくぶち",
+        "correct": "しょくぶつ"
+      },
+      "monster": "ヨミチガイ",
+      "color": "#c27ba0",
+      "source": "ai-draft",
+      "reviewedBy": null,
+      "reviewedOn": null
+    },
+    {
+      "id": "japanese.kanji.okurigana",
+      "subject": "japanese",
+      "unit": "送りがな",
+      "grades": ["e2", "e3", "e4", "e5", "e6", "j1"],
+      "label": "送りがなを間違える",
+      "example": {
+        "question": "「あたらしい」を漢字で",
+        "wrong": "新い",
+        "correct": "新しい"
+      },
+      "monster": "オクリガナクシ",
+      "color": "#a86cc1",
+      "source": "ai-draft",
+      "reviewedBy": null,
+      "reviewedOn": null
+    },
+    {
+      "id": "japanese.kanji.shape",
+      "subject": "japanese",
+      "unit": "漢字の書き",
+      "grades": ["e1", "e2", "e3", "e4", "e5", "e6"],
+      "label": "形の似た別の漢字を書く（点・画が足りない、多い）",
+      "example": {
+        "question": "「やすむ」を漢字で",
+        "wrong": "体む",
+        "correct": "休む"
+      },
+      "monster": "テンカクフタリ",
+      "color": "#e69138",
+      "source": "ai-draft",
+      "reviewedBy": null,
+      "reviewedOn": null
+    },
+    {
+      "id": "japanese.kanji.homophone",
+      "subject": "japanese",
+      "unit": "同じ読みの漢字",
+      "grades": ["e3", "e4", "e5", "e6", "j1", "j2", "j3"],
+      "label": "同じ読みの、別の漢字と取り違える",
+      "example": {
+        "question": "時間を「はかる」",
+        "wrong": "測る",
+        "correct": "計る"
+      },
+      "monster": "オナジヨミン",
+      "color": "#b5838d",
+      "source": "ai-draft",
+      "reviewedBy": null,
+      "reviewedOn": null
+    },
+    {
+      "id": "japanese.kana.small",
+      "subject": "japanese",
+      "unit": "かなづかい",
+      "grades": ["e1"],
+      "label": "小さい「っ」「ゃ」「ゅ」「ょ」を落とす",
+      "example": {
+        "question": "「きって」をひらがなで",
+        "wrong": "きて",
+        "correct": "きって"
+      },
+      "monster": "チイサイノヌキ",
+      "color": "#d16ba5",
+      "source": "ai-draft",
+      "reviewedBy": null,
+      "reviewedOn": null
+    },
+    {
+      "id": "japanese.kana.long-vowel",
+      "subject": "japanese",
+      "unit": "かなづかい",
+      "grades": ["e1", "e2"],
+      "label": "のばす音（「おお」と「おう」など）の書き方を間違える",
+      "example": {
+        "question": "「こおり」をひらがなで",
+        "wrong": "こうり",
+        "correct": "こおり"
+      },
+      "monster": "ノバシボー",
+      "color": "#c27ba0",
+      "source": "ai-draft",
+      "reviewedBy": null,
+      "reviewedOn": null
+    },
+    {
+      "id": "japanese.particle.ha-wa",
+      "subject": "japanese",
+      "unit": "かなづかい",
+      "grades": ["e1", "e2"],
+      "label": "助詞の「は・へ・を」を「わ・え・お」と書く",
+      "example": {
+        "question": "「わたし（ ）がっこう（ ）いく」",
+        "wrong": "わたしわ がっこうえ",
+        "correct": "わたしは がっこうへ"
+      },
+      "monster": "ハワヘエン",
+      "color": "#a86cc1",
+      "source": "ai-draft",
+      "reviewedBy": null,
+      "reviewedOn": null
+    },
+    {
+      "id": "japanese.katakana.confusion",
+      "subject": "japanese",
+      "unit": "カタカナ",
+      "grades": ["e1", "e2"],
+      "label": "形の似たカタカナ（シとツ、ソとン）を取り違える",
+      "example": {
+        "question": "「つみき」→「ツミキ」",
+        "wrong": "シミキ",
+        "correct": "ツミキ"
+      },
+      "monster": "シツソンモドキ",
+      "color": "#e69138",
+      "source": "ai-draft",
+      "reviewedBy": null,
+      "reviewedOn": null
+    },
+    {
+      "id": "japanese.grammar.subject-predicate",
+      "subject": "japanese",
+      "unit": "主語と述語",
+      "grades": ["e2", "e3", "e4", "e5", "e6"],
+      "label": "主語と述語が合わない文を書く",
+      "example": {
+        "question": "「ぼくの夢は、パイロットに（ ）」",
+        "wrong": "なりたい",
+        "correct": "なることだ"
+      },
+      "monster": "シュゴネジレ",
+      "color": "#b5838d",
+      "source": "ai-draft",
+      "reviewedBy": null,
+      "reviewedOn": null
+    },
+    {
+      "id": "japanese.reading.demonstrative",
+      "subject": "japanese",
+      "unit": "文章の読み取り",
+      "grades": ["e3", "e4", "e5", "e6", "j1", "j2", "j3"],
+      "label": "「これ」「それ」などがさす内容を取り違える",
+      "example": {
+        "question": "「それ」がさすもの",
+        "wrong": "すぐ前の言葉だけ",
+        "correct": "前の文の内容全体"
+      },
+      "monster": "コレソレドレ",
+      "color": "#d16ba5",
+      "source": "ai-draft",
+      "reviewedBy": null,
+      "reviewedOn": null
+    },
+    {
+      "id": "japanese.reading.main-idea",
+      "subject": "japanese",
+      "unit": "文章の読み取り",
+      "grades": ["e4", "e5", "e6", "j1", "j2", "j3"],
+      "label": "筆者の考えと、例（具体例）を取り違える",
+      "example": {
+        "question": "筆者がいちばん言いたいこと",
+        "wrong": "例として出した話",
+        "correct": "まとめの段落の考え"
+      },
+      "monster": "ヨウテンズレ",
+      "color": "#c27ba0",
+      "source": "ai-draft",
+      "reviewedBy": null,
+      "reviewedOn": null
+    },
+    {
+      "id": "japanese.idiom.meaning",
+      "subject": "japanese",
+      "unit": "ことわざ・慣用句",
+      "grades": ["e4", "e5", "e6", "j1"],
+      "label": "ことわざや慣用句を、文字どおりの意味でとる",
+      "example": {
+        "question": "「猫の手も借りたい」の意味",
+        "wrong": "猫がかわいい",
+        "correct": "とても忙しい"
+      },
+      "monster": "コトワザマチ",
+      "color": "#a86cc1",
+      "source": "ai-draft",
+      "reviewedBy": null,
+      "reviewedOn": null
+    },
+    {
+      "id": "japanese.keigo.honorific-humble",
+      "subject": "japanese",
+      "unit": "敬語",
+      "grades": ["e5", "e6", "j2"],
+      "label": "尊敬語と謙譲語を取り違える",
+      "example": {
+        "question": "先生が「言った」を敬語に",
+        "wrong": "申された",
+        "correct": "おっしゃった"
+      },
+      "monster": "ケイゴコンガラ",
+      "color": "#e69138",
+      "source": "ai-draft",
+      "reviewedBy": null,
+      "reviewedOn": null
+    },
+    {
+      "id": "japanese.kobun.kana",
+      "subject": "japanese",
+      "unit": "古文",
+      "grades": ["j1", "j2", "j3"],
+      "label": "歴史的仮名遣いを、現代仮名遣いに直し間違える",
+      "example": {
+        "question": "「けふ」を現代仮名遣いに",
+        "wrong": "けう",
+        "correct": "きょう"
+      },
+      "monster": "コブンヨミン",
+      "color": "#b5838d",
+      "source": "ai-draft",
+      "reviewedBy": null,
+      "reviewedOn": null
+    }
+  ]
+}

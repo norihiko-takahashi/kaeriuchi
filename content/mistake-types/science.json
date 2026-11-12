@@ -1,0 +1,175 @@
+{
+  "note": "間違いのタイプの一覧（content-data-plan.md の A）。source が ai-draft のものは、AI（Claude）が学習指導要領の内容をもとに書いた下書き。全国学力・学習状況調査の報告書とはまだ照らし合わせていない。見直した人と日付を reviewedBy・reviewedOn に入れる（2026-11-12 に決定：まずユーザー、β版の前に元教員など）。monster と color は仮のミスモン（OQ6）。",
+  "types": [
+    {
+      "id": "science.term.confusion",
+      "subject": "science",
+      "unit": "用語",
+      "grades": ["e3", "e4", "e5", "e6", "j1", "j2", "j3"],
+      "label": "用語を取り違える",
+      "example": {
+        "question": "植物が日光を受けてでんぷんをつくるはたらき",
+        "wrong": "呼吸",
+        "correct": "光合成"
+      },
+      "monster": "トリチガエモン",
+      "color": "#6aa84f",
+      "source": "ai-draft",
+      "reviewedBy": null,
+      "reviewedOn": null
+    },
+    {
+      "id": "science.plant.parts",
+      "subject": "science",
+      "unit": "植物のつくり",
+      "grades": ["e3", "e4", "e5"],
+      "label": "植物のつくり（根・茎・葉・花）の名前やはたらきを取り違える",
+      "example": {
+        "question": "水を吸い上げるところ",
+        "wrong": "葉",
+        "correct": "根"
+      },
+      "monster": "ネクキハナ",
+      "color": "#2d6a4f",
+      "source": "ai-draft",
+      "reviewedBy": null,
+      "reviewedOn": null
+    },
+    {
+      "id": "science.circuit.series-parallel",
+      "subject": "science",
+      "unit": "電気のはたらき",
+      "grades": ["e4", "e6"],
+      "label": "直列つなぎと並列つなぎを取り違える",
+      "example": {
+        "question": "豆電球が明るくなるかん電池のつなぎ方",
+        "wrong": "並列つなぎ",
+        "correct": "直列つなぎ"
+      },
+      "monster": "チョクヘイコン",
+      "color": "#52b788",
+      "source": "ai-draft",
+      "reviewedBy": null,
+      "reviewedOn": null
+    },
+    {
+      "id": "science.water.state",
+      "subject": "science",
+      "unit": "水のすがた",
+      "grades": ["e4"],
+      "label": "水がすがたを変える温度を取り違える",
+      "example": {
+        "question": "水がふっとうする温度",
+        "wrong": "0℃",
+        "correct": "100℃"
+      },
+      "monster": "ユゲコオリ",
+      "color": "#81b29a",
+      "source": "ai-draft",
+      "reviewedBy": null,
+      "reviewedOn": null
+    },
+    {
+      "id": "science.moon.phase",
+      "subject": "science",
+      "unit": "月と太陽",
+      "grades": ["e4", "e6"],
+      "label": "月の形と、見える時刻・方位の関係を取り違える",
+      "example": {
+        "question": "夕方、南の空に見える月",
+        "wrong": "満月",
+        "correct": "半月（上弦の月）"
+      },
+      "monster": "ツキミチカケ",
+      "color": "#40916c",
+      "source": "ai-draft",
+      "reviewedBy": null,
+      "reviewedOn": null
+    },
+    {
+      "id": "science.experiment.variable",
+      "subject": "science",
+      "unit": "実験のしかた",
+      "grades": ["e5", "e6", "j1"],
+      "label": "実験で、変える条件とそろえる条件を取り違える",
+      "example": {
+        "question": "日光の影響を調べるとき、変える条件",
+        "wrong": "水の量",
+        "correct": "日光に当てるかどうか"
+      },
+      "monster": "ジョウケンゴチャ",
+      "color": "#6aa84f",
+      "source": "ai-draft",
+      "reviewedBy": null,
+      "reviewedOn": null
+    },
+    {
+      "id": "science.graph.reading",
+      "subject": "science",
+      "unit": "グラフ・表の読み取り",
+      "grades": ["e3", "e4", "e5", "e6", "j1", "j2", "j3"],
+      "label": "グラフの目もりや単位を読み違える",
+      "example": {
+        "question": "1目もり2℃のグラフで、5目もり",
+        "wrong": "5℃",
+        "correct": "10℃"
+      },
+      "monster": "メモリヨミン",
+      "color": "#2d6a4f",
+      "source": "ai-draft",
+      "reviewedBy": null,
+      "reviewedOn": null
+    },
+    {
+      "id": "science.unit.density",
+      "subject": "science",
+      "unit": "密度",
+      "grades": ["j1"],
+      "label": "密度の求め方（質量 ÷ 体積）を逆にする",
+      "example": {
+        "question": "質量20g、体積10cm³の物体の密度",
+        "wrong": "0.5",
+        "correct": "2"
+      },
+      "monster": "ミツドサカサ",
+      "color": "#52b788",
+      "source": "ai-draft",
+      "reviewedBy": null,
+      "reviewedOn": null
+    },
+    {
+      "id": "science.force.direction",
+      "subject": "science",
+      "unit": "力のはたらき",
+      "grades": ["j1", "j3"],
+      "label": "力の向き（重力・摩擦力など）を取り違える",
+      "example": {
+        "question": "机の上で押した本にはたらく摩擦力の向き",
+        "wrong": "押した向き",
+        "correct": "押した向きと反対"
+      },
+      "monster": "チカラムキマチ",
+      "color": "#81b29a",
+      "source": "ai-draft",
+      "reviewedBy": null,
+      "reviewedOn": null
+    },
+    {
+      "id": "science.electricity.ohm-law",
+      "subject": "science",
+      "unit": "電流と電圧",
+      "grades": ["j2"],
+      "label": "電流・電圧・抵抗の関係（オームの法則）を取り違える",
+      "example": {
+        "question": "6Vの電源に3Ωの抵抗。電流は",
+        "wrong": "18A",
+        "correct": "2A"
+      },
+      "monster": "オームノナゾ",
+      "color": "#40916c",
+      "source": "ai-draft",
+      "reviewedBy": null,
+      "reviewedOn": null
+    }
+  ]
+}
