@@ -6,7 +6,7 @@ import {
   promoteGrade,
   schoolYearOf,
 } from "@/domain/profile/grade";
-import type { Battle, Mistake } from "@/shared/battle";
+import type { Battle, Mistake, Sheet } from "@/shared/battle";
 import type {
   AvatarConfig,
   ChildProfile,
@@ -203,7 +203,7 @@ export async function deleteChild(id: string): Promise<void> {
   const { [id]: _removed, ...rules } = guardian.rules;
   await db.transaction(
     "rw",
-    [db.children, db.mistakes, db.battles, db.outbox],
+    [db.children, db.mistakes, db.battles, db.sheets, db.outbox],
     async () => {
       // 端末の中からはすぐに消す（BR-4.3）。クラウドの削除は U8 で outbox から行う
       await db.children.delete(id);
@@ -215,14 +215,20 @@ export async function deleteChild(id: string): Promise<void> {
         .where("childId")
         .equals(id)
         .primaryKeys();
+      const sheetIds = await db.sheets
+        .where("childId")
+        .equals(id)
+        .primaryKeys();
       await db.mistakes.bulkDelete(mistakeIds);
       await db.battles.bulkDelete(battleIds);
+      await db.sheets.bulkDelete(sheetIds);
       // まだ送っていない、この子のミスモンとバトルの変更は、送らない
       await db.outbox
         .filter(
           (i) =>
             (i.entity === "mistake" && mistakeIds.includes(i.id)) ||
-            (i.entity === "battle" && battleIds.includes(i.id)),
+            (i.entity === "battle" && battleIds.includes(i.id)) ||
+            (i.entity === "sheet" && sheetIds.includes(i.id)),
         )
         .delete();
       await db.outbox.add(outboxItem("child", id, "delete"));
@@ -266,6 +272,7 @@ export interface ExportData {
   schemaVersion: number;
   guardian: Omit<Guardian, "pinHash">;
   children: Omit<ChildProfile, "pinHash">[];
+  sheets: Sheet[];
   mistakes: Mistake[];
   battles: Battle[];
 }
@@ -284,6 +291,7 @@ export async function exportData(childId?: string): Promise<ExportData> {
   const battles = (await db.battles.toArray()).filter((b) =>
     ids.has(b.childId),
   );
+  const sheets = (await db.sheets.toArray()).filter((x) => ids.has(x.childId));
   return {
     exportedAt: nowIso(),
     schemaVersion: db.verno,
@@ -291,6 +299,7 @@ export async function exportData(childId?: string): Promise<ExportData> {
       ? { ...guardian, rules: { [childId]: guardian.rules[childId] } }
       : guardian,
     children,
+    sheets,
     mistakes,
     battles,
   };
@@ -309,6 +318,7 @@ export async function deleteAllLocalData(): Promise<void> {
       db.mistakes,
       db.battles,
       db.regrades,
+      db.sheets,
     ],
     async () => {
       await Promise.all([
@@ -319,6 +329,7 @@ export async function deleteAllLocalData(): Promise<void> {
         db.mistakes.clear(),
         db.battles.clear(),
         db.regrades.clear(),
+        db.sheets.clear(),
       ]);
     },
   );

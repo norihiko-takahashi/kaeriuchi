@@ -4,16 +4,37 @@
  * Zod を画面のプログラムに含めないよう、型だけをここに置く。
  */
 import type { BattleState } from "@/domain/battle/state";
+import type { BattleMode } from "@/domain/game/types";
 import type { Grade } from "./constants";
 import type { Subject, VerifiedProblem } from "./problem";
 
-export type MistakeStatus = "new" | "defeated" | "almost";
+/**
+ * new：まだ戦っていない、almost：まだ撃破していない（あと一歩）、defeated：撃破した、mastered：完全撃破。
+ * 表示のための目安。再来の日程などは、バトルの記録から計算する（domain/game）
+ */
+export type MistakeStatus = "new" | "almost" | "defeated" | "mastered";
+
+/** テスト（間違いのまとまり・BR-6-1） */
+export interface Sheet {
+  id: string;
+  guardianId: string;
+  childId: string;
+  title: string;
+  subject: Subject;
+  createdDay: string;
+  version: number;
+}
+
+export const SHEET_TITLE_MAX = 30;
+export const SHEET_MISTAKE_MAX = 30;
 
 /** ミスモン（間違えた問題1問） */
 export interface Mistake {
   id: string;
   guardianId: string;
   childId: string;
+  /** どのテストか（BR-6-1） */
+  sheetId: string;
   subject: Subject;
   /** 登録したときの学年 */
   grade: Grade;
@@ -43,13 +64,15 @@ export interface Battle {
   guardianId: string;
   childId: string;
   mistakeId: string;
-  mode: "first" | "revisit";
+  mode: BattleMode;
   problems: VerifiedProblem[];
   /** 問題ごとの、最後の子どもの答え（報告と、あとで採点し直すため） */
   lastAnswers: (string | null)[];
   state: BattleState;
   startedDay: string;
   finishedDay?: string;
+  /** 終えた順番（同じ日の中の並び。時刻の代わり） */
+  order?: number;
   version: number;
 }
 
@@ -58,6 +81,7 @@ export const REPORT_REASONS = [
   "answer-wrong",
   "unclear",
   "difficulty",
+  "reading",
   "other",
 ] as const;
 export type ReportReason = (typeof REPORT_REASONS)[number];
@@ -68,6 +92,7 @@ export const REPORT_REASON_LABELS: Record<ReportReason, string> = {
   "answer-wrong": "こたえが ちがうと おもう",
   unclear: "もんだいの いみが わからない",
   difficulty: "むずかしすぎる・かんたんすぎる",
+  reading: "よみがなが へん",
   other: "そのほか",
 };
 

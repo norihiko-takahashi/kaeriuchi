@@ -88,7 +88,7 @@ export const classifyPrompt: Prompt<
 export const generatePrompt: Prompt<
   Omit<GenerateInput, "roles"> & { role: ProblemRole }
 > = {
-  id: "generate@2",
+  id: "generate@3",
   system: `${COMMON_RULES}
 
 あなたの役割：子どもが間違えた問題と、その間違いのタイプから、専用の練習問題（かえりうち問題）を1問作ります。
@@ -100,7 +100,8 @@ export const generatePrompt: Prompt<
 - 計算の問題は、できるだけ「1/3 + 1/4 = ?」のように、式と「= ?」だけの問題文にしてください。
 - 短い文で答える問題は、同じ意味の答え（ひらがな、漢字、別の言い方）を format.acceptable に入れてください。
 - ヒントは2段階までにし、答えをそのまま書かないでください。
-- 子どもの名前、学校名など、個人を表す言葉は使わないでください。`,
+- 子どもの名前、学校名など、個人を表す言葉は使わないでください。
+- ruby には、問題文・ヒント・解説・選択肢に出てくる、漢字を含む語と、その文の中での読み（ひらがな）を入れてください（例：{"word":"分母","reading":"ぶんぼ"}）。学年で習っていない漢字の語を優先し、30語までにしてください。答えには付けないでください。`,
   user: ({ analysis, grade, role, mode, avoid }) =>
     [
       `学年：${GRADE_LABELS[grade]}`,

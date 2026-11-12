@@ -84,6 +84,10 @@ const PROBLEMS: ProblemDraft[] = [
     format: { kind: "numeric" },
     answer: "7/10",
     hints: ["まず分母をそろえよう", "5 と 2 の最小公倍数は 10"],
+    ruby: [
+      { word: "分母", reading: "ぶんぼ" },
+      { word: "最小公倍数", reading: "さいしょうこうばいすう" },
+    ],
     explanation: "2/10 + 5/10 = 7/10",
   },
   {
@@ -101,6 +105,11 @@ const PROBLEMS: ProblemDraft[] = [
     answer: "6",
     hints: ["2 と 3 の両方でわれる数", "最小公倍数をさがそう"],
     explanation: "2 と 3 の最小公倍数は 6 です。",
+    ruby: [
+      { word: "通分", reading: "つうぶん" },
+      { word: "分母", reading: "ぶんぼ" },
+      { word: "最小公倍数", reading: "さいしょうこうばいすう" },
+    ],
   },
   {
     role: "stretch",

@@ -4,6 +4,13 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { ApiError, generate, gradeFreeText } from "@/client/ai/api";
 import { mistakeType } from "@/client/ai/catalog";
 import { flushRegrades } from "@/client/ai/regrade";
+import {
+  battleHref,
+  markSheetRun,
+  nextInSheetRun,
+  parseBattleHash,
+} from "@/client/battle/sheet-run";
+import { useWords } from "@/client/battle/words";
 import { useHashId } from "@/client/pwa/hash-id";
 import {
   abandonBattle,
@@ -13,15 +20,24 @@ import {
   appendProblem,
   createBattle,
   finishBattle,
+  finishedBattles,
   getMistake,
   saveBattle,
 } from "@/client/store/battle-repo";
+import { currentDay } from "@/client/store/clock";
+import {
+  type BattleOutcome,
+  battleOutcome,
+  gameSummary,
+} from "@/client/store/game-repo";
+import { toRecord } from "@/client/store/records";
 import { AnswerInput } from "@/components/battle/answer-input";
 import { HpBar } from "@/components/battle/hp-bar";
 import { Monster } from "@/components/battle/monster";
 import { ReportPanel } from "@/components/battle/report-panel";
 import { ChildGate } from "@/components/child-gate";
 import { ReadAloud } from "@/components/read-aloud";
+import { RubyText } from "@/components/ruby-text";
 import { Button, LinkButton, Loading, Page } from "@/components/ui";
 import { type ChildAnswer, gradeLocally } from "@/domain/battle/grading";
 import {
@@ -34,6 +50,9 @@ import {
   rescue,
   showHint,
 } from "@/domain/battle/state";
+import { isMastered, nextMode, reviewState } from "@/domain/game/review";
+import type { BattleMode } from "@/domain/game/types";
+import type { XpPart } from "@/domain/game/xp";
 import type { Battle, Mistake, ReportReason } from "@/shared/battle";
 import { MIN_BATTLE_PROBLEMS } from "@/shared/problem";
 import type { ChildProfile } from "@/shared/schemas";
@@ -49,9 +68,14 @@ const FAILED = "うまく つくれなかったよ。あとで もう一回 た�
 function BattleBody({
   child,
   mistake,
+  mode,
+  sheetId,
 }: {
   child: ChildProfile;
   mistake: Mistake;
+  /** 新しく始めるときのバトルの種類（続きから再開するときは、保存した種類を使う） */
+  mode: BattleMode;
+  sheetId?: string;
 }) {
   const [battle, setBattleState] = useState<Battle | null>(null);
   const battleRef = useRef<Battle | null>(null);
@@ -93,7 +117,7 @@ function BattleBody({
           const cur = battleRef.current;
           const b = cur
             ? await appendProblem(cur, p)
-            : await createBattle(mistake, [p]);
+            : await createBattle(mistake, [p], mode);
           setBattle(b);
           setLoad({ kind: "ready" });
         });
@@ -115,7 +139,8 @@ function BattleBody({
               gradingMarksFound: false,
             },
             grade: child.grade,
-            mode: mistake.status === "new" ? "first" : "revisit",
+            // 再来とれんしゅうは、前とは違う問題を2問（BR-45-3）
+            mode: mode === "first" ? "first" : "revisit",
             avoid: mistake.usedPrompts,
           },
           onProblem,
@@ -145,7 +170,7 @@ function BattleBody({
       setStreamDone(true);
     })();
     return () => ctrl.abort();
-  }, [mistake, child.grade, setBattle]);
+  }, [mistake, child.grade, setBattle, mode]);
 
   const update = useCallback(
     async (state: BattleState, lastAnswer?: string) => {
@@ -157,10 +182,11 @@ function BattleBody({
       if (state.phase === "finished" && !finished.current) {
         finished.current = true;
         saved = await finishBattle(saved);
+        if (sheetId) markSheetRun(sheetId, saved.mistakeId);
       }
       setBattle(saved);
     },
-    [setBattle],
+    [setBattle, sheetId],
   );
 
   if (load.kind === "loading") return <Loading />;
@@ -187,7 +213,14 @@ function BattleBody({
   const t = mistakeType(mistake.mistakeTypeId);
 
   if (s.phase === "finished") {
-    return <Result battle={battle} mistake={mistake} />;
+    return (
+      <Result
+        battle={battle}
+        mistake={mistake}
+        child={child}
+        sheetId={sheetId}
+      />
+    );
   }
 
   const p = battle.problems[s.index];
@@ -280,7 +313,11 @@ function BattleBody({
 
   return (
     <Page
-      title={`${t.monster}と たたかう`}
+      title={
+        child.displayMode === "junior"
+          ? t.label
+          : `${t.monster}と たたかう${battle.mode === "practice" ? "（れんしゅう）" : battle.mode === "revisit" ? "（さいらい）" : ""}`
+      }
       footer={
         <LinkButton href="/home" variant="secondary">
           やめる（つづきから できるよ）
@@ -307,12 +344,14 @@ function BattleBody({
           {s.index + 1}もんめ
           {streamDone ? ` / ${battle.problems.length}もん` : ""}
         </h2>
-        <p className="whitespace-pre-wrap text-2xl">{p.prompt}</p>
+        <p className="whitespace-pre-wrap text-2xl">
+          <RubyText text={p.prompt} ruby={p.ruby} />
+        </p>
         <ReadAloud text={p.prompt} />
 
         {p.hints.slice(0, progress.hints).map((h, i) => (
           <p key={h} className="rounded-[var(--radius)] bg-bg p-2">
-            💡 ヒント{i + 1}：{h}
+            💡 ヒント{i + 1}：<RubyText text={h} ruby={p.ruby} />
           </p>
         ))}
 
@@ -370,7 +409,9 @@ function BattleBody({
         {s.phase === "revealed" ? (
           <div className="flex flex-col gap-2">
             <p className="font-bold">こたえは「{p.answer}」だよ</p>
-            <p>{p.explanation}</p>
+            <p>
+              <RubyText text={p.explanation} ruby={p.ruby} />
+            </p>
             <Button disabled={waitingNext} onClick={() => update(next(s))}>
               {waitingNext
                 ? "つぎの もんだいを まっているよ…"
@@ -390,13 +431,51 @@ function BattleBody({
 }
 
 /** S-23 結果（撃破・あと一歩）。解説をもう一度見られる。解説の画面からも報告できる */
-function Result({ battle, mistake }: { battle: Battle; mistake: Mistake }) {
+function Result({
+  battle,
+  mistake,
+  child,
+  sheetId,
+}: {
+  battle: Battle;
+  mistake: Mistake;
+  child: ChildProfile;
+  sheetId?: string;
+}) {
+  const w = useWords();
   const won = battle.state.result === "defeated";
   const t = mistakeType(mistake.mistakeTypeId);
+  const [outcome, setOutcome] = useState<BattleOutcome | null>(null);
+  const [nextId, setNextId] = useState<string | null>(null);
+  useEffect(() => {
+    battleOutcome(child.id, battle.id).then((o) => setOutcome(o ?? null));
+    if (!sheetId) return;
+    gameSummary(child.id).then((g) => {
+      const sheet = g.sheets.find((x) => x.sheet.id === sheetId);
+      const candidates = (sheet?.mistakes ?? [])
+        .filter((v) => !isMastered(v.state))
+        .map((v) => v.mistake.id);
+      setNextId(nextInSheetRun(sheetId, candidates) ?? null);
+    });
+  }, [child.id, battle.id, sheetId]);
   return (
     <Page
-      title={won ? "げきは！" : "あと いっぽ！"}
-      footer={<LinkButton href="/home">ホームに もどる</LinkButton>}
+      title={won ? w.defeated : w.almost}
+      footer={
+        <>
+          {sheetId && nextId ? (
+            <LinkButton href={battleHref(nextId, sheetId)}>{w.next}</LinkButton>
+          ) : null}
+          {sheetId ? (
+            <LinkButton href={`/sheets/detail#${sheetId}`} variant="secondary">
+              テストに もどる
+            </LinkButton>
+          ) : null}
+          <LinkButton href="/home" variant={sheetId ? "secondary" : "primary"}>
+            ホームに もどる
+          </LinkButton>
+        </>
+      }
     >
       <div className="flex flex-col items-center gap-2">
         <Monster typeId={mistake.mistakeTypeId} size={120} motion="none" />
@@ -406,6 +485,7 @@ function Result({ battle, mistake }: { battle: Battle; mistake: Mistake }) {
             : `${t.monster}は にげた… あした また でてくるよ`}
         </output>
       </div>
+      {outcome ? <Rewards outcome={outcome} /> : null}
       <section className="card flex flex-col gap-1 p-4">
         <h2 className="font-bold">さいしょの まちがい</h2>
         <p>{mistake.question}</p>
@@ -425,12 +505,16 @@ function Result({ battle, mistake }: { battle: Battle; mistake: Mistake }) {
               {i + 1}もんめ{" "}
               {battle.state.problems[i].outcome === "cleared" ? "⭕" : "△"}
             </summary>
-            <p className="mt-2 whitespace-pre-wrap">{p.prompt}</p>
+            <p className="mt-2 whitespace-pre-wrap">
+              <RubyText text={p.prompt} ruby={p.ruby} />
+            </p>
             <p className="font-bold">こたえ：{p.answer}</p>
             {battle.lastAnswers[i] ? (
               <p>きみの こたえ：{battle.lastAnswers[i]}</p>
             ) : null}
-            <p>{p.explanation}</p>
+            <p>
+              <RubyText text={p.explanation} ruby={p.ruby} />
+            </p>
             <ReportPanel
               onSend={async (reason, freeText) => {
                 const { verification, ...problem } = p;
@@ -460,12 +544,23 @@ function Result({ battle, mistake }: { battle: Battle; mistake: Mistake }) {
   );
 }
 
-function BattleLoader({ child, id }: { child: ChildProfile; id: string }) {
+function BattleLoader({ child, hash }: { child: ChildProfile; hash: string }) {
+  const { mistakeId: id, sheetId } = parseBattleHash(hash);
   const [mistake, setMistake] = useState<Mistake | null>();
+  const [mode, setMode] = useState<BattleMode>("first");
   useEffect(() => {
-    getMistake(id).then((m) =>
-      setMistake(m && m.childId === child.id ? m : null),
-    );
+    (async () => {
+      const m = await getMistake(id);
+      if (!m || m.childId !== child.id) return setMistake(null);
+      // 記録から、再来の日が来ているかを決める（BR-6-2）
+      const records = (await finishedBattles(m.id)).flatMap((b) => {
+        const r = toRecord(b);
+        return r ? [r] : [];
+      });
+      const { today } = await currentDay();
+      setMode(nextMode(reviewState(records), today));
+      setMistake(m);
+    })();
   }, [id, child.id]);
   if (mistake === undefined) return <Loading />;
   if (mistake === null)
@@ -474,10 +569,63 @@ function BattleLoader({ child, id }: { child: ChildProfile; id: string }) {
         <LinkButton href="/home">ホームに もどる</LinkButton>
       </Page>
     );
-  return <BattleBody child={child} mistake={mistake} />;
+  return (
+    <BattleBody child={child} mistake={mistake} mode={mode} sheetId={sheetId} />
+  );
 }
 
-/** S-22 バトル（U5） */
+const XP_LABELS: Record<XpPart["kind"], string> = {
+  firstDefeat: "げきは",
+  revisitDefeat: "さいらいを げきは",
+  mastered: "かんぜん げきは！",
+  noHintBonus: "ヒントなしで ぜんもん せいかい",
+  hints: "ヒント",
+  almost: "さいごまで がんばった",
+  practice: "れんしゅう",
+};
+
+const DEX_LABELS = { seen: "", bronze: "どう", silver: "ぎん", gold: "きん" };
+
+/** もらった XP・レベルアップ・図鑑・連続記録（BR-6-3〜6-5） */
+function Rewards({ outcome }: { outcome: BattleOutcome }) {
+  const w = useWords();
+  const levelUp = outcome.levelAfter.level > outcome.levelBefore.level;
+  const dexUp =
+    outcome.dexAfter !== outcome.dexBefore && outcome.dexAfter !== "seen";
+  return (
+    <section className="card flex flex-col gap-2 p-4" aria-labelledby="rewards">
+      <h2 id="rewards" className="font-bold">
+        もらった XP：{outcome.xpGained}
+      </h2>
+      <ul className="text-sm">
+        {outcome.xpParts.map((p) => (
+          <li key={p.kind}>
+            {XP_LABELS[p.kind]} {p.xp > 0 ? `+${p.xp}` : p.xp}
+          </li>
+        ))}
+      </ul>
+      {levelUp ? (
+        <p className="text-lg font-bold text-primary">
+          🎉 {w.level} {outcome.levelAfter.level} に あがった！
+        </p>
+      ) : null}
+      {dexUp ? (
+        <p className="font-bold">
+          📖 {w.dex}の カードが「{DEX_LABELS[outcome.dexAfter]}」に なった！
+        </p>
+      ) : null}
+      <p className="text-sm">
+        🔥 {w.streak} {outcome.streak.current}にち
+        {outcome.streak.current > 0 &&
+        outcome.streak.current === outcome.streak.best
+          ? "（いちばん ながい きろく！）"
+          : ""}
+      </p>
+    </section>
+  );
+}
+
+/** S-22 バトル（U5）。再来・れんしゅう・テストのまとめての復習（U6） */
 export default function BattlePage() {
   const id = useHashId();
   return (
@@ -486,7 +634,7 @@ export default function BattlePage() {
         id === undefined ? (
           <Loading />
         ) : id ? (
-          <BattleLoader child={child} id={id} />
+          <BattleLoader child={child} hash={id} />
         ) : (
           <Page title="ミスモンが みつからないよ">
             <LinkButton href="/home">ホームに もどる</LinkButton>

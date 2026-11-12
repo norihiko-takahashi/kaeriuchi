@@ -1,0 +1,19 @@
+{
+  "note": "U6 のゲームの数字（BR-6-2・6-4・6-5）。β版で様子を見て変える。変えたら domain/game のテストも見直す。",
+  "review": {
+    "intervalsDays": [1, 3, 7, 14, 30],
+    "dailyRevisitCap": 5
+  },
+  "xp": {
+    "firstDefeat": 50,
+    "revisitDefeat": 40,
+    "mastered": 100,
+    "noHintBonus": 30,
+    "perHint": 5,
+    "defeatFloor": 20,
+    "almost": 10,
+    "practice": 10
+  },
+  "level": { "base": 100, "step": 50 },
+  "streak": { "maxTickets": 1 }
+}

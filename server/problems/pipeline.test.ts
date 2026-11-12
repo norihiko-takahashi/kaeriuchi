@@ -124,7 +124,7 @@ describe("問題の生成と検証（BR-45-2）", () => {
     ]);
     expect(problems[0].verification).toMatchObject({
       regenerations: 0,
-      promptVersion: "generate@2",
+      promptVersion: "generate@3",
       verifierPromptVersion: "solve@2",
       provider: "mock",
       model: "mock-generate",
@@ -326,5 +326,33 @@ describe("問題の生成と検証（BR-45-2）", () => {
     const { problems, meta } = await run(slow, input, ctrl.signal);
     expect(problems).toHaveLength(1);
     expect(meta).toMatchObject({ verified: 1, timedOut: true });
+  });
+});
+
+describe("ふりがな（BR-6-7）", () => {
+  it("合わない読みを捨て、読みも安全のチェックに入れる", async () => {
+    const withRuby = p({
+      ruby: [
+        { word: "円周率", reading: "えんしゅうりつ" }, // 文にない → 捨てる
+      ],
+    });
+    const badReading = p({
+      role: "focus",
+      prompt: "漢字の読みを書こう",
+      format: { kind: "text", acceptable: ["x"] },
+      answer: "x",
+      ruby: [{ word: "漢字", reading: "ころす" }],
+    });
+    const f = fake({
+      rounds: [[withRuby, badReading, stretch], []],
+    });
+    const { problems, reasons } = await run(f);
+    expect(problems[0].ruby).toBeUndefined();
+    expect(reasons).toContain("blocked_word");
+  });
+
+  it("偽物の AI のふりがなは残る", async () => {
+    const { problems } = await run(createMockProvider());
+    expect(problems[1].ruby?.map((r) => r.word)).toContain("通分");
   });
 });

@@ -25,6 +25,11 @@ export type AnswerFormat =
 
 export type ProblemRole = "same-type" | "focus" | "stretch";
 
+export interface RubyEntry {
+  word: string;
+  reading: string;
+}
+
 export interface ProblemDraft {
   role: ProblemRole;
   prompt: string;
@@ -32,6 +37,8 @@ export interface ProblemDraft {
   answer: string;
   hints: string[];
   explanation: string;
+  /** ふりがな（BR-6-7）。サーバーで確かめたものだけが入る */
+  ruby?: RubyEntry[];
 }
 
 /** 検証の結果（U45-Q-4） */

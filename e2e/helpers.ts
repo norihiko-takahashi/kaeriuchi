@@ -102,3 +102,39 @@ export async function onboard(page: Page, nickname = "ほのおのきつね") {
   await page.getByText("めがね").click();
   await page.getByRole("button", { name: "できた！" }).click();
 }
+
+/** 初めて使う流れのあと、プロフィールを選んでホームまで進む */
+export async function toHome(page: Page) {
+  await onboard(page);
+  await page.getByRole("button", { name: "あとで" }).click();
+  await expect(page).toHaveURL(/\/profiles$/);
+  await page.getByRole("button", { name: /ほのおのきつね/ }).click();
+  await expect(page).toHaveURL(/\/home$/);
+  await ready(page);
+}
+
+export async function enterMistake(page: Page) {
+  await page.getByRole("link", { name: /てで いれる/ }).click();
+  await expect(page).toHaveURL(/\/mistakes\/new$/);
+  await ready(page);
+  await expectNoA11yViolations(page);
+  const send = page.getByRole("button", { name: "おくる" });
+  await expect(send).toBeDisabled();
+  await page.getByText("さんすう・すうがく").click();
+  await page.getByLabel("もんだい").fill("1/2 + 1/3 = ?");
+  await page.getByLabel("きみの こたえ").fill("2/5");
+  await page.getByLabel(/しい こたえ/).fill("5/6");
+  await send.click();
+
+  await expect(page).toHaveURL(/\/mistakes\/found#/);
+  await expect(
+    page.getByRole("heading", { name: "ミスモンが あらわれた！" }),
+  ).toBeVisible();
+  await expect(page.getByText("ブンボタッシー")).toBeVisible();
+  await expectNoA11yViolations(page);
+}
+
+export async function answerNumber(page: Page, value: string) {
+  await page.getByLabel("きみの こたえ").fill(value);
+  await page.getByRole("button", { name: "こたえる" }).click();
+}

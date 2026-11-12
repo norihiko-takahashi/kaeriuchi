@@ -1,6 +1,7 @@
 "use client";
 
 import { mistakeType } from "@/client/ai/catalog";
+import { useAppState } from "@/components/app-state";
 
 /** 仮のミスモン（SVG）。絵は後から差し替える（OQ6）。名前は画面の文字で伝え、絵は飾り */
 export function Monster({
@@ -13,6 +14,10 @@ export function Monster({
   motion?: "appear" | "idle" | "hit" | "none";
 }) {
   const t = mistakeType(typeId);
+  const { mode } = useAppState();
+  // 中学生モードでは小さくし、ゆらゆら動く演出を止める（正解のときの短い動きだけ残す・BR-6-6）
+  const junior = mode === "junior";
+  const px = junior ? Math.round(size * 0.6) : size;
   const cls =
     motion === "none"
       ? ""
@@ -20,12 +25,14 @@ export function Monster({
         ? "monster-appear"
         : motion === "hit"
           ? "monster-hit"
-          : "monster-idle";
+          : junior
+            ? ""
+            : "monster-idle";
   return (
     <svg
       viewBox="0 0 120 120"
-      width={size}
-      height={size}
+      width={px}
+      height={px}
       aria-hidden="true"
       className={cls}
     >

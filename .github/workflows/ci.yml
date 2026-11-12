@@ -93,6 +93,10 @@ jobs:
   security:
     name: 脆弱性と秘密情報のスキャン
     runs-on: ubuntu-latest
+    # gitleaks は、PR のコミットの一覧を API で読む（pulls/{n}/commits）。読むだけの権限をこのジョブにだけ足す
+    permissions:
+      contents: read
+      pull-requests: read
     steps:
       - uses: actions/checkout@v4
         with:

@@ -66,6 +66,8 @@ export const SyncEntity = z.enum([
   "guardianSettings",
   "mistake",
   "battle",
+  /** テスト（BR-6-1） */
+  "sheet",
   /** 「あれ？おかしいかも」の報告（BR-45-8） */
   "report",
   /** 通信が切れていたときの答えを、AI で採点し直したもの（U45-OFF-2） */

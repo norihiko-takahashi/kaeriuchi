@@ -39,7 +39,14 @@ export function visibleText(p: ProblemDraft): string {
           : f.kind === "self-check"
             ? [f.model]
             : [f.unit ?? ""];
-  return [p.prompt, p.answer, p.explanation, ...p.hints, ...extra].join("\n");
+  return [
+    p.prompt,
+    p.answer,
+    p.explanation,
+    ...p.hints,
+    ...extra,
+    ...(p.ruby ?? []).map((r) => r.reading),
+  ].join("\n");
 }
 
 export function checkSafety(p: ProblemDraft): SafetyIssue | null {
