@@ -30,6 +30,7 @@ const OTHER_ROUTES = [
   "parent/rules",
   "parent/data",
   "parent/reports",
+  "parent/insights",
 ];
 
 const root = new URL("..", import.meta.url).pathname;

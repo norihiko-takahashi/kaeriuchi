@@ -4,8 +4,10 @@ import {
   enterMistake,
   expectNoA11yViolations,
   failOnCspViolations,
+  PARENT_PIN,
   ready,
   toHome,
+  typePin,
 } from "./helpers";
 
 /**
@@ -90,6 +92,25 @@ test("撃破すると XP と図鑑の銅。翌日に再来して倒すと銀に�
   await page.getByRole("link", { name: /ずかん/ }).click();
   await expect(page).toHaveURL(/\/dex$/);
   await expect(page.getByText(/ぎん（さいらいも げきは）/)).toBeVisible();
+  await expectNoA11yViolations(page);
+
+  // 保護者メニューの「学習のようす」（U7）
+  await page.goto("/parent/insights");
+  await expect(page).toHaveURL(/\/parent\/unlock$/);
+  await typePin(page, "保護者の PIN（6桁）", PARENT_PIN);
+  await page.getByRole("button", { name: "確認" }).click();
+  await expect(page).toHaveURL(/\/parent$/);
+  await page.getByRole("link", { name: "学習のようす" }).click();
+  await expect(page).toHaveURL(/\/parent\/insights$/);
+  const summary = page.getByRole("region", { name: "まとめ" });
+  await expect(summary.getByText("登録した間違い")).toBeVisible();
+  await expect(summary.getByText("100%").first()).toBeVisible();
+  await expect(page.getByText("1問・撃破 1").first()).toBeVisible();
+  await expect(
+    page.getByText("分数のたし算で、分母どうしも足してしまう"),
+  ).toBeVisible();
+  await page.getByText("表で見る").click();
+  await expect(page.getByRole("cell", { name: "1/1（100%）" })).toBeVisible();
   await expectNoA11yViolations(page);
 });
 

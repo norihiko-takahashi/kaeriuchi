@@ -392,7 +392,7 @@ function render() {
     `印でないものを印とした数: ${t.falsePositive}`,
     `枠に名前の欄が入った写真: ${t.name}`,
     `処理の時間（写真）: 平均 ${avg ?? "-"}ms / 最大 ${max ?? "-"}ms`,
-    `かくすペン: ${items.filter((i) => i.strokes).length}枚で使用（なぞった回数 ${items.reduce((n, i) => n + (i.strokes || 0), 0)}、最初に押してから最後になぞるまで 平均 ${(() => { const t = items.filter((i) => i.penMs).map((i) => i.penMs); return t.length ? Math.round(t.reduce((a, b) => a + b, 0) / t.length / 1000) + "秒" : "-"; })()}）`,
+    `かくすペン: ${items.filter((i) => i.strokes).length}枚で使用（なぞった回数 ${items.reduce((n, i) => n + (i.strokes || 0), 0)}、最初に押してから最後になぞるまで 平均 ${(() => { const t = items.filter((i) => i.penMs).map((i) => i.penMs); return t.length ? `${Math.round(t.reduce((a, b) => a + b, 0) / t.length / 1000)}秒` : "-"; })()}）`,
     ...items.filter((i) => !i.truth).map((i) => `- ${i.width}×${i.height} ${Math.round(i.ms)}ms`),
   ].join("\n");
 }

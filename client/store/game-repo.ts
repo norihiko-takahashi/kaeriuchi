@@ -17,6 +17,7 @@ import {
   type XpPart,
   xpForStep,
 } from "@/domain/game/xp";
+import { computeInsights, type Insights } from "@/domain/parent/insights";
 import { type Mistake, SHEET_TITLE_MAX, type Sheet } from "@/shared/battle";
 import type { Subject } from "@/shared/problem";
 import type { OutboxItem } from "@/shared/schemas";
@@ -192,6 +193,13 @@ export async function gameSummary(childId: string): Promise<GameSummary> {
     ),
     sheets: sheetViews,
   };
+}
+
+/** 保護者向けの「学習のようす」（U7） */
+export async function insightsFor(childId: string): Promise<Insights> {
+  const { today } = await currentDay();
+  const { mistakes, records } = await load(childId);
+  return computeInsights(mistakes, records, today);
 }
 
 /** 結果の画面で見せる、このバトルでもらったもの（BR-6-3・6-4・6-5） */

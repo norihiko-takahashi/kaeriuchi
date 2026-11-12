@@ -3,7 +3,7 @@
 - **プロジェクト**: かえりうち
 - **プロジェクト種別**: Greenfield（新規）
 - **開始日**: 2026-11-08
-- **現在のフェーズ**: 🟢 CONSTRUCTION — U6 完了（PR #15 をマージ）。課題 R1（写り込み対策）のスパイク中（写真待ち）。間違いのタイプの一覧の下書き（80種類、ユーザーが見直し中）
+- **現在のフェーズ**: 🟢 CONSTRUCTION — U6 完了（PR #15 をマージ）。課題 R1（写り込み対策）のスパイク中（写真待ち）。間違いのタイプの一覧の下書き（80種類、ユーザーが見直し中）。U7（保護者向けの画面）レビュー中
 - **Inception の承認**: 2026-11-08（課題 R1・R2 は Construction の中で検証する）
 
 ## INCEPTION フェーズ
@@ -26,7 +26,8 @@
 | U2 AI 基盤 | ✅ 承認済み | ✅ 承認済み | ✅ 承認済み | ✅ 承認済み（PR #10 でマージ） | ✅ CI ですべて成功 |
 | U4・U5 問題の生成と検証・バトル | ✅ 承認済み（`construction/u4-u5-problems-battle/functional-design/`） | ✅ 承認済み | ✅ 承認済み | ✅ 承認済み（PR #13 でマージ） | ✅ CI ですべて成功 |
 | U6 ゲーミフィケーション・再来 | ✅ 承認済み（`construction/u6-game-revisit/functional-design/`） | ✅ 承認済み | ✅ 承認済み | ✅ 承認済み（PR #15 でマージ） | ✅ CI ですべて成功 |
-| U3・U7・U8 | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |
+| U7 保護者向けの画面 | 🟡 レビュー中（`construction/u7-parent-dashboard/`） | 🟡 レビュー中 | 🟡 レビュー中 | 🟡 レビュー中 | 🟡 ローカルで成功 |
+| U3・U8 | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |
 
 
 ユニットごとに次の順で進めます：Functional Design → NFR Requirements → NFR Design → Infrastructure Design → Code Generation → Build & Test。
