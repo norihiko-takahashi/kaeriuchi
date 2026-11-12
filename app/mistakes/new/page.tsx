@@ -7,13 +7,33 @@ import {
   createMistake,
   DailyLimitError,
   mistakesToday,
+  SheetFullError,
 } from "@/client/store/battle-repo";
+import { createSheet, listSheets } from "@/client/store/game-repo";
 import { ChildGate } from "@/components/child-gate";
 import { ReadAloud } from "@/components/read-aloud";
 import { R } from "@/components/ruby";
 import { Button, ErrorText, LinkButton, Page } from "@/components/ui";
+import type { Sheet } from "@/shared/battle";
 import { SUBJECT_LABELS, type Subject } from "@/shared/problem";
 import type { ChildProfile } from "@/shared/schemas";
+
+/** 続けて入れるときに、前に選んだテストを最初から選んでおく（BR-6-1） */
+const LAST_SHEET_KEY = "kaeriuchi:last-sheet";
+function readLastSheet(): string | null {
+  try {
+    return sessionStorage.getItem(LAST_SHEET_KEY);
+  } catch {
+    return null;
+  }
+}
+function writeLastSheet(id: string) {
+  try {
+    sessionStorage.setItem(LAST_SHEET_KEY, id);
+  } catch {
+    // 使えなくても動く
+  }
+}
 
 /** 入力の上限（BR-45-1） */
 const LIMITS = { question: 200, answer: 100 } as const;
@@ -69,12 +89,32 @@ function NewMistake({ child }: { child: ChildProfile }) {
   const [error, setError] = useState<string>();
   const [busy, setBusy] = useState(false);
   const [left, setLeft] = useState<number | null>(null);
+  const [sheets, setSheets] = useState<Sheet[]>([]);
+  /** "new" はあたらしいテスト */
+  const [sheetChoice, setSheetChoice] = useState<string>("new");
 
   useEffect(() => {
     mistakesToday(child.id).then(({ used, limit }) =>
       setLeft(Math.max(0, limit - used)),
     );
+    listSheets(child.id).then((all) => {
+      setSheets(all);
+      const last = readLastSheet();
+      const lastSheet = all.find((x) => x.id === last);
+      if (lastSheet) {
+        setSheetChoice(lastSheet.id);
+        setSubject(lastSheet.subject);
+      }
+    });
   }, [child.id]);
+
+  // 選んだ教科のテストだけを出す（新しいもの 5つまで）
+  const sheetOptions = sheets.filter((x) => x.subject === subject).slice(0, 5);
+  const chooseSubject = (s: Subject) => {
+    setSubject(s);
+    if (!sheets.some((x) => x.id === sheetChoice && x.subject === s))
+      setSheetChoice("new");
+  };
 
   const ready =
     !!subject &&
@@ -98,17 +138,28 @@ function NewMistake({ child }: { child: ChildProfile }) {
         correctAnswer: correctAnswer.trim(),
       };
       const res = await classify(input);
+      // テストは、判定がうまくいってから作る（空のテストを残さない）
+      const sheetId =
+        sheetChoice === "new"
+          ? (await createSheet(child.id, subject)).id
+          : sheetChoice;
       const m = await createMistake({
         ...input,
         childId: child.id,
+        sheetId,
         classified: res.result,
         classifiedBy: res.meta,
       });
+      writeLastSheet(sheetId);
       router.push(`/mistakes/found#${m.id}`);
     } catch (e) {
       setBusy(false);
       if (e instanceof DailyLimitError)
         return setError("きょうは もう とうろく できないよ。また あしたね");
+      if (e instanceof SheetFullError)
+        return setError(
+          `この テストには もう いれられないよ（${e.max}もん まで）。あたらしい テストに してね`,
+        );
       if (e instanceof ApiError) return setError(e.childMessage);
       setError("うまく いかなかったよ。もう一回 ためしてね");
     }
@@ -163,13 +214,40 @@ function NewMistake({ child }: { child: ChildProfile }) {
                 name="subject"
                 className="sr-only"
                 checked={subject === s}
-                onChange={() => setSubject(s)}
+                onChange={() => chooseSubject(s)}
               />
               {SUBJECT_LABELS[s]}
             </label>
           ))}
         </div>
       </fieldset>
+      {subject ? (
+        <fieldset className="flex flex-col gap-2">
+          <legend className="mb-1 font-bold">どの テスト？</legend>
+          <div className="flex flex-wrap gap-2">
+            {[
+              { id: "new", title: "あたらしい テスト" },
+              ...sheetOptions.map((x) => ({ id: x.id, title: x.title })),
+            ].map((o) => (
+              <label
+                key={o.id}
+                className={`tap card flex cursor-pointer items-center px-3 ${
+                  sheetChoice === o.id ? "border-4 border-primary" : ""
+                }`}
+              >
+                <input
+                  type="radio"
+                  name="sheet"
+                  className="sr-only"
+                  checked={sheetChoice === o.id}
+                  onChange={() => setSheetChoice(o.id)}
+                />
+                {o.title}
+              </label>
+            ))}
+          </div>
+        </fieldset>
+      ) : null}
       <Field
         label="もんだい"
         value={question}

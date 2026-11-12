@@ -19,6 +19,9 @@ const KID_ROUTES = [
   "mistakes/new",
   "mistakes/found",
   "battle",
+  "sheets",
+  "sheets/detail",
+  "dex",
 ];
 const OTHER_ROUTES = [
   "login",

@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { mistakeType, mistakeTypesFor } from "@/client/ai/catalog";
+import { battleHref } from "@/client/battle/sheet-run";
+import { useWords } from "@/client/battle/words";
 import { useHashId } from "@/client/pwa/hash-id";
 import { changeMistakeType, getMistake } from "@/client/store/battle-repo";
 import { Monster } from "@/components/battle/monster";
@@ -11,6 +13,7 @@ import { Button, LinkButton, Loading, Page } from "@/components/ui";
 import type { Mistake } from "@/shared/battle";
 
 function Found({ id }: { id: string }) {
+  const w = useWords();
   const [mistake, setMistake] = useState<Mistake | null>();
   const [choosing, setChoosing] = useState(false);
 
@@ -30,14 +33,14 @@ function Found({ id }: { id: string }) {
 
   return (
     <Page
-      title="ミスモンが あらわれた！"
+      title={w.appeared}
       footer={
         <>
-          <LinkButton href={`/battle#${mistake.id}`} className="text-xl">
-            ⚔️ たたかう
+          <LinkButton href={battleHref(mistake.id)} className="text-xl">
+            {w.fight}
           </LinkButton>
           <LinkButton href="/home" variant="secondary">
-            あとで たたかう
+            {w.fightLater}
           </LinkButton>
         </>
       }

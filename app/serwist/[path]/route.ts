@@ -25,6 +25,9 @@ const APP_ROUTES = [
   "/mistakes/new",
   "/mistakes/found",
   "/battle",
+  "/sheets",
+  "/sheets/detail",
+  "/dex",
 ];
 
 const revision = process.env.GIT_SHA ?? `${Date.now()}`;

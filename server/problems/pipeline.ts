@@ -5,13 +5,13 @@ import {
 } from "@/domain/battle/grading/normalize";
 import { ratToString } from "@/domain/math/rational";
 import { generatePrompt, solvePrompt } from "@/server/ai/prompts";
-import { cleanRuby } from "@/server/ai/ruby";
 import type {
   AIProvider,
   CallContext,
   GenerateInput,
   Usage,
 } from "@/server/ai/provider";
+import { cleanRuby } from "@/server/ai/ruby";
 import type {
   MistakeAnalysis,
   ProblemDraft,

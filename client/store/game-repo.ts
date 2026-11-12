@@ -87,6 +87,12 @@ export async function renameSheet(id: string, title: string): Promise<Sheet> {
   return next;
 }
 
+/** 子どものテスト（新しい順） */
+export async function listSheets(childId: string): Promise<Sheet[]> {
+  const rows = await getDB().sheets.where("childId").equals(childId).toArray();
+  return rows.sort((a, b) => b.createdDay.localeCompare(a.createdDay));
+}
+
 export async function getSheet(id: string): Promise<Sheet | undefined> {
   return getDB().sheets.get(id);
 }

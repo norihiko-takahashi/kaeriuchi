@@ -1,10 +1,11 @@
 import { expect, type Page, test } from "@playwright/test";
 import {
+  answerNumber,
+  enterMistake,
   expectNoA11yViolations,
   failOnCspViolations,
-  onboard,
   PARENT_PIN,
-  ready,
+  toHome,
   typePin,
 } from "./helpers";
 
@@ -14,41 +15,6 @@ import {
  */
 
 failOnCspViolations();
-
-async function toHome(page: Page) {
-  await onboard(page);
-  await page.getByRole("button", { name: "あとで" }).click();
-  await expect(page).toHaveURL(/\/profiles$/);
-  await page.getByRole("button", { name: /ほのおのきつね/ }).click();
-  await expect(page).toHaveURL(/\/home$/);
-  await ready(page);
-}
-
-async function enterMistake(page: Page) {
-  await page.getByRole("link", { name: /てで いれる/ }).click();
-  await expect(page).toHaveURL(/\/mistakes\/new$/);
-  await ready(page);
-  await expectNoA11yViolations(page);
-  const send = page.getByRole("button", { name: "おくる" });
-  await expect(send).toBeDisabled();
-  await page.getByText("さんすう・すうがく").click();
-  await page.getByLabel("もんだい").fill("1/2 + 1/3 = ?");
-  await page.getByLabel("きみの こたえ").fill("2/5");
-  await page.getByLabel(/しい こたえ/).fill("5/6");
-  await send.click();
-
-  await expect(page).toHaveURL(/\/mistakes\/found#/);
-  await expect(
-    page.getByRole("heading", { name: "ミスモンが あらわれた！" }),
-  ).toBeVisible();
-  await expect(page.getByText("ブンボタッシー")).toBeVisible();
-  await expectNoA11yViolations(page);
-}
-
-async function answerNumber(page: Page, value: string) {
-  await page.getByLabel("きみの こたえ").fill(value);
-  await page.getByRole("button", { name: "こたえる" }).click();
-}
 
 async function reportMarkedWrong(page: Page) {
   await page.getByRole("button", { name: /あれ？おかしいかも/ }).click();
@@ -106,7 +72,12 @@ test("手で入れた間違いのミスモンを、かえりうち問題で撃�
 
   await page.getByRole("link", { name: "ホームに もどる" }).click();
   await expect(page).toHaveURL(/\/home$/);
-  await expect(page.getByText("いまは いないよ")).toBeVisible();
+  await expect(
+    page
+      .locator("section")
+      .filter({ hasText: "まだ たおしていない ミスモン" })
+      .getByText("いまは いないよ"),
+  ).toBeVisible();
 
   // 保護者メニューで、報告の一覧を見る（画像とニックネームは含まない）
   await page.goto("/parent/reports");

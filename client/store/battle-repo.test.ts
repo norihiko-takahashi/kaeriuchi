@@ -108,7 +108,6 @@ describe("ミスモン", () => {
     await createMistake(input());
     await expect(createMistake(input())).rejects.toBeInstanceOf(
       DailyLimitError,
-      SheetFullError,
     );
     expect(await mistakesToday(childId)).toEqual({ used: 1, limit: 1 });
   });

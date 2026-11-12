@@ -3,7 +3,7 @@
 - **プロジェクト**: かえりうち
 - **プロジェクト種別**: Greenfield（新規）
 - **開始日**: 2026-11-08
-- **現在のフェーズ**: 🟢 CONSTRUCTION — U4・U5 完了（PR #13 をマージ）。U6（ゲーミフィケーション・再来）の Code Generation（作成中）
+- **現在のフェーズ**: 🟢 CONSTRUCTION — U4・U5 完了（PR #13 をマージ）。U6（ゲーミフィケーション・再来）の Code Generation（レビュー中）
 - **Inception の承認**: 2026-11-08（課題 R1・R2 は Construction の中で検証する）
 
 ## INCEPTION フェーズ
@@ -25,7 +25,7 @@
 | U1 基盤・プロフィール | ✅ 承認済み | ✅ 承認済み | ✅ 承認済み | ✅ 承認済み（`construction/u1-foundation/code/code-summary.md`） | ✅ CI ですべて成功（7c2f042。WebKit のオフラインでの移動は実機で確認する） |
 | U2 AI 基盤 | ✅ 承認済み | ✅ 承認済み | ✅ 承認済み | ✅ 承認済み（PR #10 でマージ） | ✅ CI ですべて成功 |
 | U4・U5 問題の生成と検証・バトル | ✅ 承認済み（`construction/u4-u5-problems-battle/functional-design/`） | ✅ 承認済み | ✅ 承認済み | ✅ 承認済み（PR #13 でマージ） | ✅ CI ですべて成功 |
-| U6 ゲーミフィケーション・再来 | ✅ 承認済み（`construction/u6-game-revisit/functional-design/`） | ✅ 承認済み | ✅ 承認済み | 🟡 作成中 | ⬜ |
+| U6 ゲーミフィケーション・再来 | ✅ 承認済み（`construction/u6-game-revisit/functional-design/`） | ✅ 承認済み | ✅ 承認済み | 🟡 レビュー中（`construction/u6-game-revisit/code/code-summary.md`） | 🟡 ローカルで成功、CI で確認中 |
 | U3・U7・U8 | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |
 
 
