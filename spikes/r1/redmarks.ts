@@ -48,7 +48,7 @@ export interface DetectOptions {
 
 const DEFAULTS: Required<DetectOptions> = {
   maxSide: 960,
-  minSaturation: 0.3,
+  minSaturation: 0.2,
   minSize: 0.015,
   maxSize: 0.3,
 };
@@ -138,15 +138,24 @@ function whiteBalance(img: Small) {
     }
 }
 
+/**
+ * 赤ペンの画素を選ぶ。色相が赤〜ピンク（300°〜360°、0°〜25°）で、ある程度鮮やかなもの。
+ * 学校の丸付けのペンは、ピンクに近い赤（マゼンタ、330°〜345°）も多い（2026-11-12、本物の写真で確認）
+ */
 function redMask(img: Small, minSat: number): Uint8Array {
   const m = new Uint8Array(img.w * img.h);
   for (let i = 0; i < img.w * img.h; i++) {
     const r = img.rgb[i * 3];
     const g = img.rgb[i * 3 + 1];
     const b = img.rgb[i * 3 + 2];
-    const sat = (r - Math.max(g, b)) / Math.max(r, 1e-3);
-    // 赤みが強い（緑・青より明らかに強い）、ある程度明るい、鮮やか
-    if (r > 0.3 && sat > minSat && r - g > 0.2) m[i] = 1;
+    const max = Math.max(r, g, b);
+    const min = Math.min(r, g, b);
+    if (max !== r || max < 0.3) continue;
+    const sat = (max - min) / max;
+    if (sat < minSat) continue;
+    // 赤が一番強いときの色相（−60°〜60°）
+    const hue = (60 * (g - b)) / (max - min || 1);
+    if (hue >= -60 && hue <= 25) m[i] = 1;
   }
   return m;
 }
