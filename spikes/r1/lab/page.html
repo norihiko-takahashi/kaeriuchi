@@ -1,0 +1,350 @@
+<title>赤ペン検知ラボ</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;600;700&family=IBM+Plex+Mono:wght@500&display=swap">
+<style>
+  /* 採点用紙の机：紙の地色、赤ペン、○ の緑、切り抜き枠の青。数字は等幅で並べる */
+  :root {
+    --paper: #f6f7f9;
+    --sheet: #ffffff;
+    --ink: #1d2430;
+    --muted: #5d6675;
+    --rule: #d9dee6;
+    --red: #c8102e;
+    --ok: #1f8a4c;
+    --frame: #2457c5;
+    --chip: #eef1f6;
+    --font-body: "Noto Sans JP", "Hiragino Sans", "Yu Gothic UI", system-ui, sans-serif;
+    --font-num: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --paper: #12161d; --sheet: #1a2029; --ink: #e8ecf2; --muted: #9aa4b4; --rule: #2c3440;
+      --red: #ff5a6e; --ok: #4cc983; --frame: #7aa2ff; --chip: #222a35; color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --paper: #12161d; --sheet: #1a2029; --ink: #e8ecf2; --muted: #9aa4b4; --rule: #2c3440;
+    --red: #ff5a6e; --ok: #4cc983; --frame: #7aa2ff; --chip: #222a35; color-scheme: dark;
+  }
+  * { box-sizing: border-box; }
+  body {
+    background: var(--paper); color: var(--ink); font-family: var(--font-body);
+    font-size: 15px; line-height: 1.6;
+    padding-left: max(16px, env(safe-area-inset-left, 0px));
+    padding-right: max(16px, env(safe-area-inset-right, 0px));
+    padding-block: 20px 48px;
+  }
+  .wrap { max-width: 760px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; }
+  h1 { font-size: 1.5rem; margin: 0; text-wrap: balance; }
+  h1 .pen { color: var(--red); }
+  h2 { font-size: 1.05rem; margin: 0; }
+  p { margin: 0; max-width: 65ch; }
+  .lead { color: var(--muted); }
+  .privacy { border-left: 3px solid var(--ok); padding: 4px 0 4px 12px; font-size: 0.92rem; }
+  .bar { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+  button, .file-btn {
+    font: inherit; font-weight: 600; min-height: 44px; padding: 0 18px; border-radius: 10px;
+    border: 1px solid var(--rule); background: var(--sheet); color: var(--ink); cursor: pointer;
+  }
+  .file-btn { display: inline-flex; align-items: center; background: var(--red); color: #fff; border-color: transparent; }
+  .file-btn:focus-within, button:focus-visible { outline: 3px solid var(--frame); outline-offset: 2px; }
+  input[type="file"] { position: absolute; width: 1px; height: 1px; opacity: 0; }
+  .legend { display: flex; flex-wrap: wrap; gap: 8px 16px; font-size: 0.88rem; color: var(--muted); }
+  .legend span::before { content: ""; display: inline-block; width: 14px; height: 10px; margin-right: 6px; vertical-align: -1px; border: 2px solid; }
+  .lg-wrong::before { border-color: var(--red) !important; }
+  .lg-ok::before { border-color: var(--ok) !important; border-radius: 50%; }
+  .lg-frame::before { border-color: var(--frame) !important; border-style: dashed !important; }
+  .card { background: var(--sheet); border: 1px solid var(--rule); border-radius: 12px; padding: 14px; display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+  .card header { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 6px; }
+  .name { font-weight: 700; overflow-wrap: anywhere; }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .chip { background: var(--chip); border-radius: 999px; padding: 2px 10px; font-size: 0.85rem; font-family: var(--font-num); font-variant-numeric: tabular-nums; }
+  .chip.slow { color: var(--red); }
+  canvas { width: 100%; height: auto; border-radius: 8px; background: var(--chip); display: block; }
+  fieldset { border: 1px dashed var(--rule); border-radius: 10px; margin: 0; padding: 10px 12px; display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; }
+  legend { font-size: 0.85rem; color: var(--muted); padding: 0 6px; }
+  label { display: flex; flex-direction: column; gap: 4px; font-size: 0.85rem; }
+  label.check { flex-direction: row; align-items: center; gap: 8px; }
+  input[type="number"] { font: inherit; font-family: var(--font-num); min-height: 40px; padding: 0 10px; border-radius: 8px; border: 1px solid var(--rule); background: var(--paper); color: var(--ink); width: 100%; }
+  input[type="checkbox"] { width: 22px; height: 22px; accent-color: var(--red); }
+  .summary { background: var(--sheet); border: 2px solid var(--ink); border-radius: 12px; padding: 14px; display: flex; flex-direction: column; gap: 10px; }
+  .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; }
+  .stat b { display: block; font-family: var(--font-num); font-size: 1.35rem; font-variant-numeric: tabular-nums; }
+  .stat span { font-size: 0.82rem; color: var(--muted); }
+  pre { background: var(--chip); border-radius: 8px; padding: 10px; font-family: var(--font-num); font-size: 0.8rem; white-space: pre-wrap; overflow-wrap: anywhere; margin: 0; }
+  .note { font-size: 0.85rem; color: var(--muted); }
+  .status { font-size: 0.9rem; color: var(--muted); min-height: 1.6em; }
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+
+<div class="wrap">
+  <header class="wrap" style="gap:8px">
+    <h1><span class="pen">赤ペン</span>検知ラボ</h1>
+    <p class="lead">丸付けしたテストの写真を選ぶと、赤ペンの印を見つけ、間違いの印のまわりに「切り抜く枠」の候補を重ねて表示します。かえりうちの写り込み対策（R1）の検証用です。</p>
+    <p class="privacy">写真はこの端末の中だけで処理します。どこにも送らず、保存もしません。ページを閉じると消えます。</p>
+  </header>
+
+  <div class="bar">
+    <label class="file-btn" for="files">写真を選ぶ<input id="files" type="file" accept="image/*" multiple></label>
+    <button id="sample" type="button">見本の画像をもう1枚</button>
+  </div>
+  <div class="legend" aria-label="表示の見方">
+    <span class="lg-wrong">間違いの印（✗・✓・／）</span>
+    <span class="lg-ok">○（正解の印）</span>
+    <span class="lg-frame">切り抜く枠の候補</span>
+  </div>
+  <p id="status" class="status" role="status"></p>
+
+  <section class="summary" aria-labelledby="sum-title">
+    <h2 id="sum-title">まとめ</h2>
+    <div class="stats" id="stats"></div>
+    <p class="note">写真ごとの下の欄に、あなたが数えた正しい数を入れると、見つけられた率などが出ます（見本の画像は自動で数えます）。</p>
+    <pre id="report"></pre>
+    <div class="bar">
+      <button id="copy" type="button">結果をコピーする</button>
+      <span id="copied" class="note" role="status"></span>
+    </div>
+  </section>
+
+  <div id="list" class="wrap" style="gap:16px"></div>
+</div>
+
+<script>
+/*__R1_CODE__*/
+const worker = new Worker(URL.createObjectURL(new Blob([R1_CODE], { type: "text/javascript" })));
+const pending = new Map();
+worker.onmessage = (e) => {
+  const p = pending.get(e.data.id);
+  if (p) { pending.delete(e.data.id); p(e.data); }
+};
+const call = (msg, transfer) => new Promise((resolve) => {
+  const id = Math.random().toString(36).slice(2);
+  pending.set(id, resolve);
+  worker.postMessage({ ...msg, id }, transfer || []);
+});
+
+const items = [];
+let sampleSeed = 1;
+const $ = (s) => document.querySelector(s);
+const MAX_SIDE = 4032;
+
+function draw(canvas, img, r, truth) {
+  const scale = Math.min(1, 900 / Math.max(img.width, img.height));
+  canvas.width = Math.round(img.width * scale);
+  canvas.height = Math.round(img.height * scale);
+  const ctx = canvas.getContext("2d");
+  ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+  const css = getComputedStyle(document.documentElement);
+  const s = (b) => [b.x * scale, b.y * scale, b.w * scale, b.h * scale];
+  ctx.lineWidth = Math.max(2, canvas.width / 300);
+  ctx.setLineDash([8, 6]);
+  ctx.strokeStyle = "#2457c5";
+  for (const f of r.frames) ctx.strokeRect(...s(f));
+  ctx.setLineDash([]);
+  for (const m of r.marks) {
+    ctx.strokeStyle = m.kind === "wrong" ? "#c8102e" : "#1f8a4c";
+    if (m.kind === "wrong") ctx.strokeRect(...s(m.box));
+    else {
+      const [x, y, w, h] = s(m.box);
+      ctx.beginPath();
+      ctx.ellipse(x + w / 2, y + h / 2, w / 2 + 4, h / 2 + 4, 0, 0, Math.PI * 2);
+      ctx.stroke();
+    }
+  }
+  if (truth) {
+    ctx.strokeStyle = "rgba(120,120,120,0.9)";
+    ctx.setLineDash([3, 4]);
+    ctx.strokeRect(...s(truth.nameBox));
+    ctx.setLineDash([]);
+  }
+}
+
+function autoCount(r, truth) {
+  const c = (b) => ({ x: b.x + b.w / 2, y: b.y + b.h / 2 });
+  const inside = (p, b, pad) => p.x >= b.x - pad && p.x <= b.x + b.w + pad && p.y >= b.y - pad && p.y <= b.y + b.h + pad;
+  const wrong = truth.marks.filter((m) => m.kind === "wrong");
+  const circles = truth.marks.filter((m) => m.kind === "circle");
+  const hit = (m, kind) => r.marks.some((d) => d.kind === kind && inside(c(d.box), m.box, m.box.w * 0.2));
+  const covered = (a, b) => {
+    const w = Math.max(0, Math.min(a.x + a.w, b.x + b.w) - Math.max(a.x, b.x));
+    const h = Math.max(0, Math.min(a.y + a.h, b.y + b.h) - Math.max(a.y, b.y));
+    return (w * h) / (b.w * b.h);
+  };
+  return {
+    wrongTotal: wrong.length,
+    wrongFound: wrong.filter((m) => hit(m, "wrong")).length,
+    circleTotal: circles.length,
+    circleAsWrong: circles.filter((m) => hit(m, "wrong")).length,
+    falsePositive: r.marks.filter((d) => !truth.marks.some((m) => inside(c(d.box), m.box, m.box.w * 0.2))).length,
+    nameInFrame: r.frames.some((f) => covered(f, truth.nameBox) >= 0.2),
+  };
+}
+
+function field(item, key, label) {
+  const id = `${item.id}-${key}`;
+  const l = document.createElement("label");
+  l.htmlFor = id;
+  l.textContent = label;
+  const input = document.createElement("input");
+  input.type = "number"; input.min = "0"; input.inputMode = "numeric"; input.id = id;
+  input.value = item.count[key] ?? "";
+  input.addEventListener("input", () => { item.count[key] = input.value === "" ? null : Number(input.value); render(); });
+  l.append(input);
+  return l;
+}
+
+function addCard(item) {
+  const card = document.createElement("article");
+  card.className = "card";
+  const head = document.createElement("header");
+  const name = document.createElement("span");
+  name.className = "name"; name.textContent = item.name;
+  const chips = document.createElement("div");
+  chips.className = "chips";
+  const wrong = item.result.marks.filter((m) => m.kind === "wrong").length;
+  const ok = item.result.marks.length - wrong;
+  for (const [t, cls] of [
+    [`${item.width}×${item.height}`, ""],
+    [`${Math.round(item.ms)}ms`, item.ms > 1000 ? "slow" : ""],
+    [`間違い ${wrong}`, ""],
+    [`○ ${ok}`, ""],
+  ]) {
+    const s = document.createElement("span");
+    s.className = `chip ${cls}`; s.textContent = t; chips.append(s);
+  }
+  head.append(name, chips);
+  const canvas = document.createElement("canvas");
+  canvas.setAttribute("role", "img");
+  canvas.setAttribute("aria-label", `${item.name}：間違いの印 ${wrong}個、○ ${ok}個を見つけた`);
+  draw(canvas, item.bitmap, item.result, item.truth);
+  card.append(head, canvas);
+  if (item.truth) {
+    const n = document.createElement("p");
+    n.className = "note";
+    n.textContent = `見本の画像（${item.variant}）なので、正しい数は自動で数えました。灰色の点線が名前の欄です。`;
+    card.append(n);
+  } else {
+    const fs = document.createElement("fieldset");
+    const lg = document.createElement("legend");
+    lg.textContent = "あなたが数えた数";
+    const chk = document.createElement("label");
+    chk.className = "check"; chk.htmlFor = `${item.id}-name`;
+    const cb = document.createElement("input");
+    cb.type = "checkbox"; cb.id = `${item.id}-name`;
+    cb.addEventListener("change", () => { item.count.nameInFrame = cb.checked; render(); });
+    chk.append(cb, "青い枠に名前の欄が入った");
+    fs.append(
+      lg,
+      field(item, "wrongTotal", "写真の中の ✗・✓・／ の数"),
+      field(item, "wrongFound", "そのうち赤い四角が付いた数"),
+      field(item, "circleTotal", "写真の中の ○ の数"),
+      field(item, "circleAsWrong", "○ なのに赤い四角が付いた数"),
+      field(item, "falsePositive", "印でないのに四角や丸が付いた数"),
+      chk,
+    );
+    card.append(fs);
+  }
+  $("#list").prepend(card);
+}
+
+function render() {
+  const t = { wrongTotal: 0, wrongFound: 0, circleTotal: 0, circleAsWrong: 0, falsePositive: 0, name: 0, photos: 0, counted: 0 };
+  for (const it of items) {
+    if (!it.truth) t.photos++;
+    const c = it.count;
+    if ([c.wrongTotal, c.wrongFound].some((v) => v == null)) continue;
+    t.counted++;
+    t.wrongTotal += c.wrongTotal || 0; t.wrongFound += c.wrongFound || 0;
+    t.circleTotal += c.circleTotal || 0; t.circleAsWrong += c.circleAsWrong || 0;
+    t.falsePositive += c.falsePositive || 0; t.name += c.nameInFrame ? 1 : 0;
+  }
+  const pct = (a, b) => (b ? `${Math.round((a / b) * 1000) / 10}%` : "-");
+  const ms = items.filter((i) => !i.truth).map((i) => i.ms);
+  const avg = ms.length ? Math.round(ms.reduce((a, b) => a + b, 0) / ms.length) : null;
+  const max = ms.length ? Math.round(Math.max(...ms)) : null;
+  const stats = [
+    [pct(t.wrongFound, t.wrongTotal), "間違いの印を見つけた率"],
+    [pct(t.circleAsWrong, t.circleTotal), "○ を間違いと取り違えた率"],
+    [String(t.falsePositive), "印でないものを印とした数"],
+    [String(t.name), "枠に名前の欄が入った写真"],
+    [avg == null ? "-" : `${avg}ms`, "写真1枚の処理（平均）"],
+  ];
+  $("#stats").replaceChildren(...stats.map(([v, l]) => {
+    const d = document.createElement("div"); d.className = "stat";
+    const b = document.createElement("b"); b.textContent = v;
+    const s = document.createElement("span"); s.textContent = l;
+    d.append(b, s); return d;
+  }));
+  $("#report").textContent = [
+    "R1 赤ペン検知ラボの結果",
+    `端末: ${navigator.userAgent}`,
+    `写真: ${t.photos}枚（数を入れた写真・見本: ${t.counted}枚）`,
+    `間違いの印を見つけた率: ${pct(t.wrongFound, t.wrongTotal)}（${t.wrongFound}/${t.wrongTotal}）`,
+    `○ を取り違えた率: ${pct(t.circleAsWrong, t.circleTotal)}（${t.circleAsWrong}/${t.circleTotal}）`,
+    `印でないものを印とした数: ${t.falsePositive}`,
+    `枠に名前の欄が入った写真: ${t.name}`,
+    `処理の時間（写真）: 平均 ${avg ?? "-"}ms / 最大 ${max ?? "-"}ms`,
+    ...items.filter((i) => !i.truth).map((i) => `- ${i.width}×${i.height} ${Math.round(i.ms)}ms`),
+  ].join("\n");
+}
+
+async function analyze(bitmap, name, truth, variant) {
+  const scale = Math.min(1, MAX_SIDE / Math.max(bitmap.width, bitmap.height));
+  const w = Math.round(bitmap.width * scale), h = Math.round(bitmap.height * scale);
+  const c = document.createElement("canvas");
+  c.width = w; c.height = h;
+  const ctx = c.getContext("2d", { willReadFrequently: true });
+  ctx.drawImage(bitmap, 0, 0, w, h);
+  const data = ctx.getImageData(0, 0, w, h);
+  const res = await call({ type: "detect", width: w, height: h, buffer: data.data.buffer }, [data.data.buffer]);
+  const item = { id: `p${items.length}`, name, width: w, height: h, bitmap: c, result: res.result, ms: res.ms, truth, variant, count: {} };
+  if (truth) item.count = autoCount(res.result, truth);
+  items.push(item);
+  addCard(item);
+  render();
+}
+
+async function sample() {
+  $("#status").textContent = "見本の画像を作っています…";
+  const res = await call({ type: "sample", seed: sampleSeed, variant: (sampleSeed - 1) % 12 });
+  sampleSeed++;
+  const img = new ImageData(new Uint8ClampedArray(res.buffer), res.width, res.height);
+  const c = document.createElement("canvas");
+  c.width = res.width; c.height = res.height;
+  c.getContext("2d").putImageData(img, 0, 0);
+  await analyze(c, `見本 ${sampleSeed - 1}`, res.truth, res.label);
+  $("#status").textContent = "";
+}
+
+$("#files").addEventListener("change", async (e) => {
+  const files = [...e.target.files];
+  for (const [i, f] of files.entries()) {
+    $("#status").textContent = `写真を調べています（${i + 1}/${files.length}）…`;
+    try {
+      const bmp = await createImageBitmap(f);
+      await analyze(bmp, `写真 ${items.filter((x) => !x.truth).length + 1}`);
+    } catch {
+      $("#status").textContent = "この写真は読み込めませんでした。JPEG か PNG を選んでください。";
+      return;
+    }
+  }
+  $("#status").textContent = files.length ? `${files.length}枚を調べました。下の欄に、数えた数を入れてください。` : "";
+  e.target.value = "";
+});
+$("#sample").addEventListener("click", sample);
+$("#copy").addEventListener("click", async () => {
+  const text = $("#report").textContent;
+  try {
+    await navigator.clipboard.writeText(text);
+    $("#copied").textContent = "コピーしました。チャットに貼り付けてください。";
+  } catch {
+    const range = document.createRange();
+    range.selectNodeContents($("#report"));
+    const sel = getSelection(); sel.removeAllRanges(); sel.addRange(range);
+    $("#copied").textContent = "選択しました。長押しでコピーしてください。";
+  }
+});
+render();
+sample();
+</script>
