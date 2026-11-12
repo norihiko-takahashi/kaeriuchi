@@ -5,6 +5,7 @@ import {
 } from "@/domain/battle/grading/normalize";
 import { ratToString } from "@/domain/math/rational";
 import { generatePrompt, solvePrompt } from "@/server/ai/prompts";
+import { cleanRuby } from "@/server/ai/ruby";
 import type {
   AIProvider,
   CallContext,
@@ -128,10 +129,12 @@ export async function* runPipeline(
   const aborted = () => ctx.signal?.aborted === true;
 
   async function verify(
-    draft: ProblemDraft,
+    raw: ProblemDraft,
     model: string,
     regenerations: number,
   ): Promise<VerifiedProblem | null> {
+    // ふりがなは、合わないものを先に捨てる（読みも安全のチェックに入れる・BR-6-7）
+    const draft = cleanRuby(raw);
     if (!shapeOk(draft)) {
       reject("invalid_shape");
       return null;
@@ -154,7 +157,7 @@ export async function* runPipeline(
     }
     // 検証役の AI：作った答えを見せずに解かせ、子ども向けとして適切かも答えさせる（U45-SAFE-1）。
     // 計算器で確かめた問題でも、ヒントと解説の文があるので、適切かどうかは必ず聞く
-    const { answer: _a, explanation: _e, ...shown } = draft;
+    const { answer: _a, explanation: _e, ruby: _r, ...shown } = draft;
     let solved: Awaited<ReturnType<AIProvider["solve"]>>;
     try {
       solved = await provider.solve(

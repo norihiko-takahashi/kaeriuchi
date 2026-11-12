@@ -152,7 +152,7 @@ describe("POST /api/ai/generate", () => {
     expect(problems).toHaveLength(3);
     for (const p of problems)
       expect(p.verification).toMatchObject({
-        promptVersion: "generate@2",
+        promptVersion: "generate@3",
         verifierPromptVersion: "solve@2",
         provider: "mock",
       });

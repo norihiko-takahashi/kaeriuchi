@@ -70,6 +70,12 @@ export const ProblemRole = z.enum(["same-type", "focus", "stretch"]);
 export type ProblemRole = z.infer<typeof ProblemRole>;
 
 /** AI が作った問題（検証の前） */
+/** ふりがな（BR-6-7）。漢字の語とその読み（ひらがな） */
+export const RubyEntry = z.object({
+  word: z.string().min(1).max(20),
+  reading: z.string().min(1).max(40),
+});
+
 export const ProblemDraft = z.object({
   role: ProblemRole,
   prompt: z.string().max(600),
@@ -77,6 +83,8 @@ export const ProblemDraft = z.object({
   answer: z.string().max(200),
   hints: z.array(z.string().max(200)).min(1).max(2),
   explanation: z.string().max(400),
+  // 多すぎても問題ごと落とさず、server/ai/ruby.ts で 30語に切る
+  ruby: z.array(RubyEntry).max(60).optional(),
 });
 export type ProblemDraft = z.infer<typeof ProblemDraft>;
 
