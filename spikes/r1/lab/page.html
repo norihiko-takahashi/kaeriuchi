@@ -74,6 +74,13 @@
   .stat span { font-size: 0.82rem; color: var(--muted); }
   pre { background: var(--chip); border-radius: 8px; padding: 10px; font-family: var(--font-num); font-size: 0.8rem; white-space: pre-wrap; overflow-wrap: anywhere; margin: 0; }
   .note { font-size: 0.85rem; color: var(--muted); }
+  .tools { display: flex; flex-wrap: wrap; gap: 8px; }
+  .tools button { min-height: 44px; }
+  .tools button[aria-pressed="true"] { background: var(--ink); color: var(--sheet); border-color: var(--ink); }
+  canvas.painting { touch-action: none; cursor: crosshair; outline: 3px solid var(--ink); outline-offset: 2px; }
+  .crops { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 8px; }
+  .crops figure { margin: 0; display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+  .crops figcaption { font-size: 0.78rem; color: var(--muted); }
   .status { font-size: 0.9rem; color: var(--muted); min-height: 1.6em; }
 </style>
 
@@ -82,6 +89,7 @@
     <h1><span class="pen">赤ペン</span>検知ラボ</h1>
     <p class="lead">丸付けしたテストの写真を選ぶと、赤ペンの印を見つけ、間違いの印のまわりに「切り抜く枠」の候補を重ねて表示します。かえりうちの写り込み対策（R1）の検証用です。</p>
     <p class="privacy">写真はこの端末の中だけで処理します。どこにも送らず、保存もしません。ページを閉じると消えます。</p>
+    <p class="lead">写真ごとに「かくすペン」も試せます。名前などを指でなぞって塗ると、「送る部分を見る」で、AI に送ることになる切り抜きからその部分が消えているのを確かめられます。</p>
   </header>
 
   <div class="bar">
@@ -192,6 +200,103 @@ function field(item, key, label) {
   return l;
 }
 
+/**
+ * かくすペン：名前などを指でなぞって黒く塗る。塗った部分は、送る切り抜きから消す。
+ * 塗る線は、元の画像の大きさの別の canvas（mask）に描く
+ */
+function penTools(item, canvas, redraw) {
+  const bar = document.createElement("div");
+  bar.className = "tools";
+  const pen = document.createElement("button");
+  pen.type = "button"; pen.textContent = "✏️ かくすペン"; pen.setAttribute("aria-pressed", "false");
+  const undo = document.createElement("button");
+  undo.type = "button"; undo.textContent = "ぬったところを けす";
+  const show = document.createElement("button");
+  show.type = "button"; show.textContent = "送る部分を見る";
+  const crops = document.createElement("div");
+  crops.className = "crops";
+  crops.hidden = true;
+  bar.append(pen, undo, show);
+
+  let painting = false;
+  let last = null;
+  const toImage = (e) => {
+    const r = canvas.getBoundingClientRect();
+    return { x: ((e.clientX - r.left) / r.width) * item.width, y: ((e.clientY - r.top) / r.height) * item.height };
+  };
+  const ensureMask = () => {
+    if (item.mask) return item.mask;
+    item.mask = document.createElement("canvas");
+    item.mask.width = item.width; item.mask.height = item.height;
+    return item.mask;
+  };
+  pen.addEventListener("click", () => {
+    painting = !painting;
+    pen.setAttribute("aria-pressed", String(painting));
+    canvas.classList.toggle("painting", painting);
+    if (painting && !item.penStartedAt) item.penStartedAt = performance.now();
+  });
+  canvas.addEventListener("pointerdown", (e) => {
+    if (!painting) return;
+    canvas.setPointerCapture(e.pointerId);
+    last = toImage(e);
+    item.strokes = (item.strokes || 0) + 1;
+  });
+  canvas.addEventListener("pointermove", (e) => {
+    if (!painting || !last) return;
+    const p = toImage(e);
+    const ctx = ensureMask().getContext("2d");
+    ctx.strokeStyle = "#000"; ctx.lineCap = "round"; ctx.lineJoin = "round";
+    ctx.lineWidth = Math.max(item.width, item.height) * 0.03;
+    ctx.beginPath(); ctx.moveTo(last.x, last.y); ctx.lineTo(p.x, p.y); ctx.stroke();
+    last = p;
+    redraw();
+  });
+  const end = () => {
+    if (last && item.penStartedAt) item.penMs = performance.now() - item.penStartedAt;
+    last = null;
+    render();
+  };
+  canvas.addEventListener("pointerup", end);
+  canvas.addEventListener("pointercancel", end);
+  undo.addEventListener("click", () => { item.mask = null; item.strokes = 0; redraw(); render(); if (!crops.hidden) showCrops(); });
+
+  const showCrops = () => {
+    crops.replaceChildren(...item.result.frames.map((f, i) => {
+      const fig = document.createElement("figure");
+      const c = document.createElement("canvas");
+      c.width = Math.max(1, f.w); c.height = Math.max(1, f.h);
+      const ctx = c.getContext("2d");
+      ctx.drawImage(item.bitmap, f.x, f.y, f.w, f.h, 0, 0, f.w, f.h);
+      if (item.mask) ctx.drawImage(item.mask, f.x, f.y, f.w, f.h, 0, 0, f.w, f.h);
+      c.setAttribute("role", "img");
+      c.setAttribute("aria-label", `送る切り抜き ${i + 1}`);
+      const cap = document.createElement("figcaption");
+      cap.textContent = `切り抜き ${i + 1}（${f.w}×${f.h}）`;
+      fig.append(c, cap);
+      return fig;
+    }));
+    if (item.result.frames.length === 0) {
+      const p = document.createElement("p");
+      p.className = "note"; p.textContent = "間違いの印が見つからなかったので、送る切り抜きはありません。";
+      crops.append(p);
+    }
+    crops.hidden = false;
+    show.textContent = "送る部分を閉じる";
+  };
+  show.addEventListener("click", () => {
+    if (crops.hidden) showCrops();
+    else { crops.hidden = true; show.textContent = "送る部分を見る"; }
+  });
+  const wrap = document.createElement("div");
+  wrap.style.display = "flex"; wrap.style.flexDirection = "column"; wrap.style.gap = "10px";
+  const hint = document.createElement("p");
+  hint.className = "note";
+  hint.textContent = "「かくすペン」を押してから、写真の上を指でなぞると黒く塗れます。塗ったところは、送る切り抜きに写りません。";
+  wrap.append(bar, hint, crops);
+  return wrap;
+}
+
 function addCard(item) {
   const card = document.createElement("article");
   card.className = "card";
@@ -215,8 +320,12 @@ function addCard(item) {
   const canvas = document.createElement("canvas");
   canvas.setAttribute("role", "img");
   canvas.setAttribute("aria-label", `${item.name}：間違いの印 ${wrong}個、○ ${ok}個を見つけた`);
-  draw(canvas, item.bitmap, item.result, item.truth);
-  card.append(head, canvas);
+  const redraw = () => {
+    draw(canvas, item.bitmap, item.result, item.truth);
+    if (item.mask) canvas.getContext("2d").drawImage(item.mask, 0, 0, canvas.width, canvas.height);
+  };
+  redraw();
+  card.append(head, canvas, penTools(item, canvas, redraw));
   if (item.truth) {
     const n = document.createElement("p");
     n.className = "note";
@@ -283,6 +392,7 @@ function render() {
     `印でないものを印とした数: ${t.falsePositive}`,
     `枠に名前の欄が入った写真: ${t.name}`,
     `処理の時間（写真）: 平均 ${avg ?? "-"}ms / 最大 ${max ?? "-"}ms`,
+    `かくすペン: ${items.filter((i) => i.strokes).length}枚で使用（なぞった回数 ${items.reduce((n, i) => n + (i.strokes || 0), 0)}、最初に押してから最後になぞるまで 平均 ${(() => { const t = items.filter((i) => i.penMs).map((i) => i.penMs); return t.length ? Math.round(t.reduce((a, b) => a + b, 0) / t.length / 1000) + "秒" : "-"; })()}）`,
     ...items.filter((i) => !i.truth).map((i) => `- ${i.width}×${i.height} ${Math.round(i.ms)}ms`),
   ].join("\n");
 }
