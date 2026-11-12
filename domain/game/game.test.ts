@@ -127,6 +127,8 @@ describe("再来の日程（BR-6-2）", () => {
     const done = todayRevisits(items, 5, "2026-11-10");
     expect(done).toEqual({ list: [], doneForToday: true });
     expect(todayRevisits([], 0, "2026-11-10").doneForToday).toBe(false);
+    // 予定の分を全部倒したときも「今日はおしまい」
+    expect(todayRevisits([], 1, "2026-11-10").doneForToday).toBe(true);
   });
 });
 

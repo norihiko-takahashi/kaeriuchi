@@ -66,7 +66,7 @@ export const isDue = (s: ReviewState, today: string) =>
 export interface TodayRevisits<T> {
   /** 今日出すもの（予定の日が古い順に、上限まで） */
   list: T[];
-  /** 今日の分を全部倒して、残りは次の日（BR-6-2） */
+  /** 今日の再来を1匹以上倒して、今日の分が残っていない（上限に届いたか、予定の分を全部倒した・BR-6-2） */
   doneForToday: boolean;
 }
 
@@ -81,8 +81,6 @@ export function todayRevisits<T extends { state: ReviewState }>(
     .filter((i) => isDue(i.state, today))
     .sort((a, b) => (a.state.dueDay ?? "").localeCompare(b.state.dueDay ?? ""));
   const remaining = Math.max(0, cap - revisitsDoneToday);
-  return {
-    list: due.slice(0, remaining),
-    doneForToday: revisitsDoneToday > 0 && remaining === 0,
-  };
+  const list = due.slice(0, remaining);
+  return { list, doneForToday: revisitsDoneToday > 0 && list.length === 0 };
 }
