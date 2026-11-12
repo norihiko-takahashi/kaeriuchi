@@ -27,7 +27,7 @@ const ruby = [
 ];
 const text = "分母を、最小公倍数にそろえる";
 
-function html(grade: Grade, mode: DisplayMode) {
+function mount(grade: Grade, mode: DisplayMode) {
   const { container } = render(
     <AppStateProvider>
       <As grade={grade} mode={mode}>
@@ -37,8 +37,10 @@ function html(grade: Grade, mode: DisplayMode) {
       </As>
     </AppStateProvider>,
   );
-  return container.innerHTML;
+  return container;
 }
+
+const html = (grade: Grade, mode: DisplayMode) => mount(grade, mode).innerHTML;
 
 describe("RubyText（BR-6-7）", () => {
   it("習っていない漢字を含む語にだけ付ける。長い語を先に当てる", () => {
@@ -47,11 +49,10 @@ describe("RubyText（BR-6-7）", () => {
     expect(e1).toContain("<rt>ぶんぼ</rt>");
     expect(e1).toContain("<rt>さいしょうこうばいすう</rt>");
     expect(e1).not.toContain("<rt>こうばいすう</rt>");
-    expect(
-      e1
-        .replace(/<[^>]+>|（[^）]*）/g, "")
-        .replace(/ぶんぼ|さいしょうこうばいすう/g, ""),
-    ).toBe(text);
+    // ふりがなを取り除くと、元の文に戻る（文字が欠けたり増えたりしない）
+    const el = mount("e1", "lower");
+    for (const r of el.querySelectorAll("rt, rp")) r.remove();
+    expect(el.textContent).toBe(text);
   });
 
   it("習った漢字だけなら付けない。中学生モードでは付けない", () => {
