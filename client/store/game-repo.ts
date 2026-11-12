@@ -1,5 +1,6 @@
 import { type DexRank, dex } from "@/domain/game/dex";
 import {
+  groupByMistake,
   type ReplayStep,
   type ReviewState,
   replay,
@@ -139,17 +140,10 @@ async function load(childId: string) {
   return { mistakes, records, sheets };
 }
 
-function byMistake(records: BattleRecord[]): Map<string, BattleRecord[]> {
-  const out = new Map<string, BattleRecord[]>();
-  for (const r of records)
-    out.set(r.mistakeId, [...(out.get(r.mistakeId) ?? []), r]);
-  return out;
-}
-
 export async function gameSummary(childId: string): Promise<GameSummary> {
   const { today, clockBack } = await currentDay();
   const { mistakes, records, sheets } = await load(childId);
-  const grouped = byMistake(records);
+  const grouped = groupByMistake(records);
   const views: MistakeView[] = mistakes.map((m) => ({
     mistake: m,
     state: reviewState(grouped.get(m.id) ?? []),
@@ -230,7 +224,7 @@ export async function battleOutcome(
   const upTo = [...without, target];
 
   const xpOf = (rs: BattleRecord[]) =>
-    [...byMistake(rs).values()]
+    [...groupByMistake(rs).values()]
       .flatMap(replay)
       .reduce((n, s) => n + sumXp(xpForStep(s)), 0);
   const step = replay(upTo.filter((r) => r.mistakeId === mistake.id)).at(-1);
@@ -238,7 +232,7 @@ export async function battleOutcome(
   const parts = xpForStep(step);
 
   const dexOf = (rs: BattleRecord[]) => {
-    const grouped = byMistake(rs);
+    const grouped = groupByMistake(rs);
     return dex(
       mistakes.map((m) => ({
         mistakeTypeId: m.mistakeTypeId,

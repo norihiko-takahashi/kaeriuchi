@@ -1,5 +1,10 @@
 import { addDays, weekday } from "@/domain/game/day";
-import { everDefeated, replay, reviewState } from "@/domain/game/review";
+import {
+  everDefeated,
+  groupByMistake,
+  replay,
+  reviewState,
+} from "@/domain/game/review";
 import { streak } from "@/domain/game/streak";
 import type { BattleRecord } from "@/domain/game/types";
 
@@ -49,9 +54,7 @@ export function computeInsights(
   today: string,
   weeks = 8,
 ): Insights {
-  const byMistake = new Map<string, BattleRecord[]>();
-  for (const r of records)
-    byMistake.set(r.mistakeId, [...(byMistake.get(r.mistakeId) ?? []), r]);
+  const byMistake = groupByMistake(records);
   const defeated = new Set(
     mistakes
       .filter((m) => everDefeated(reviewState(byMistake.get(m.id) ?? [])))
