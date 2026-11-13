@@ -1,17 +1,25 @@
 # U7 コードの作成：まとめ
 
+2026-11-13 に、デザイン案 E（棚卸し表で組み直した形）で作り直した。
+
 | 場所 | 内容 |
 |---|---|
-| `domain/parent/insights.ts` | 集計（まとめ・教科ごと・TOP5・週ごとの推移）。単体テストつき |
-| `client/store/game-repo.ts` | `insightsFor(childId)` |
-| `components/parent/charts.tsx` | 横の棒・たての棒・折れ線（SVG）。なぞる・フォーカスで値を出す |
-| `app/parent/insights/page.tsx` | 「学習のようす」。保護者メニューに入り口を足した |
+| `domain/parent/insights.ts` | 集計。今週・これまで（4つの段階・再来の撃破率）・連続記録・カレンダー・最近覚えた間違い・教科ごと・登録の多い間違い・週ごとの推移。日の詳細（`dayDetail`）。単体テストつき |
+| `client/store/game-repo.ts` | `insightsFor(childId)`、`dayDetailFor(childId, day)` |
+| `components/parent/footprints.tsx` | 学習の足あと（カレンダー）。記録のある日だけ押せる。矢印キーで記録のある日を移る |
+| `components/parent/labels.ts` | 保護者向けの言葉（教科・段階・日付・バトルの結果） |
+| `components/parent/before-after.tsx` | 間違いの前と後 |
+| `components/parent/charts.tsx` | 横の棒・たての棒・折れ線。目安の線は消した |
+| `app/parent/insights/page.tsx` | 学習のようす（最初の画面） |
+| `app/parent/insights/day/page.tsx` | 日の詳細（`#子どもの ID/日付`）。その日のミスモンと結果、覚えたものの前と後、登録した間違い |
 
 ## 確かめたこと（ローカル）
-- 単体テスト 339件成功
-- E2E：撃破 → 翌日の再来のあとに「学習のようす」を開き、数・TOP5・表（1/1・100%）を確かめる。axe と CSP の違反なし
-- 見本の記録（8週分）を入れた画面を、スマホの幅で目で確かめた
+- 単体テスト 348件成功（`insights.ts` の行の網羅 100%）
+- E2E 12件成功（Chromium）。撃破 → 翌日の再来のあとに「学習のようす」を開き、今週の文・4つの段階・再来の撃破率・連続記録・目安が出ないこと・くわしく見る・カレンダーから日の詳細・前の日への移動を確かめる。axe と CSP の違反なし
+- 画面の大きさ：学習のようす 186.8KB、日の詳細 183.8KB（保護者の画面は予算の対象外）
+- スマホの幅の画面写真で、並びとカレンダーの大きさを目で確かめた
 
 ## まだできていないこと
 - ほかの端末の記録を合わせて見る（U8）
 - AI による傾向のまとめ（MVP に入れない）
+- カレンダーの「1回」と「2回」の色の差は 3:1 に届かない（凡例の文字と読み上げで補う）

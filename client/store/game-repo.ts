@@ -18,7 +18,12 @@ import {
   type XpPart,
   xpForStep,
 } from "@/domain/game/xp";
-import { computeInsights, type Insights } from "@/domain/parent/insights";
+import {
+  computeInsights,
+  type DayDetail,
+  dayDetail,
+  type Insights,
+} from "@/domain/parent/insights";
 import { type Mistake, SHEET_TITLE_MAX, type Sheet } from "@/shared/battle";
 import type { Subject } from "@/shared/problem";
 import type { OutboxItem } from "@/shared/schemas";
@@ -194,6 +199,16 @@ export async function insightsFor(childId: string): Promise<Insights> {
   const { today } = await currentDay();
   const { mistakes, records } = await load(childId);
   return computeInsights(mistakes, records, today);
+}
+
+/** 「学習のようす」の日の詳細（U7） */
+export async function dayDetailFor(
+  childId: string,
+  day: string,
+): Promise<DayDetail> {
+  const { today } = await currentDay();
+  const { mistakes, records } = await load(childId);
+  return dayDetail(mistakes, records, day, today);
 }
 
 /** 結果の画面で見せる、このバトルでもらったもの（BR-6-3・6-4・6-5） */

@@ -6,6 +6,7 @@ import { useState } from "react";
  * 保護者向けの小さなグラフ（U7）。ライブラリは使わず、SVG で描く（画面の大きさを増やさない）。
  * - 1つのグラフに1つの値だけ（2つの軸を持つグラフは作らない）
  * - 色は1色（アプリの主の色）。値は文字でも出し、表でも見られる（色だけで伝えない）
+ * - 目安の線や順位など、評価に見えるものは描かない（NFR-P10）
  * - なぞる・フォーカスすると、その週の値を出す
  */
 
@@ -140,14 +141,11 @@ export function WeeklyBars({
   );
 }
 
-/** 週ごとの割合（折れ線）。目安の線つき。記録のない週は点を打たず、線も切る */
-export function WeeklyRate({
-  points,
-  target,
-}: {
-  points: WeekPoint[];
-  target: number;
-}) {
+/**
+ * 週ごとの割合（折れ線）。記録のない週は点を打たず、線も切る。
+ * 目安の線は引かない（目安と比べると評価になる・2026-11-13 に決定）
+ */
+export function WeeklyRate({ points }: { points: WeekPoint[] }) {
   const [hover, setHover] = useState<number | null>(null);
   const slot = plotW / points.length;
   const x = (i: number) => PAD.l + slot * i + slot / 2;
@@ -190,23 +188,6 @@ export function WeeklyRate({
           </text>
         </g>
       ))}
-      <line
-        x1={PAD.l}
-        x2={W - PAD.r}
-        y1={y(target)}
-        y2={y(target)}
-        className="stroke-[var(--text-muted)]"
-        strokeWidth={1}
-        strokeDasharray="4 4"
-      />
-      <text
-        x={W - PAD.r}
-        y={y(target) - 4}
-        textAnchor="end"
-        className="fill-[var(--text-muted)] text-[10px]"
-      >
-        目安 {Math.round(target * 100)}%
-      </text>
       {segments.map((d) => (
         <path
           key={d}

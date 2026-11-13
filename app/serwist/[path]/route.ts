@@ -23,6 +23,7 @@ const APP_ROUTES = [
   "/parent/data",
   "/parent/reports",
   "/parent/insights",
+  "/parent/insights/day",
   "/mistakes/new",
   "/mistakes/found",
   "/battle",
