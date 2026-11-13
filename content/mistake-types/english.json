@@ -1,5 +1,5 @@
 {
-  "note": "間違いのタイプの一覧（content-data-plan.md の A）。source が ai-draft のものは、AI（Claude）が学習指導要領の内容をもとに書いた下書き。全国学力・学習状況調査の報告書とはまだ照らし合わせていない。見直した人と日付を reviewedBy・reviewedOn に入れる（2026-11-12 に決定：まずユーザー、β版の前に元教員など）。monster と color は仮のミスモン（OQ6）。",
+  "note": "間違いのタイプの一覧（content-data-plan.md の A）。source が ai-draft のものは、AI（Claude）が学習指導要領の内容をもとに書いた下書き。2026-11-12 に、学年を学習指導要領（平成29年告示）と、つまずきを全国学力・学習状況調査の分析資料と照らし合わせた（文部科学省のサイトは開けなかったため、それを引用した自治体・教科書会社の資料で確認。結果は aidlc-docs/inception/mistake-types-check.md）。見直した人と日付を reviewedBy・reviewedOn に入れる（2026-11-12 に決定：まずユーザー、β版の前に元教員など）。monster と color は仮のミスモン（OQ6）。",
   "types": [
     {
       "id": "english.verb.third-person-s",

@@ -68,7 +68,7 @@
     [
       "math.decimal.align",
       "math",
-      "e4 e5",
+      "e3 e4 e5",
       "小数のたし算・ひき算で、小数点をそろえない",
       "テンズラシ",
       "#d1495b"
@@ -84,7 +84,7 @@
     [
       "math.fraction.add-denominators",
       "math",
-      "e5",
+      "e3 e4 e5",
       "分数のたし算で、分母どうしも足してしまう",
       "ブンボタッシー",
       "#e76f51"
@@ -164,7 +164,7 @@
     [
       "math.speed.relation",
       "math",
-      "e6",
+      "e5 e6",
       "速さ・時間・道のりの関係を取り違える",
       "ハヤサマゼ",
       "#d1495b"
@@ -316,7 +316,7 @@
     [
       "japanese.grammar.subject-predicate",
       "japanese",
-      "e2 e3 e4 e5 e6",
+      "e1 e2 e3 e4 e5 e6",
       "主語と述語が合わない文を書く",
       "シュゴネジレ",
       "#b5838d"
@@ -340,7 +340,7 @@
     [
       "japanese.idiom.meaning",
       "japanese",
-      "e4 e5 e6 j1",
+      "e3 e4 e5 e6 j1",
       "ことわざや慣用句を、文字どおりの意味でとる",
       "コトワザマチ",
       "#a86cc1"
@@ -492,7 +492,7 @@
     [
       "science.circuit.series-parallel",
       "science",
-      "e4 e6",
+      "e4 j2",
       "直列つなぎと並列つなぎを取り違える",
       "チョクヘイコン",
       "#52b788"
@@ -596,7 +596,7 @@
     [
       "social.climate.region",
       "social",
-      "e5 j1",
+      "e5 j1 j2",
       "気候の特色と地域を取り違える",
       "キコウアベコベ",
       "#a64d79"
