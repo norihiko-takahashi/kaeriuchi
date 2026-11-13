@@ -6,6 +6,7 @@ import type {
   Mistake,
   PendingRegrade,
   ProblemReport,
+  Sheet,
 } from "@/shared/battle";
 import { SHEET_MISTAKE_MAX } from "@/shared/battle";
 import type { Grade } from "@/shared/constants";
@@ -16,7 +17,7 @@ import type {
 } from "@/shared/problem";
 import type { OutboxItem, SyncEntity } from "@/shared/schemas";
 import { currentDay, nextBattleOrder } from "./clock";
-import { getDB } from "./db";
+import { getDB, sheetTitle } from "./db";
 import { toRecord } from "./records";
 import { getRules, requireGuardian } from "./repo";
 
@@ -126,6 +127,85 @@ export async function createMistake(input: NewMistake): Promise<Mistake> {
     updatedDay: day,
     version: 0,
   });
+}
+
+/** 写真から読み取った間違い1問（U3）。子どもが確かめたあとのもの */
+export interface PhotoMistake {
+  subject: Subject;
+  question: string;
+  childAnswer: string;
+  correctAnswer: string;
+  classified: ClassifyResult;
+  classifiedBy: Mistake["classifiedBy"];
+}
+
+/**
+ * 1回の撮影の間違いを、新しい1つのテストにまとめて登録する（FR-2.7、U3）。
+ * テストと間違いは1つのトランザクションで入れる（途中で失敗したら、空のテストを残さない）。
+ * テストの教科は、選んだ教科（「わからない」なら、いちばん多かった教科）
+ */
+export async function registerPhotoMistakes(input: {
+  childId: string;
+  grade: Grade;
+  subject?: Subject;
+  mistakes: PhotoMistake[];
+}): Promise<{ sheet: Sheet; mistakes: Mistake[] }> {
+  if (input.mistakes.length === 0)
+    throw new Error("登録する間違いがありません");
+  if (input.mistakes.length > SHEET_MISTAKE_MAX)
+    throw new SheetFullError(SHEET_MISTAKE_MAX);
+  const guardian = await requireGuardian();
+  const { used, limit } = await mistakesToday(input.childId);
+  if (used + input.mistakes.length > limit) throw new DailyLimitError(limit);
+  const day = await today();
+  const subject =
+    input.subject ?? mostCommon(input.mistakes.map((m) => m.subject));
+  const sheet: Sheet = {
+    id: crypto.randomUUID(),
+    guardianId: guardian.id,
+    childId: input.childId,
+    title: sheetTitle(subject, day),
+    subject,
+    createdDay: day,
+    version: 1,
+  };
+  const mistakes: Mistake[] = input.mistakes.map((m) => ({
+    id: crypto.randomUUID(),
+    guardianId: guardian.id,
+    childId: input.childId,
+    sheetId: sheet.id,
+    subject: m.subject,
+    grade: input.grade,
+    question: m.question,
+    childAnswer: m.childAnswer,
+    correctAnswer: m.correctAnswer,
+    mistakeTypeId: m.classified.mistakeTypeId,
+    unit: m.classified.unit,
+    explanation: m.classified.explanation,
+    source: "photo",
+    status: "new",
+    usedPrompts: [],
+    classifiedBy: m.classifiedBy,
+    createdDay: day,
+    updatedDay: day,
+    version: 1,
+  }));
+  const db = getDB();
+  await db.transaction("rw", db.sheets, db.mistakes, db.outbox, async () => {
+    await db.sheets.put(sheet);
+    await db.outbox.add(outboxItem("sheet", sheet.id, sheet));
+    for (const m of mistakes) {
+      await db.mistakes.put(m);
+      await db.outbox.add(outboxItem("mistake", m.id, m));
+    }
+  });
+  return { sheet, mistakes };
+}
+
+function mostCommon<T extends string>(xs: T[]): T {
+  const n = new Map<T, number>();
+  for (const x of xs) n.set(x, (n.get(x) ?? 0) + 1);
+  return [...n.entries()].sort((a, b) => b[1] - a[1])[0][0];
 }
 
 export async function getMistake(id: string): Promise<Mistake | undefined> {

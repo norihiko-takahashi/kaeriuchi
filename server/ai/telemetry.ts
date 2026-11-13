@@ -20,6 +20,8 @@ export interface AiCallLog {
   /** 生成：通った数・落とした数（中身は出さない） */
   verified?: number;
   rejected?: number;
+  /** 解析：伏せ字にした種類の数（文字は出さない・U3-PRIV-3） */
+  piiKinds?: number;
   provider: string;
   promptVersion?: string;
   latencyMs: number;

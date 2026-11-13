@@ -65,10 +65,13 @@ body {
   min-width: var(--tap);
 }
 
-.card {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
+/* 部品の層に入れる（border-4 などのユーティリティで上書きできるように。層の外に置くと、ユーティリティより強くなる） */
+@layer components {
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+  }
 }
 
 ruby rt {

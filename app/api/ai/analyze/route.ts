@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { mistakeTypeCatalog } from "@/server/ai/catalog";
 import { classifyError, errorResponse, guard } from "@/server/ai/guard";
 import { checkImage, MAX_IMAGE_BYTES } from "@/server/ai/image";
+import { redactAnalysis } from "@/server/ai/pii";
 import { analyzePrompt } from "@/server/ai/prompts";
 import { aiAllowed, getProvider } from "@/server/ai/registry";
 import { Grade, Subject } from "@/server/ai/schemas";
@@ -61,7 +62,7 @@ export async function POST(request: Request) {
   const started = Date.now();
   try {
     const subjectHint = subject?.success ? subject.data : undefined;
-    const { value, usage } = await getProvider(config).analyzeMistake(
+    const { value: raw, usage } = await getProvider(config).analyzeMistake(
       {
         image: { mime: image.mime, data: bytes },
         grade: grade.data,
@@ -70,6 +71,8 @@ export async function POST(request: Request) {
       },
       { requestId, signal },
     );
+    // 名前などは伏せ字にしてから返す。伏せる前の文字は返さない・残さない（US-3.3）
+    const { value, kinds } = redactAnalysis(raw);
     logAiCall({
       requestId,
       route: "analyze",
@@ -77,6 +80,7 @@ export async function POST(request: Request) {
       promptVersion: analyzePrompt.id,
       latencyMs: Date.now() - started,
       outcome: "ok",
+      piiKinds: kinds,
       usage,
     });
     return NextResponse.json(
