@@ -44,7 +44,8 @@ export interface Mistake {
   mistakeTypeId: string;
   unit: string;
   explanation: string;
-  source: "manual";
+  /** 手で入れた／写真から読み取った（U3） */
+  source: "manual" | "photo";
   status: MistakeStatus;
   /** これまでに出した問題（再来で同じ問題を出さないため） */
   usedPrompts: string[];

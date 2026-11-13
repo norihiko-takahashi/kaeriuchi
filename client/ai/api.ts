@@ -1,3 +1,4 @@
+import type { AnalyzeResponse } from "@/shared/capture";
 import type { Grade } from "@/shared/constants";
 import type {
   ClassifyResult,
@@ -40,17 +41,32 @@ const OFFLINE = new ApiError(
   "インターネットに つながっていないよ。つながってから ためしてね",
 );
 
-async function post(path: string, body: unknown, signal?: AbortSignal) {
+async function post(
+  path: string,
+  body: unknown,
+  signal?: AbortSignal,
+): Promise<Response> {
+  return send(
+    path,
+    { "content-type": "application/json" },
+    JSON.stringify(body),
+    signal,
+  );
+}
+
+async function send(
+  path: string,
+  headers: Record<string, string>,
+  body: BodyInit,
+  signal?: AbortSignal,
+): Promise<Response> {
   if (typeof navigator !== "undefined" && !navigator.onLine) throw OFFLINE;
   let res: Response;
   try {
     res = await fetch(path, {
       method: "POST",
-      headers: {
-        "content-type": "application/json",
-        "x-device-id": await deviceId(),
-      },
-      body: JSON.stringify(body),
+      headers: { ...headers, "x-device-id": await deviceId() },
+      body,
       signal,
     });
   } catch (e) {
@@ -149,4 +165,19 @@ export async function gradeFreeText(input: {
 }): Promise<boolean> {
   const json = await (await post("/api/ai/grade", input)).json();
   return json.result.correct === true;
+}
+
+/**
+ * 切り抜いた画像を読み取ってもらう（U3）。送るのは枠の中の画像だけ（U3-PRIV-2）。
+ * 教科を選んでいれば一緒に送る（選ばなければ AI が推定する）。
+ */
+export async function analyzeImage(
+  input: { image: Blob; grade: Grade; subject?: Subject },
+  signal?: AbortSignal,
+): Promise<AnalyzeResponse> {
+  const form = new FormData();
+  form.append("image", input.image, "crop.jpg");
+  form.append("grade", input.grade);
+  if (input.subject) form.append("subject", input.subject);
+  return (await send("/api/ai/analyze", {}, form, signal)).json();
 }

@@ -1,9 +1,10 @@
 "use client";
 
 import { useId, useState } from "react";
+import { RubyText } from "@/components/ruby-text";
 import { Button } from "@/components/ui";
 import type { ChildAnswer } from "@/domain/battle/grading";
-import type { ProblemDraft } from "@/shared/problem";
+import type { ProblemDraft, RubyEntry } from "@/shared/problem";
 
 /** 子どもの答えを、教科と答え方に合った形で受け取る（US-4.4） */
 export function AnswerInput({
@@ -46,9 +47,11 @@ export function AnswerInput({
               key={o}
               variant="secondary"
               className="text-xl"
+              // 読み上げでは、ふりがなを重ねて読まないように、もとの文字で伝える
+              aria-label={o}
               onClick={() => onSubmit({ kind: "text", value: o }, o)}
             >
-              {o}
+              <RubyText text={o} ruby={problem.ruby} />
             </Button>
           ))}
         </fieldset>
@@ -58,6 +61,7 @@ export function AnswerInput({
         <OrderingAnswer
           key={problem.prompt}
           tokens={f.tokens}
+          ruby={problem.ruby}
           disabled={disabled}
           onSubmit={(words) =>
             onSubmit({ kind: "ordering", value: words }, words.join(" "))
@@ -169,10 +173,12 @@ function TextAnswer({
 
 function OrderingAnswer({
   tokens,
+  ruby,
   disabled,
   onSubmit,
 }: {
   tokens: string[];
+  ruby?: RubyEntry[];
   disabled?: boolean;
   onSubmit: (words: string[]) => void;
 }) {
@@ -192,9 +198,10 @@ function OrderingAnswer({
             key={i}
             variant="secondary"
             disabled={disabled}
+            aria-label={t}
             onClick={() => setPicked((p) => [...p, i])}
           >
-            {t}
+            <RubyText text={t} ruby={ruby} />
           </Button>
         ))}
       </div>

@@ -37,6 +37,8 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
         <SerwistProvider
           swUrl="/serwist/sw.js"
           disable={process.env.NODE_ENV === "development"}
+          // つながり直したときに自動で再読み込みしない（入力の途中や、メモリにだけ持つ撮影の写真が消えるため・U3-PRIV-1）
+          reloadOnOnline={false}
         >
           <SwUpdateProvider>
             <AppStateProvider>{children}</AppStateProvider>

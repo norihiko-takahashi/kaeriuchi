@@ -71,18 +71,14 @@ function HomeBody({ child }: { child: ChildProfile }) {
         <p className="text-lg font-bold">
           まちがえた もんだいを とって、ミスモンを かえりうちに しよう！
         </p>
-        <button
-          type="button"
-          disabled
-          className="tap rounded-[var(--radius)] bg-primary px-8 py-4 text-xl font-bold text-on-primary opacity-60"
-          aria-describedby="capture-soon"
-        >
+        <LinkButton href="/capture" className="px-8 py-4 text-xl">
           📷 ミスモンを よぶ
-        </button>
-        <p id="capture-soon" className="text-sm text-muted">
-          じゅんびちゅう（もうすぐ つかえるように なるよ）
-        </p>
-        <LinkButton href="/mistakes/new" className="text-xl">
+        </LinkButton>
+        <LinkButton
+          href="/mistakes/new"
+          variant="secondary"
+          className="text-xl"
+        >
           ✏️ てで いれる
         </LinkButton>
       </section>

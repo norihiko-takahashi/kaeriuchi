@@ -17,6 +17,7 @@ const KID_ROUTES = [
   "profiles/new/nickname-guide",
   "profiles/new/nickname",
   "mistakes/new",
+  "capture",
   "mistakes/found",
   "battle",
   "sheets",

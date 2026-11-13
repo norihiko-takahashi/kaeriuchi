@@ -18,7 +18,9 @@ import {
   mistakesToday,
   type NewMistake,
   openMistakes,
+  type PhotoMistake,
   pendingRegrades,
+  registerPhotoMistakes,
   SheetFullError,
   saveBattle,
 } from "./battle-repo";
@@ -252,6 +254,60 @@ describe("1つのテストに入れられる数", () => {
       })),
     );
     await expect(createMistake(input())).rejects.toBeInstanceOf(SheetFullError);
+  });
+});
+
+describe("写真からまとめて登録（U3）", () => {
+  const photo = (subject: PhotoMistake["subject"]): PhotoMistake => {
+    const { classified, classifiedBy, question, childAnswer, correctAnswer } =
+      input();
+    return {
+      subject,
+      question,
+      childAnswer,
+      correctAnswer,
+      classified,
+      classifiedBy,
+    };
+  };
+
+  it("新しい1つのテストに、まとめて入れる。教科がなければ多いほう", async () => {
+    const r = await registerPhotoMistakes({
+      childId,
+      grade: "e5",
+      mistakes: [photo("english"), photo("math"), photo("english")],
+    });
+    expect(r.sheet.subject).toBe("english");
+    expect(r.mistakes).toHaveLength(3);
+    expect(r.mistakes.every((m) => m.source === "photo")).toBe(true);
+    expect(await db.mistakes.where("sheetId").equals(r.sheet.id).count()).toBe(
+      3,
+    );
+    expect(await db.sheets.get(r.sheet.id)).toEqual(r.sheet);
+    const chosen = await registerPhotoMistakes({
+      childId,
+      grade: "e5",
+      subject: "math",
+      mistakes: [photo("english")],
+    });
+    expect(chosen.sheet.subject).toBe("math");
+  });
+
+  it("1日の上限を超えるなら、1問も入れない（空のテストも作らない）", async () => {
+    await setRules(childId, { dailyMistakeLimit: 2, notifications: false });
+    const sheets = await db.sheets.count();
+    await expect(
+      registerPhotoMistakes({
+        childId,
+        grade: "e5",
+        mistakes: [photo("math"), photo("math"), photo("math")],
+      }),
+    ).rejects.toBeInstanceOf(DailyLimitError);
+    expect(await db.sheets.count()).toBe(sheets);
+    expect((await mistakesToday(childId)).used).toBe(0);
+    await expect(
+      registerPhotoMistakes({ childId, grade: "e5", mistakes: [] }),
+    ).rejects.toThrow();
   });
 });
 
