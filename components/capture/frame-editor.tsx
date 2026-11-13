@@ -291,10 +291,12 @@ export function FrameEditor({
   return (
     <div
       ref={outer}
-      className="relative w-full touch-none overflow-hidden rounded-[var(--radius)] border border-line bg-[#111] select-none"
+      className="relative touch-none overflow-hidden rounded-[var(--radius)] border border-line bg-[#111] select-none"
       style={{
         aspectRatio: `${photo.width} / ${photo.height}`,
-        maxHeight: "70dvh",
+        // 縦長の写真でも画面の 70% の高さに収める。縦横の比は変えない（幅を縮める）
+        width: `min(100%, calc(70dvh * ${photo.width / photo.height}))`,
+        marginInline: "auto",
       }}
     >
       <div

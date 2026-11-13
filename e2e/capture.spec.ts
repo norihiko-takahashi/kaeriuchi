@@ -60,6 +60,10 @@ function makePng(): Buffer {
 
 /** 写真の画素の位置を、画面の位置に直してなぞる */
 async function drag(page: Page, from: [number, number], to: [number, number]) {
+  // なぞる場所が画面に入るように、写真の上の端を画面の上に合わせる（スマホの幅では写真が画面より長い）
+  await page
+    .getByTestId("frame-editor")
+    .evaluate((el) => el.scrollIntoView({ block: "start" }));
   const box = await page.getByTestId("frame-editor").boundingBox();
   if (!box) throw new Error("no editor");
   const at = ([x, y]: [number, number]) => [
@@ -187,45 +191,50 @@ test("テストの写真から、囲んだ2問をまとめて登録できる。�
   ).toHaveCount(2);
 });
 
-test("読み取れなかった問題は、じぶんで いれるか やめるかを選べる。囲む前は送れない", async ({
-  page,
-}) => {
-  let calls = 0;
-  await page.route("**/api/ai/analyze", async (route) => {
-    calls++;
-    await route.fulfill({
-      status: 504,
-      contentType: "application/json",
-      body: JSON.stringify({
-        error: {
-          code: "timeout",
-          message: "じかんが かかりすぎちゃった。もう一回 ためしてね",
-          requestId: "r",
-        },
-      }),
-    });
-  });
-  await toHome(page);
-  await page.getByRole("link", { name: "📷 ミスモンを よぶ" }).click();
-  await page.getByRole("button", { name: "わからない" }).click();
-  await page.getByTestId("pick-photo").setInputFiles({
-    name: "test.png",
-    mimeType: "image/png",
-    buffer: makePng(),
-  });
-  await drag(page, [100, 100], [400, 300]);
-  await page.getByRole("button", { name: "つぎへ（1もん）" }).click();
-  await page.getByRole("button", { name: "おくる（1もん）" }).click();
+test.describe("読み取りの失敗", () => {
+  // WebKit では、Service Worker を通った通信を page.route で差し替えられないため、止めておく
+  test.use({ serviceWorkers: "block" });
 
-  await expect(page.getByText("よみとれなかったよ")).toBeVisible();
-  await expect(page.getByText("じかんが かかりすぎちゃった")).toBeVisible();
-  await page.getByRole("button", { name: "じぶんで いれる" }).click();
-  await page.getByLabel("もんだい").fill("3 + 4 = ?");
-  await page.getByLabel("きみの こたえ").fill("8");
-  await page.getByLabel("せいかい").fill("7");
-  await page.getByRole("button", { name: "これで とうろく する" }).click();
-  await expect(
-    page.getByRole("heading", { name: "ミスモンが 1ひき あらわれた！" }),
-  ).toBeVisible();
-  expect(calls).toBe(1);
+  test("読み取れなかった問題は、じぶんで いれて登録できる", async ({
+    page,
+  }) => {
+    let calls = 0;
+    await page.route("**/api/ai/analyze", async (route) => {
+      calls++;
+      await route.fulfill({
+        status: 504,
+        contentType: "application/json",
+        body: JSON.stringify({
+          error: {
+            code: "timeout",
+            message: "じかんが かかりすぎちゃった。もう一回 ためしてね",
+            requestId: "r",
+          },
+        }),
+      });
+    });
+    await toHome(page);
+    await page.getByRole("link", { name: "📷 ミスモンを よぶ" }).click();
+    await page.getByRole("button", { name: "わからない" }).click();
+    await page.getByTestId("pick-photo").setInputFiles({
+      name: "test.png",
+      mimeType: "image/png",
+      buffer: makePng(),
+    });
+    await drag(page, [100, 100], [400, 300]);
+    await page.getByRole("button", { name: "つぎへ（1もん）" }).click();
+    await page.getByRole("button", { name: "おくる（1もん）" }).click();
+
+    await expect(page.getByText("よみとれなかったよ")).toBeVisible();
+    await expect(page.getByText("じかんが かかりすぎちゃった")).toBeVisible();
+    await page.getByRole("button", { name: "じぶんで いれる" }).click();
+    await page.getByLabel("もんだい").fill("3 + 4 = ?");
+    await page.getByLabel("きみの こたえ").fill("8");
+    await page.getByLabel("せいかい").fill("7");
+    await page.getByRole("button", { name: "これで とうろく する" }).click();
+    await expect(
+      page.getByRole("heading", { name: "ミスモンが 1ひき あらわれた！" }),
+    ).toBeVisible();
+    expect(calls).toBe(1);
+  });
 });
