@@ -13,7 +13,8 @@
     "test:coverage": "vitest run --coverage",
     "e2e": "playwright test",
     "check:bundle": "node scripts/check-bundle-size.mjs",
-    "eval": "tsx --conditions=react-server --tsconfig tsconfig.json evals/run.mts"
+    "eval": "tsx --conditions=react-server --tsconfig tsconfig.json evals/run.mts",
+    "spike:r1": "tsx --tsconfig tsconfig.json spikes/r1/evaluate.mts"
   },
   "dependencies": {
     "@aws-sdk/client-bedrock": "^3.1163.0",

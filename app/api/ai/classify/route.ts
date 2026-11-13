@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { mistakeTypeCatalog } from "@/server/ai/catalog";
+import { isKnownMistakeType, mistakeTypeCatalog } from "@/server/ai/catalog";
 import { classifyError, errorResponse, guard } from "@/server/ai/guard";
 import { classifyPrompt } from "@/server/ai/prompts";
 import { aiAllowed, getProvider } from "@/server/ai/registry";
@@ -23,14 +23,15 @@ export async function POST(request: Request) {
     return errorResponse("ai_unavailable", requestId);
 
   const started = Date.now();
-  const catalog = mistakeTypeCatalog(body.data.subject);
+  const catalog = mistakeTypeCatalog(body.data.subject, body.data.grade);
   try {
     const { value, usage } = await getProvider(config).classifyMistake(
       { ...body.data, mistakeTypeCatalog: catalog },
       { requestId, signal },
     );
-    // 一覧にないタイプが返ってきたら "other" にする
-    const known = catalog.some((t) => t.id === value.mistakeTypeId);
+    // 一覧にないタイプが返ってきたら "other" にする。
+    // 学年で絞った候補の外でも、一覧にあるものは受け付ける（学年より先の問題を解いていることもあるため）
+    const known = isKnownMistakeType(value.mistakeTypeId);
     logAiCall({
       requestId,
       route: "classify",

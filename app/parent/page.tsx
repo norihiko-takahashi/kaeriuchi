@@ -190,6 +190,9 @@ export default function ParentMenu() {
           ) : null}
 
           <nav className="grid grid-cols-2 gap-3">
+            <LinkButton href="/parent/insights" variant="secondary">
+              学習のようす
+            </LinkButton>
             <LinkButton href="/parent/rules" variant="secondary">
               使い方のルール
             </LinkButton>

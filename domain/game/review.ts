@@ -36,6 +36,19 @@ export function applyBattle(s: ReviewState, r: BattleRecord): ReviewState {
   return { stage: s.stage === 0 ? 0 : 1, dueDay: addDays(r.day, 1) };
 }
 
+/** 記録をミスモンごとに分ける（記録の数に比例する時間で終わる） */
+export function groupByMistake(
+  records: BattleRecord[],
+): Map<string, BattleRecord[]> {
+  const out = new Map<string, BattleRecord[]>();
+  for (const r of records) {
+    const list = out.get(r.mistakeId);
+    if (list) list.push(r);
+    else out.set(r.mistakeId, [r]);
+  }
+  return out;
+}
+
 /** 1匹のミスモンの記録を、順番どおりに当てはめる */
 export function replay(records: BattleRecord[]): ReplayStep[] {
   const steps: ReplayStep[] = [];

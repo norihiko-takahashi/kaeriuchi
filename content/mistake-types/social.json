@@ -1,0 +1,192 @@
+{
+  "note": "間違いのタイプの一覧（content-data-plan.md の A）。source が ai-draft のものは、AI（Claude）が学習指導要領の内容をもとに書いた下書き。2026-11-12 に、学年を学習指導要領（平成29年告示）と、つまずきを全国学力・学習状況調査の分析資料と照らし合わせた（文部科学省のサイトは開けなかったため、それを引用した自治体・教科書会社の資料で確認。結果は aidlc-docs/inception/mistake-types-check.md）。見直した人と日付を reviewedBy・reviewedOn に入れる（2026-11-12 に決定：まずユーザー、β版の前に元教員など）。monster と color は仮のミスモン（OQ6）。",
+  "types": [
+    {
+      "id": "social.term.confusion",
+      "subject": "social",
+      "unit": "用語",
+      "grades": ["e3", "e4", "e5", "e6", "j1", "j2", "j3"],
+      "label": "用語・地名を取り違える",
+      "example": {
+        "question": "日本でいちばん長い川",
+        "wrong": "利根川",
+        "correct": "信濃川"
+      },
+      "monster": "ゴチャマゼン",
+      "color": "#a64d79",
+      "source": "ai-draft",
+      "reviewedBy": null,
+      "reviewedOn": null
+    },
+    {
+      "id": "social.map.direction",
+      "subject": "social",
+      "unit": "地図の見方",
+      "grades": ["e3"],
+      "label": "八方位（北東・南西など）を取り違える",
+      "example": {
+        "question": "地図で右上の方位",
+        "wrong": "北西",
+        "correct": "北東"
+      },
+      "monster": "ハッポウマヨイ",
+      "color": "#8d6e63",
+      "source": "ai-draft",
+      "reviewedBy": null,
+      "reviewedOn": null
+    },
+    {
+      "id": "social.map.symbol",
+      "subject": "social",
+      "unit": "地図記号",
+      "grades": ["e3", "e4"],
+      "label": "地図記号を取り違える",
+      "example": {
+        "question": "「文」の地図記号",
+        "wrong": "病院",
+        "correct": "小・中学校"
+      },
+      "monster": "キゴウクラクラ",
+      "color": "#bc6c25",
+      "source": "ai-draft",
+      "reviewedBy": null,
+      "reviewedOn": null
+    },
+    {
+      "id": "social.prefecture.capital",
+      "subject": "social",
+      "unit": "都道府県",
+      "grades": ["e4"],
+      "label": "都道府県と、その都道府県庁所在地を取り違える",
+      "example": {
+        "question": "宮城県の県庁所在地",
+        "wrong": "宮城市",
+        "correct": "仙台市"
+      },
+      "monster": "ケンチョウマゼ",
+      "color": "#6d597a",
+      "source": "ai-draft",
+      "reviewedBy": null,
+      "reviewedOn": null
+    },
+    {
+      "id": "social.industry.region",
+      "subject": "social",
+      "unit": "日本の産業",
+      "grades": ["e5"],
+      "label": "産業と、それがさかんな地域を取り違える",
+      "example": {
+        "question": "りんごの生産がいちばん多い県",
+        "wrong": "静岡県",
+        "correct": "青森県"
+      },
+      "monster": "サンチマチガイ",
+      "color": "#b56576",
+      "source": "ai-draft",
+      "reviewedBy": null,
+      "reviewedOn": null
+    },
+    {
+      "id": "social.climate.region",
+      "subject": "social",
+      "unit": "日本の気候",
+      "grades": ["e5", "j1", "j2"],
+      "label": "気候の特色と地域を取り違える",
+      "example": {
+        "question": "冬に雪が多い地域",
+        "wrong": "太平洋側",
+        "correct": "日本海側"
+      },
+      "monster": "キコウアベコベ",
+      "color": "#a64d79",
+      "source": "ai-draft",
+      "reviewedBy": null,
+      "reviewedOn": null
+    },
+    {
+      "id": "social.history.order",
+      "subject": "social",
+      "unit": "歴史のできごと",
+      "grades": ["e6", "j1", "j2"],
+      "label": "歴史のできごとの順番を取り違える",
+      "example": {
+        "question": "先に起きたのは？ 鎌倉幕府／室町幕府",
+        "wrong": "室町幕府",
+        "correct": "鎌倉幕府"
+      },
+      "monster": "ジダイグルグル",
+      "color": "#8d6e63",
+      "source": "ai-draft",
+      "reviewedBy": null,
+      "reviewedOn": null
+    },
+    {
+      "id": "social.history.person",
+      "subject": "social",
+      "unit": "歴史の人物",
+      "grades": ["e6", "j1", "j2"],
+      "label": "歴史上の人物と、その人がしたことを取り違える",
+      "example": {
+        "question": "「天下統一をなしとげた人物」",
+        "wrong": "織田信長",
+        "correct": "豊臣秀吉"
+      },
+      "monster": "ジンブツスリカエ",
+      "color": "#bc6c25",
+      "source": "ai-draft",
+      "reviewedBy": null,
+      "reviewedOn": null
+    },
+    {
+      "id": "social.politics.three-powers",
+      "subject": "social",
+      "unit": "政治のしくみ",
+      "grades": ["e6", "j3"],
+      "label": "三権（立法・行政・司法）と、それを担う機関を取り違える",
+      "example": {
+        "question": "法律をつくる機関",
+        "wrong": "内閣",
+        "correct": "国会"
+      },
+      "monster": "サンケンバラバラ",
+      "color": "#6d597a",
+      "source": "ai-draft",
+      "reviewedBy": null,
+      "reviewedOn": null
+    },
+    {
+      "id": "social.graph.reading",
+      "subject": "social",
+      "unit": "資料の読み取り",
+      "grades": ["e3", "e4", "e5", "e6", "j1", "j2", "j3"],
+      "label": "グラフや資料の数字・単位を読み違える",
+      "example": {
+        "question": "単位が「万人」のグラフで「12」",
+        "wrong": "12人",
+        "correct": "12万人"
+      },
+      "monster": "シリョウヨミン",
+      "color": "#b56576",
+      "source": "ai-draft",
+      "reviewedBy": null,
+      "reviewedOn": null
+    },
+    {
+      "id": "social.kanji.term",
+      "subject": "social",
+      "unit": "社会の用語の漢字",
+      "grades": ["e4", "e5", "e6", "j1", "j2", "j3"],
+      "label": "社会の用語や人物名の漢字を書き間違える",
+      "example": {
+        "question": "「とくがわいえやす」を漢字で",
+        "wrong": "徳川家安",
+        "correct": "徳川家康"
+      },
+      "monster": "カンジマチガエル",
+      "color": "#a64d79",
+      "source": "ai-draft",
+      "reviewedBy": null,
+      "reviewedOn": null
+    }
+  ]
+}

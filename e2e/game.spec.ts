@@ -4,8 +4,10 @@ import {
   enterMistake,
   expectNoA11yViolations,
   failOnCspViolations,
+  PARENT_PIN,
   ready,
   toHome,
+  typePin,
 } from "./helpers";
 
 /**
@@ -90,6 +92,59 @@ test("撃破すると XP と図鑑の銅。翌日に再来して倒すと銀に�
   await page.getByRole("link", { name: /ずかん/ }).click();
   await expect(page).toHaveURL(/\/dex$/);
   await expect(page.getByText(/ぎん（さいらいも げきは）/)).toBeVisible();
+  await expectNoA11yViolations(page);
+
+  // 保護者メニューの「学習のようす」（U7）
+  await page.goto("/parent/insights");
+  await expect(page).toHaveURL(/\/parent\/unlock$/);
+  await typePin(page, "保護者の PIN（6桁）", PARENT_PIN);
+  await page.getByRole("button", { name: "確認" }).click();
+  await expect(page).toHaveURL(/\/parent$/);
+  await page.getByRole("link", { name: "学習のようす" }).click();
+  await expect(page).toHaveURL(/\/parent\/insights$/);
+  // 今週・これまで・足あと（同じ数字は1回だけ。目安の線は出さない）
+  const week = page.getByRole("region", { name: "今週" });
+  await expect(
+    week.getByText("2回バトルして、1問を撃破しました。"),
+  ).toBeVisible();
+  await expect(week.getByText("（先週は")).toHaveCount(0); // 最初の週は比べない
+  await expect(
+    week.getByText("再来は 1回のうち 1回、もう一度撃破しました。"),
+  ).toBeVisible();
+  const sofar = page.getByRole("region", { name: /これまで/ });
+  await expect(sofar.getByText("登録した間違い")).toBeVisible();
+  await expect(
+    sofar.getByRole("img", {
+      name: "1問のうち、覚えた 0問、再来も撃破 1問、1回撃破 0問、まだ 0問",
+    }),
+  ).toBeVisible();
+  await expect(sofar.getByText("（1回のうち 1回）")).toBeVisible();
+  await expect(page.getByText(/目安/)).toHaveCount(0);
+  await expect(page.getByText(/今日まで\s*2日\s*つづけて/)).toBeVisible();
+  await expectNoA11yViolations(page);
+
+  // くわしく見る：登録の多い間違い（順位は付けない）と、週ごとの表
+  await page.getByText("登録の多い間違い", { exact: true }).click();
+  await expect(
+    page.getByText("分数のたし算で、分母どうしも足してしまう"),
+  ).toBeVisible();
+  await page.getByText("週ごとの推移", { exact: true }).click();
+  await expect(page.getByRole("cell", { name: "1/1（100%）" })).toBeVisible();
+
+  // カレンダーの今日のマス → 日の詳細。前の日へ戻ると、登録と初めての撃破
+  await page
+    .getByRole("link", { name: /11月11日（水）（今日）\s*バトル 1回/ })
+    .click();
+  await expect(page).toHaveURL(/\/parent\/insights\/day#.+\/2026-11-11$/);
+  await expect(page.getByText("ブンボタッシー")).toBeVisible();
+  await expect(page.getByText("再来 1回目・撃破")).toBeVisible();
+  await expectNoA11yViolations(page);
+  await page.getByRole("link", { name: /前の記録の日/ }).click();
+  await expect(
+    page.getByRole("heading", { name: "11月10日（火）" }),
+  ).toBeVisible();
+  await expect(page.getByText("初めて撃破")).toBeVisible();
+  await expect(page.getByText("この日に登録した間違い（1問）")).toBeVisible();
   await expectNoA11yViolations(page);
 });
 

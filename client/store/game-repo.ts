@@ -1,5 +1,6 @@
 import { type DexRank, dex } from "@/domain/game/dex";
 import {
+  groupByMistake,
   type ReplayStep,
   type ReviewState,
   replay,
@@ -17,6 +18,12 @@ import {
   type XpPart,
   xpForStep,
 } from "@/domain/game/xp";
+import {
+  computeInsights,
+  type DayDetail,
+  dayDetail,
+  type Insights,
+} from "@/domain/parent/insights";
 import { type Mistake, SHEET_TITLE_MAX, type Sheet } from "@/shared/battle";
 import type { Subject } from "@/shared/problem";
 import type { OutboxItem } from "@/shared/schemas";
@@ -138,17 +145,10 @@ async function load(childId: string) {
   return { mistakes, records, sheets };
 }
 
-function byMistake(records: BattleRecord[]): Map<string, BattleRecord[]> {
-  const out = new Map<string, BattleRecord[]>();
-  for (const r of records)
-    out.set(r.mistakeId, [...(out.get(r.mistakeId) ?? []), r]);
-  return out;
-}
-
 export async function gameSummary(childId: string): Promise<GameSummary> {
   const { today, clockBack } = await currentDay();
   const { mistakes, records, sheets } = await load(childId);
-  const grouped = byMistake(records);
+  const grouped = groupByMistake(records);
   const views: MistakeView[] = mistakes.map((m) => ({
     mistake: m,
     state: reviewState(grouped.get(m.id) ?? []),
@@ -194,6 +194,23 @@ export async function gameSummary(childId: string): Promise<GameSummary> {
   };
 }
 
+/** 保護者向けの「学習のようす」（U7） */
+export async function insightsFor(childId: string): Promise<Insights> {
+  const { today } = await currentDay();
+  const { mistakes, records } = await load(childId);
+  return computeInsights(mistakes, records, today);
+}
+
+/** 「学習のようす」の日の詳細（U7） */
+export async function dayDetailFor(
+  childId: string,
+  day: string,
+): Promise<DayDetail> {
+  const { today } = await currentDay();
+  const { mistakes, records } = await load(childId);
+  return dayDetail(mistakes, records, day, today);
+}
+
 /** 結果の画面で見せる、このバトルでもらったもの（BR-6-3・6-4・6-5） */
 export interface BattleOutcome {
   xpParts: XpPart[];
@@ -222,7 +239,7 @@ export async function battleOutcome(
   const upTo = [...without, target];
 
   const xpOf = (rs: BattleRecord[]) =>
-    [...byMistake(rs).values()]
+    [...groupByMistake(rs).values()]
       .flatMap(replay)
       .reduce((n, s) => n + sumXp(xpForStep(s)), 0);
   const step = replay(upTo.filter((r) => r.mistakeId === mistake.id)).at(-1);
@@ -230,7 +247,7 @@ export async function battleOutcome(
   const parts = xpForStep(step);
 
   const dexOf = (rs: BattleRecord[]) => {
-    const grouped = byMistake(rs);
+    const grouped = groupByMistake(rs);
     return dex(
       mistakes.map((m) => ({
         mistakeTypeId: m.mistakeTypeId,

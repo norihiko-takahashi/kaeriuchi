@@ -66,7 +66,7 @@ export async function POST(request: Request) {
         image: { mime: image.mime, data: bytes },
         grade: grade.data,
         subjectHint,
-        mistakeTypeCatalog: mistakeTypeCatalog(subjectHint),
+        mistakeTypeCatalog: mistakeTypeCatalog(subjectHint, grade.data),
       },
       { requestId, signal },
     );

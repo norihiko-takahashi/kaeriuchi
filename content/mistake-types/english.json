@@ -1,0 +1,243 @@
+{
+  "note": "間違いのタイプの一覧（content-data-plan.md の A）。source が ai-draft のものは、AI（Claude）が学習指導要領の内容をもとに書いた下書き。2026-11-12 に、学年を学習指導要領（平成29年告示）と、つまずきを全国学力・学習状況調査の分析資料と照らし合わせた（文部科学省のサイトは開けなかったため、それを引用した自治体・教科書会社の資料で確認。結果は aidlc-docs/inception/mistake-types-check.md）。見直した人と日付を reviewedBy・reviewedOn に入れる（2026-11-12 に決定：まずユーザー、β版の前に元教員など）。monster と color は仮のミスモン（OQ6）。",
+  "types": [
+    {
+      "id": "english.verb.third-person-s",
+      "subject": "english",
+      "unit": "三人称単数現在",
+      "grades": ["j1"],
+      "label": "三人称単数現在の s が抜ける",
+      "example": {
+        "question": "He ( ) to school every day. (go)",
+        "wrong": "go",
+        "correct": "goes"
+      },
+      "monster": "エスワスレン",
+      "color": "#3d85c6",
+      "source": "ai-draft",
+      "reviewedBy": null,
+      "reviewedOn": null
+    },
+    {
+      "id": "english.verb.past-tense",
+      "subject": "english",
+      "unit": "過去形",
+      "grades": ["j1", "j2"],
+      "label": "過去形を間違える",
+      "example": {
+        "question": "I ( ) to the park yesterday. (go)",
+        "wrong": "goed",
+        "correct": "went"
+      },
+      "monster": "カコケイモドキ",
+      "color": "#5c7cfa",
+      "source": "ai-draft",
+      "reviewedBy": null,
+      "reviewedOn": null
+    },
+    {
+      "id": "english.be-verb.agreement",
+      "subject": "english",
+      "unit": "be動詞",
+      "grades": ["e5", "e6", "j1"],
+      "label": "be動詞（am・is・are）を主語に合わせない",
+      "example": {
+        "question": "They ( ) students.",
+        "wrong": "is",
+        "correct": "are"
+      },
+      "monster": "ビードウズレ",
+      "color": "#8e7cc3",
+      "source": "ai-draft",
+      "reviewedBy": null,
+      "reviewedOn": null
+    },
+    {
+      "id": "english.plural.s",
+      "subject": "english",
+      "unit": "名詞の複数形",
+      "grades": ["e5", "e6", "j1"],
+      "label": "数が2つ以上なのに、名詞に s を付けない",
+      "example": {
+        "question": "I have two ( ). (book)",
+        "wrong": "book",
+        "correct": "books"
+      },
+      "monster": "フクスウナシ",
+      "color": "#2a9d8f",
+      "source": "ai-draft",
+      "reviewedBy": null,
+      "reviewedOn": null
+    },
+    {
+      "id": "english.article.a-an",
+      "subject": "english",
+      "unit": "a と an",
+      "grades": ["e5", "e6", "j1"],
+      "label": "母音で始まる語の前に a を使う",
+      "example": {
+        "question": "( ) apple",
+        "wrong": "a",
+        "correct": "an"
+      },
+      "monster": "アンアンナイ",
+      "color": "#4dabf7",
+      "source": "ai-draft",
+      "reviewedBy": null,
+      "reviewedOn": null
+    },
+    {
+      "id": "english.spelling.letters",
+      "subject": "english",
+      "unit": "つづり",
+      "grades": ["e5", "e6", "j1", "j2", "j3"],
+      "label": "つづりを間違える",
+      "example": {
+        "question": "「友だち」を英語で",
+        "wrong": "freind",
+        "correct": "friend"
+      },
+      "monster": "ツヅリマゼ",
+      "color": "#3d85c6",
+      "source": "ai-draft",
+      "reviewedBy": null,
+      "reviewedOn": null
+    },
+    {
+      "id": "english.sentence.word-order",
+      "subject": "english",
+      "unit": "語順",
+      "grades": ["e6", "j1", "j2"],
+      "label": "英語の語順（主語・動詞・目的語）を日本語の順にする",
+      "example": {
+        "question": "「私はテニスをします」",
+        "wrong": "I tennis play.",
+        "correct": "I play tennis."
+      },
+      "monster": "ゴジュンサカサ",
+      "color": "#5c7cfa",
+      "source": "ai-draft",
+      "reviewedBy": null,
+      "reviewedOn": null
+    },
+    {
+      "id": "english.question.do",
+      "subject": "english",
+      "unit": "疑問文",
+      "grades": ["j1"],
+      "label": "一般動詞の疑問文で、Do・Does を使わない",
+      "example": {
+        "question": "「あなたは犬が好きですか」",
+        "wrong": "You like dogs?",
+        "correct": "Do you like dogs?"
+      },
+      "monster": "ドゥーヌケ",
+      "color": "#8e7cc3",
+      "source": "ai-draft",
+      "reviewedBy": null,
+      "reviewedOn": null
+    },
+    {
+      "id": "english.negative.does",
+      "subject": "english",
+      "unit": "否定文",
+      "grades": ["j1"],
+      "label": "doesn't のあとの動詞にも s を付ける",
+      "example": {
+        "question": "He doesn't ( ) soccer. (play)",
+        "wrong": "plays",
+        "correct": "play"
+      },
+      "monster": "ダズントエス",
+      "color": "#2a9d8f",
+      "source": "ai-draft",
+      "reviewedBy": null,
+      "reviewedOn": null
+    },
+    {
+      "id": "english.progressive.be",
+      "subject": "english",
+      "unit": "進行形",
+      "grades": ["j1"],
+      "label": "進行形で、be動詞を落とす",
+      "example": {
+        "question": "「私はテニスをしています」",
+        "wrong": "I playing tennis.",
+        "correct": "I am playing tennis."
+      },
+      "monster": "イングヌケ",
+      "color": "#4dabf7",
+      "source": "ai-draft",
+      "reviewedBy": null,
+      "reviewedOn": null
+    },
+    {
+      "id": "english.pronoun.case",
+      "subject": "english",
+      "unit": "代名詞",
+      "grades": ["j1"],
+      "label": "代名詞の形（I・my・me）を取り違える",
+      "example": {
+        "question": "This is ( ) book.",
+        "wrong": "I",
+        "correct": "my"
+      },
+      "monster": "マイミーアイ",
+      "color": "#3d85c6",
+      "source": "ai-draft",
+      "reviewedBy": null,
+      "reviewedOn": null
+    },
+    {
+      "id": "english.preposition.in-on-at",
+      "subject": "english",
+      "unit": "前置詞",
+      "grades": ["j1", "j2", "j3"],
+      "label": "前置詞（in・on・at）を取り違える",
+      "example": {
+        "question": "( ) Monday",
+        "wrong": "in",
+        "correct": "on"
+      },
+      "monster": "ゼンチシマヨイ",
+      "color": "#5c7cfa",
+      "source": "ai-draft",
+      "reviewedBy": null,
+      "reviewedOn": null
+    },
+    {
+      "id": "english.comparison.double",
+      "subject": "english",
+      "unit": "比較",
+      "grades": ["j2"],
+      "label": "比較級に more と -er を両方付ける",
+      "example": {
+        "question": "Tom is ( ) than Ken. (tall)",
+        "wrong": "more taller",
+        "correct": "taller"
+      },
+      "monster": "モアモアター",
+      "color": "#8e7cc3",
+      "source": "ai-draft",
+      "reviewedBy": null,
+      "reviewedOn": null
+    },
+    {
+      "id": "english.verb.past-participle",
+      "subject": "english",
+      "unit": "現在完了・受け身",
+      "grades": ["j2", "j3"],
+      "label": "過去分詞のかわりに過去形を使う",
+      "example": {
+        "question": "The letter was ( ) by Ken. (write)",
+        "wrong": "wrote",
+        "correct": "written"
+      },
+      "monster": "カコブンシモドキ",
+      "color": "#2a9d8f",
+      "source": "ai-draft",
+      "reviewedBy": null,
+      "reviewedOn": null
+    }
+  ]
+}
