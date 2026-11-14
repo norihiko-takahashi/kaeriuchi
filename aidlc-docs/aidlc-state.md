@@ -28,7 +28,7 @@
 | U6 ゲーミフィケーション・再来 | ✅ 承認済み（`construction/u6-game-revisit/functional-design/`） | ✅ 承認済み | ✅ 承認済み | ✅ 承認済み（PR #15 でマージ） | ✅ CI ですべて成功 |
 | U7 保護者向けの画面 | ✅ 承認（2026-11-13、デザイン案 E） | ✅ 承認 | ✅ 承認（新しい資源なし） | ✅ 承認（2026-11-13） | ✅ CI 成功 |
 | U3 撮影・解析 | ✅ 承認（2026-11-13） | ✅ 承認 | ✅ 承認（新しい資源なし） | ✅ 承認（2026-11-13） | ✅ CI 成功（実機は Issue #8） |
-| U8 ログイン・同期 | ✅ 承認（2026-11-14） | ⬜ | ⬜ | ⬜ | ⬜ |
+| U8 ログイン・同期 | ✅ 承認（2026-11-14） | 🟡 レビュー中 | 🟡 レビュー中 | ⬜ | ⬜ |
 
 
 ユニットごとに次の順で進めます：Functional Design → NFR Requirements → NFR Design → Infrastructure Design → Code Generation → Build & Test。
