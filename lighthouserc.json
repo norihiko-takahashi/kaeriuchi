@@ -3,16 +3,11 @@
     "collect": {
       "startServerCommand": "PORT=3200 node scripts/start-standalone.mjs",
       "startServerReadyPattern": "Ready",
-      "url": [
-        "http://127.0.0.1:3200/login"
-      ],
+      "url": ["http://127.0.0.1:3200/login"],
       "numberOfRuns": 3,
       "settings": {
         "formFactor": "mobile",
-        "onlyCategories": [
-          "performance",
-          "accessibility"
-        ],
+        "onlyCategories": ["performance", "accessibility"],
         "chromeFlags": "--no-sandbox --headless=new"
       }
     },
