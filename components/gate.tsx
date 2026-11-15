@@ -3,6 +3,7 @@
 import { type ReactNode, useEffect, useState } from "react";
 import { useNav } from "@/client/pwa/navigate";
 import { getGuardian, listChildren } from "@/client/store/repo";
+import { isSignedOut } from "@/client/sync/engine";
 import { needsConsent } from "@/domain/consent";
 import type { ChildProfile, Guardian } from "@/shared/schemas";
 import { useAppState } from "./app-state";
@@ -38,7 +39,8 @@ export function Gate({
     let cancelled = false;
     (async () => {
       const guardian = await getGuardian();
-      if (!guardian) return router.replace("/login");
+      // ほかの端末からログアウトさせられた端末は、ログインの画面に戻す（記録は消さない・U8 §3）
+      if (!guardian || (await isSignedOut())) return router.replace("/login");
       if (level !== "login" && needsConsent(guardian.consentVersion)) {
         return router.replace("/consent");
       }

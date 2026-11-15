@@ -57,8 +57,13 @@ async function saveGuardian(guardian: Guardian): Promise<void> {
   const next = { ...guardian, updatedAt: nowIso() };
   await db.transaction("rw", db.guardian, db.outbox, async () => {
     await db.guardian.put(next);
-    // PIN のハッシュは端末の中だけに置く（同期しない）
-    const { pinHash: _pinHash, ...syncable } = next;
+    // PIN のハッシュは端末の中だけに置く（同期しない）。メールアドレスも送信待ちに残さない（U8-PRIV-1）
+    const {
+      pinHash: _pinHash,
+      email: _email,
+      accountLinkedAt: _linked,
+      ...syncable
+    } = next;
     await db.outbox.add(
       outboxItem("guardianSettings", next.id, "upsert", syncable),
     );
@@ -324,13 +329,16 @@ export async function adoptAccount(account: {
   const db = getDB();
   const local = await getGuardian();
   const linkedAt = nowIso();
+  // ログインし直したら、ほかの端末からログアウトさせられた印を消す
+  await db.meta.delete("signed-out");
   if (!local) {
     await db.guardian.put({
       id: account.guardianId,
       email: account.email,
       rules: {},
       accountLinkedAt: linkedAt,
-      updatedAt: linkedAt,
+      // クラウドに設定があれば、そちらを採用する（更新の時刻で比べるため、いちばん古い時刻にする）
+      updatedAt: new Date(0).toISOString(),
     });
     return "ok";
   }
@@ -348,6 +356,7 @@ export async function adoptAccount(account: {
   const to = account.guardianId;
   const tables = [db.children, db.mistakes, db.battles, db.sheets] as const;
   await db.transaction("rw", [db.guardian, db.outbox, ...tables], async () => {
+    // 送信待ちは、初めての同期のときに端末の記録から作り直す（client/sync/engine.ts）
     for (const table of tables)
       await (table as unknown as Dexie.Table<{ guardianId: string }>)
         .filter((r) => r.guardianId === from)
@@ -370,7 +379,6 @@ export async function adoptAccount(account: {
       id: to,
       email: account.email,
       accountLinkedAt: linkedAt,
-      updatedAt: linkedAt,
     });
   });
   return "ok";
@@ -390,6 +398,7 @@ export async function deleteAllLocalData(): Promise<void> {
       db.battles,
       db.regrades,
       db.sheets,
+      db.reports,
     ],
     async () => {
       await Promise.all([
@@ -401,6 +410,7 @@ export async function deleteAllLocalData(): Promise<void> {
         db.battles.clear(),
         db.regrades.clear(),
         db.sheets.clear(),
+        db.reports.clear(),
       ]);
     },
   );

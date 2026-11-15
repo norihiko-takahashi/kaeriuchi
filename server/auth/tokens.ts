@@ -49,6 +49,7 @@ export const LIMITS = {
   codeFailPerIp: [5, 10 * MINUTE],
   passkeyPerIp: [30, 60 * MINUTE],
   allPerIp: [300, 5 * MINUTE],
+  syncPerDevice: [30, MINUTE],
 } as const satisfies Record<string, readonly [number, number]>;
 
 /** ブラウザの情報から、端末の名前を付ける（例：「iPad（Safari）」）。保護者があとから変えられる */

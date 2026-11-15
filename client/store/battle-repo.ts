@@ -359,14 +359,18 @@ export async function addReport(input: NewReport): Promise<ProblemReport> {
     id: crypto.randomUUID(),
     createdDay: await today(),
   };
-  await getDB().outbox.add(outboxItem("report", report.id, report));
+  const db = getDB();
+  await db.transaction("rw", db.reports, db.outbox, async () => {
+    await db.reports.add(report);
+    await db.outbox.add(outboxItem("report", report.id, report));
+  });
   return report;
 }
 
-/** 送信待ちの報告（保護者メニューで一覧を見る） */
+/** この端末から出した報告（保護者メニューで一覧を見る。送ったあとも残る） */
 export async function listReports(): Promise<ProblemReport[]> {
-  const items = await getDB().outbox.where("entity").equals("report").toArray();
-  return items.map((i) => i.payload as ProblemReport).reverse();
+  const rows = await getDB().reports.orderBy("n").reverse().toArray();
+  return rows.map(({ n: _n, ...r }) => r);
 }
 
 /* ---------- あとで採点し直す答え（U45-OFF-2） ---------- */

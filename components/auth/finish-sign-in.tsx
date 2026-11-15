@@ -4,6 +4,7 @@ import { useState } from "react";
 import { type SignedIn, signOut } from "@/client/auth/api";
 import { useNav } from "@/client/pwa/navigate";
 import { adoptAccount, deleteAllLocalData } from "@/client/store/repo";
+import { syncNow } from "@/client/sync/engine";
 import { Button } from "@/components/ui";
 
 /**
@@ -17,6 +18,8 @@ export function useFinishSignIn() {
   const finish = async (account: SignedIn) => {
     const r = await adoptAccount(account);
     if (r === "conflict") return setConflict(account);
+    // クラウドの記録（同意・プロフィールなど）を受け取ってから進む。失敗しても、あとで裏で同期する
+    await syncNow().catch(() => {});
     router.replace("/");
   };
 

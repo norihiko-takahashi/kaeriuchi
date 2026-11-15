@@ -1,5 +1,11 @@
 import Dexie, { type EntityTable } from "dexie";
-import type { Battle, Mistake, PendingRegrade, Sheet } from "@/shared/battle";
+import type {
+  Battle,
+  Mistake,
+  PendingRegrade,
+  ProblemReport,
+  Sheet,
+} from "@/shared/battle";
 import { SUBJECT_LABELS } from "@/shared/problem";
 import type { ChildProfile, Guardian, OutboxItem } from "@/shared/schemas";
 
@@ -13,6 +19,7 @@ export interface MetaRow {
  * 表を増やすときは version(n) を足し、移行の処理と単体テストを書く。
  * v2（U4・U5）：ミスモン、バトル、あとで採点し直す答え。v1 のデータはそのまま残る。
  * v3（U6）：テスト。v2 のミスモンは、子ども・教科・登録した日ごとにテストを作って入れる。
+ * v4（U8）：報告。送信待ちから送ったあとも、保護者メニューの一覧に残す。v3 の送信待ちの報告を入れる。
  */
 export class KaeriuchiDB extends Dexie {
   guardian!: EntityTable<Guardian, "id">;
@@ -23,6 +30,8 @@ export class KaeriuchiDB extends Dexie {
   battles!: EntityTable<Battle, "id">;
   regrades!: EntityTable<PendingRegrade, "id">;
   sheets!: EntityTable<Sheet, "id">;
+  /** n：入れた順（新しい順に並べるため） */
+  reports!: EntityTable<ProblemReport & { n?: number }, "n">;
 
   constructor(name = "kaeriuchi") {
     super(name);
@@ -77,6 +86,18 @@ export class KaeriuchiDB extends Dexie {
             await tx.table<Battle>("battles").update(b.id, { order: ++order });
         }
         await tx.table("meta").put({ key: "battle-order", value: order });
+      });
+    this.version(4)
+      .stores({ reports: "++n, &id" })
+      .upgrade(async (tx) => {
+        const items = await tx
+          .table<OutboxItem>("outbox")
+          .where("entity")
+          .equals("report")
+          .toArray();
+        await tx
+          .table<ProblemReport>("reports")
+          .bulkAdd(items.map((i) => i.payload as ProblemReport));
       });
   }
 }

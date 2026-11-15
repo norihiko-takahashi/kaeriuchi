@@ -388,7 +388,7 @@ describe("スキーマの移行（v2 → v3）", () => {
   });
 });
 
-describe("スキーマの移行（v1 → v3）", () => {
+describe("スキーマの移行（v1 → 最新）", () => {
   it("v1 のデータを残したまま、新しい表を足す", async () => {
     const name = `migrate-${crypto.randomUUID()}`;
     const v1 = new Dexie(name);
@@ -403,9 +403,60 @@ describe("スキーマの移行（v1 → v3）", () => {
 
     const v2 = new KaeriuchiDB(name);
     await v2.open();
-    expect(v2.verno).toBe(3);
+    expect(v2.verno).toBe(4);
     expect(await v2.meta.get("k")).toEqual({ key: "k", value: 1 });
     expect(await v2.mistakes.count()).toBe(0);
     await v2.delete();
+  });
+});
+
+describe("スキーマの移行（v3 → v4）", () => {
+  it("送信待ちの報告を、報告の表に入れる（送ったあとも一覧に残す）", async () => {
+    const name = `migrate-${crypto.randomUUID()}`;
+    const v3 = new Dexie(name);
+    v3.version(3).stores({
+      guardian: "id",
+      children: "id, guardianId, [guardianId+nickname]",
+      outbox: "++seq, entity, createdAt",
+      meta: "key",
+      mistakes: "id, childId, [childId+createdDay], status, sheetId",
+      battles: "id, mistakeId, childId",
+      regrades: "id",
+      sheets: "id, childId",
+    });
+    const t = "2026-11-15T00:00:00.000Z";
+    await v3.table("outbox").bulkAdd([
+      {
+        entity: "report",
+        id: "r1",
+        op: "upsert",
+        payload: { id: "r1" },
+        clientUpdatedAt: t,
+        createdAt: t,
+      },
+      {
+        entity: "child",
+        id: "c",
+        op: "upsert",
+        payload: {},
+        clientUpdatedAt: t,
+        createdAt: t,
+      },
+      {
+        entity: "report",
+        id: "r2",
+        op: "upsert",
+        payload: { id: "r2" },
+        clientUpdatedAt: t,
+        createdAt: t,
+      },
+    ]);
+    v3.close();
+
+    const v4 = new KaeriuchiDB(name);
+    setDBForTesting(v4);
+    expect((await listReports()).map((r) => r.id)).toEqual(["r2", "r1"]);
+    expect(await v4.outbox.count()).toBe(3);
+    await v4.delete();
   });
 });

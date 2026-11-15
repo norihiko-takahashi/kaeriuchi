@@ -68,9 +68,17 @@ test("保護者のスマホで出した番号で、子ども用の端末をつ�
     .getByLabel("8けたの番号")
     .fill(`${code.slice(0, 4)}-${code.slice(4)}`);
   await tablet.getByRole("button", { name: "つなぐ" }).click();
-  // つながった（同意などは、同期ができるまで端末ごと）
-  await expect(tablet).toHaveURL(/\/consent$/);
+  // つながった。同意とプロフィールは同期で届く。PIN は端末ごとに決める
+  await expect(tablet).toHaveURL(/\/parent\/pin-setup$/);
   expect(await sessionStatus(tablet)).toBe(200);
+  await typePin(tablet, "6桁の PIN", PARENT_PIN);
+  await tablet.getByRole("button", { name: "次へ" }).click();
+  await typePin(tablet, "確認のため、もう一度入力してください", PARENT_PIN);
+  await tablet.getByRole("button", { name: "設定する" }).click();
+  await expect(tablet).toHaveURL(/\/profiles$/);
+  await expect(
+    tablet.getByRole("button", { name: /ほのおのきつね/ }),
+  ).toBeVisible();
 
   // 保護者のスマホの一覧に出て、ログアウトさせられる
   await openParentMenu(page, "/parent/devices");
@@ -84,6 +92,11 @@ test("保護者のスマホで出した番号で、子ども用の端末をつ�
   ).toBeVisible();
   expect(await sessionStatus(tablet)).toBe(401);
   expect(await sessionStatus(page)).toBe(200);
+  // ログアウトさせた端末は、次の同期のあと、ログインの画面に戻る（記録は残る）
+  await expect(async () => {
+    await tablet.goto("/profiles");
+    await expect(tablet).toHaveURL(/\/login$/, { timeout: 2_000 });
+  }).toPass();
 });
 
 test("ログイン用のリンクは1回きり。別のアカウントの記録がある端末では、混ぜずに選んでもらう", async ({

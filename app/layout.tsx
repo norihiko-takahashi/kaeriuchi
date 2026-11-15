@@ -3,6 +3,7 @@ import type { Metadata, Viewport } from "next";
 import { connection } from "next/server";
 import { AppStateProvider } from "@/components/app-state";
 import { SwUpdateProvider } from "@/components/sw-update";
+import { SyncRunner } from "@/components/sync-runner";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -41,7 +42,10 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
           reloadOnOnline={false}
         >
           <SwUpdateProvider>
-            <AppStateProvider>{children}</AppStateProvider>
+            <AppStateProvider>
+              <SyncRunner />
+              {children}
+            </AppStateProvider>
           </SwUpdateProvider>
         </SerwistProvider>
       </body>

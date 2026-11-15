@@ -102,6 +102,14 @@ export class AuthService {
     await this.limit(`all:${ip}`, LIMITS.allPerIp);
   }
 
+  /** 同期は1端末1分に30回まで（U8-SEC-6） */
+  async checkSync(session: StoredSession) {
+    await this.limit(
+      `sync:${session.guardianId}:${session.deviceId}`,
+      LIMITS.syncPerDevice,
+    );
+  }
+
   /* ---------- メールのリンク ---------- */
 
   /**

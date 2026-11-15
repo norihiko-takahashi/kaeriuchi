@@ -7,6 +7,7 @@ import {
   getGuardian,
   listChildren,
 } from "@/client/store/repo";
+import { isSignedOut } from "@/client/sync/engine";
 import { Loading } from "@/components/ui";
 import { needsConsent } from "@/domain/consent";
 
@@ -16,7 +17,7 @@ export default function Start() {
   useEffect(() => {
     (async () => {
       const guardian = await getGuardian();
-      if (!guardian) return router.replace("/login");
+      if (!guardian || (await isSignedOut())) return router.replace("/login");
       if (needsConsent(guardian.consentVersion))
         return router.replace("/consent");
       if (!guardian.pinHash) return router.replace("/parent/pin-setup");

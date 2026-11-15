@@ -46,7 +46,7 @@ function ReportList() {
   );
 }
 
-/** 「あれ？おかしいかも」の報告の一覧（BR-45-8）。U8 で運用者に届くまで、端末にためておく */
+/** 「あれ？おかしいかも」の報告の一覧（BR-45-8）。この端末から出したもの（運用者には同期で届く） */
 export default function ReportsPage() {
   return (
     <ParentGuard>
