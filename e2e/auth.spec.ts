@@ -32,6 +32,8 @@ test("保護者のスマホで出した番号で、子ども用の端末をつ�
 }) => {
   await onboard(page);
   await page.getByRole("button", { name: "あとで" }).click();
+  // 画面が /profiles に移り終わってから、次の画面を開く（WebKit では移動がぶつかる）
+  await expect(page).toHaveURL(/\/profiles$/);
   await openParentMenu(page, "/parent");
   await page.getByRole("link", { name: "ログインしている端末" }).click();
   await expect(page).toHaveURL(/\/parent\/devices$/);
@@ -89,6 +91,8 @@ test("ログイン用のリンクは1回きり。別のアカウントの記録�
 }) => {
   await onboard(page);
   await page.getByRole("button", { name: "あとで" }).click();
+  // 画面が /profiles に移り終わってから、次の画面を開く（WebKit では移動がぶつかる）
+  await expect(page).toHaveURL(/\/profiles$/);
 
   // 別のアカウントでログインしようとする
   await page.goto("/login");
