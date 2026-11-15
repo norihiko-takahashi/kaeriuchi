@@ -22,11 +22,12 @@ async function call<T>(
   method: string,
   action: string,
   body?: unknown,
+  base = "/api/auth",
 ): Promise<T> {
   if (typeof navigator !== "undefined" && !navigator.onLine) throw OFFLINE;
   let res: Response;
   try {
-    res = await fetch(`/api/auth/${action}`, {
+    res = await fetch(`${base}/${action}`, {
       method,
       headers:
         body === undefined ? undefined : { "content-type": "application/json" },
@@ -67,8 +68,15 @@ export interface Device {
 
 export const sendLoginLink = (email: string) =>
   call<{ devLink?: string }>("POST", "link", { email });
+/** 削除の手続き中のアカウント（7日のうちは取り消せる） */
+export interface PendingRestore {
+  restore: { ticket: string; purgeDay: string };
+}
+
 export const verifyLoginLink = (token: string) =>
-  call<SignedIn>("POST", "verify", { token });
+  call<SignedIn | PendingRestore>("POST", "verify", { token });
+export const restoreAccount = (ticket: string) =>
+  call<SignedIn>("POST", "restore", { token: ticket });
 export const redeemLinkCode = (code: string) =>
   call<SignedIn>("POST", "redeem", { code });
 export const currentSession = () => call<SessionInfo>("GET", "session");
@@ -108,3 +116,26 @@ export async function loginWithPasskey(
   const response = await startAuthentication({ optionsJSON: options });
   return call("POST", "passkey-login", { challengeId, response, reauth });
 }
+
+/* ---------- アカウント（U8 §5。削除と書き出しは、ログインし直してから） ---------- */
+
+const account = <T>(method: string, action: string, body?: unknown) =>
+  call<T>(method, action, body, "/api/account");
+
+export interface DeletedChild {
+  id: string;
+  nickname: string;
+  deletedDay: string;
+  /** この日に本当に消える */
+  purgeDay: string;
+}
+
+export const exportCloud = () => account<unknown>("GET", "export");
+export const listDeletedChildren = async () =>
+  (await account<{ children: DeletedChild[] }>("GET", "deleted-children"))
+    .children;
+export const deleteChildInCloud = (childId: string) =>
+  account<object>("POST", "delete-child", { childId });
+export const restoreChildInCloud = (childId: string) =>
+  account<object>("POST", "restore-child", { childId });
+export const deleteAccount = () => account<object>("POST", "delete", {});

@@ -6,6 +6,7 @@ export class MemorySyncStore implements SyncStore {
   private rows = new Map<string, Map<string, StoredRecord>>();
   private seq = 0;
   private queues = new Map<string, Promise<unknown>>();
+  private aiUsage = new Map<string, number>();
 
   async transaction<T>(
     guardianId: string,
@@ -63,6 +64,13 @@ export class MemorySyncStore implements SyncStore {
           .filter((r) => !r.deleted)
           .sort((a, b) => a.seq - b.seq)
           .map((r) => structuredClone(r)),
+      takeAiUsage: async (childId, day, route, limit) => {
+        const k = `${guardianId}|${childId}|${day}|${route}`;
+        const used = this.aiUsage.get(k) ?? 0;
+        if (used >= limit) return false;
+        this.aiUsage.set(k, used + 1);
+        return true;
+      },
       deletedChildren: async () =>
         [...rows.values()]
           .filter((r) => r.entity === "child" && r.deleted)

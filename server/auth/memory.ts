@@ -34,6 +34,21 @@ export class MemoryAuthStore implements AuthStore {
     this.guardians.set(g.id, { ...g });
   }
 
+  async setGuardianDeleted(id: string, at: number | null) {
+    const g = this.guardians.get(id);
+    if (!g) return;
+    const { deletedAt: _d, ...rest } = g;
+    this.guardians.set(id, at === null ? rest : { ...rest, deletedAt: at });
+  }
+  async deleteGuardian(id: string) {
+    this.guardians.delete(id);
+    await this.deleteSessionsOf(id);
+    for (const [k, p] of this.passkeys)
+      if (p.guardianId === id) this.passkeys.delete(k);
+    for (const [k, c] of this.linkCodes)
+      if (c.guardianId === id) this.linkCodes.delete(k);
+  }
+
   async saveLoginToken(t: { hash: string; email: string; expiresAt: number }) {
     this.loginTokens.set(t.hash, {
       email: t.email,

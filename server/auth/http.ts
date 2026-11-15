@@ -62,6 +62,7 @@ export function sameOrigin(request: Request, config: Config): boolean {
 }
 
 const STATUS: Record<AuthErrorCode, number> = {
+  reauth: 403,
   bad_request: 400,
   invalid: 400,
   rate_limited: 429,
@@ -70,6 +71,8 @@ const STATUS: Record<AuthErrorCode, number> = {
 
 /** 画面に出してよい文（保護者向け） */
 export const MESSAGES: Record<AuthErrorCode, string> = {
+  reauth:
+    "大切な操作なので、もう一度ログインして（またはパスキーで）確かめてから、やり直してください",
   bad_request: "入力の形が正しくありません",
   invalid: "このリンク（番号）は使えません。もう一度やり直してください",
   rate_limited: "しばらく待ってから、もう一度ためしてください",

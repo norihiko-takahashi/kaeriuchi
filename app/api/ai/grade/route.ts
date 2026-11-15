@@ -7,7 +7,7 @@ import { logAiCall } from "@/server/ai/telemetry";
 
 /** POST /api/ai/grade：短い文の答えを採点する（ルールで判断できないときだけ使う・FR-5.3） */
 export async function POST(request: Request) {
-  const g = guard(request, "grade");
+  const g = await guard(request, "grade");
   if (g instanceof NextResponse) return g;
   const { requestId, config, signal } = g;
 

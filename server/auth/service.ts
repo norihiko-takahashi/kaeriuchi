@@ -25,6 +25,7 @@ import {
  */
 
 export type AuthErrorCode =
+  | "reauth"
   | "bad_request"
   | "invalid"
   | "rate_limited"
@@ -56,6 +57,14 @@ export interface NewSession {
   session: StoredSession;
   email: string;
 }
+
+/** 削除の手続き中のアカウントに、ログインしようとしたとき（7日のうちは取り消せる・U8 §5） */
+export interface PendingRestore {
+  restore: { ticket: string; purgeDay: string };
+}
+
+/** アカウントを削除してから取り消せる期間 */
+export const ACCOUNT_UNDO_MS = 7 * DAY;
 
 export interface Device {
   deviceId: string;
@@ -140,7 +149,7 @@ export class AuthService {
     token: string,
     ip: string,
     userAgent: string,
-  ): Promise<NewSession> {
+  ): Promise<NewSession | PendingRestore> {
     await this.limit(`verify-ip:${ip}`, LIMITS.verifyPerIp);
     const email = await this.store.consumeLoginToken(
       hashToken(token),
@@ -148,11 +157,52 @@ export class AuthService {
     );
     if (!email) throw new AuthError("invalid");
     let guardian = await this.store.findGuardianByEmail(email);
+    if (guardian?.deletedAt !== undefined) {
+      // 7日のうちなら、取り消すかどうかを選んでもらう。過ぎていれば、すぐに消して新しく始める
+      if (guardian.deletedAt + ACCOUNT_UNDO_MS > this.now())
+        return this.restoreTicket(guardian.id, guardian.deletedAt);
+      await this.store.deleteGuardian(guardian.id);
+      guardian = undefined;
+    }
     if (!guardian) {
       guardian = { id: crypto.randomUUID(), email, createdAt: this.now() };
       await this.store.createGuardian(guardian);
     }
     return { ...(await this.newSession(guardian.id, userAgent)), email };
+  }
+
+  private async restoreTicket(
+    guardianId: string,
+    deletedAt: number,
+  ): Promise<PendingRestore> {
+    const ticket = randomToken();
+    await this.store.saveChallenge(
+      `restore:${ticket}`,
+      guardianId,
+      this.now() + TTL.challenge,
+    );
+    return {
+      restore: { ticket, purgeDay: jstDay(deletedAt + ACCOUNT_UNDO_MS) },
+    };
+  }
+
+  /** アカウントの削除を取り消して、ログインする */
+  async restoreAccount(ticket: string, userAgent: string): Promise<NewSession> {
+    const guardianId = await this.store.takeChallenge(
+      `restore:${ticket}`,
+      this.now(),
+    );
+    const g = guardianId && (await this.store.getGuardian(guardianId));
+    if (!g || g.deletedAt === undefined) throw new AuthError("invalid");
+    await this.store.setGuardianDeleted(g.id, null);
+    return { ...(await this.newSession(g.id, userAgent)), email: g.email };
+  }
+
+  /** アカウントの削除：削除の印を付け、すべての端末をログアウトさせる（U8 §5・U8-SEC-7） */
+  async deleteAccount(session: StoredSession) {
+    this.requireRecentAuth(session);
+    await this.store.setGuardianDeleted(session.guardianId, this.now());
+    await this.store.deleteSessionsOf(session.guardianId);
   }
 
   private async newSession(guardianId: string, userAgent: string) {
@@ -208,6 +258,10 @@ export class AuthService {
   /** 削除・書き出しの前に、ログインし直してから10分以内か（U8-SEC-7） */
   isRecentAuth(session: StoredSession): boolean {
     return this.now() - session.authAt <= TTL.recentAuth;
+  }
+
+  requireRecentAuth(session: StoredSession) {
+    if (!this.isRecentAuth(session)) throw new AuthError("reauth");
   }
 
   async signOut(token: string) {
@@ -285,9 +339,10 @@ export class AuthService {
       await this.store.hit(failKey, windowMs, this.now());
       throw new AuthError("invalid");
     }
-    const created = await this.newSession(guardianId, userAgent);
     const g = await this.store.getGuardian(guardianId);
-    return { ...created, email: g?.email ?? "" };
+    if (!g || g.deletedAt !== undefined) throw new AuthError("invalid");
+    const created = await this.newSession(guardianId, userAgent);
+    return { ...created, email: g.email };
   }
 
   /* ---------- パスキー ---------- */

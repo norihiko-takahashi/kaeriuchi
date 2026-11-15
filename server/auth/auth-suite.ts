@@ -1,6 +1,11 @@
 import { describe, expect, it } from "vitest";
 import { DevMailer } from "./mail";
-import { type AuthError, AuthService, jstDay } from "./service";
+import {
+  type AuthError,
+  AuthService,
+  jstDay,
+  type NewSession,
+} from "./service";
 import type { AuthStore } from "./store";
 import { DAY, MINUTE } from "./tokens";
 
@@ -10,6 +15,16 @@ const UA_IPAD =
   "Mozilla/5.0 (iPad; CPU OS 18_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Mobile/15E148 Safari/604.1";
 
 const code = (e: unknown) => (e as AuthError).code;
+
+/** リンクでログインする（削除の手続き中のアカウントではないとき） */
+async function verify(
+  auth: AuthService,
+  ...args: Parameters<AuthService["verifyLoginLink"]>
+): Promise<NewSession> {
+  const r = await auth.verifyLoginLink(...args);
+  if ("restore" in r) throw new Error("削除の手続き中です");
+  return r;
+}
 
 export function authSuite(name: string, makeStore: () => Promise<AuthStore>) {
   async function setup() {
@@ -43,16 +58,13 @@ export function authSuite(name: string, makeStore: () => Promise<AuthStore>) {
         // ログインにメールアドレスは出さない（U8-PRIV-1）
         expect(lines.join("\n")).not.toContain('example.com"');
         expect(lines.join("\n")).not.toMatch(/parent@/i);
-        const s = await auth.verifyLoginLink(
-          linkToken(r.devLink),
-          "1.1.1.1",
-          UA_IPAD,
-        );
+        const s = await verify(auth, linkToken(r.devLink), "1.1.1.1", UA_IPAD);
         expect(s.email).toBe("parent@example.com");
         expect(s.session.deviceName).toBe("iPad（Safari）");
         // 同じアドレスなら、同じアカウント
         const r2 = await auth.requestLoginLink("parent@example.com", "1.1.1.1");
-        const s2 = await auth.verifyLoginLink(
+        const s2 = await verify(
+          auth,
           linkToken(r2.devLink),
           "1.1.1.1",
           UA_IPAD,
@@ -66,14 +78,14 @@ export function authSuite(name: string, makeStore: () => Promise<AuthStore>) {
       it("リンクは1回きり、15分で使えなくなる", async () => {
         const { auth, tick, linkToken } = await setup();
         const r = await auth.requestLoginLink("a@example.com", "1.1.1.1");
-        await auth.verifyLoginLink(linkToken(r.devLink), "1.1.1.1", "");
+        await verify(auth, linkToken(r.devLink), "1.1.1.1", "");
         await expect(
-          auth.verifyLoginLink(linkToken(r.devLink), "1.1.1.1", ""),
+          verify(auth, linkToken(r.devLink), "1.1.1.1", ""),
         ).rejects.toSatisfy((e) => code(e) === "invalid");
         const r2 = await auth.requestLoginLink("a@example.com", "1.1.1.1");
         tick(15 * MINUTE);
         await expect(
-          auth.verifyLoginLink(linkToken(r2.devLink), "1.1.1.1", ""),
+          verify(auth, linkToken(r2.devLink), "1.1.1.1", ""),
         ).rejects.toSatisfy((e) => code(e) === "invalid");
       });
 
@@ -107,11 +119,7 @@ export function authSuite(name: string, makeStore: () => Promise<AuthStore>) {
       it("30日続き、使うたびに延びる。ログアウトで使えなくなる", async () => {
         const { auth, tick, linkToken } = await setup();
         const r = await auth.requestLoginLink("a@example.com", "1.1.1.1");
-        const s = await auth.verifyLoginLink(
-          linkToken(r.devLink),
-          "1.1.1.1",
-          "",
-        );
+        const s = await verify(auth, linkToken(r.devLink), "1.1.1.1", "");
         tick(20 * DAY);
         const used = await auth.getSession(s.token);
         expect(used?.lastSeenDay).toBe(jstDay(Date.UTC(2026, 11, 5, 3)));
@@ -122,11 +130,7 @@ export function authSuite(name: string, makeStore: () => Promise<AuthStore>) {
         expect(await auth.getSession(undefined)).toBeUndefined();
 
         const r2 = await auth.requestLoginLink("a@example.com", "1.1.1.1");
-        const s2 = await auth.verifyLoginLink(
-          linkToken(r2.devLink),
-          "1.1.1.1",
-          "",
-        );
+        const s2 = await verify(auth, linkToken(r2.devLink), "1.1.1.1", "");
         await auth.signOut(s2.token);
         expect(await auth.getSession(s2.token)).toBeUndefined();
       });
@@ -134,14 +138,67 @@ export function authSuite(name: string, makeStore: () => Promise<AuthStore>) {
       it("ログインし直してから10分以内だけ、削除・書き出しができる（U8-SEC-7）", async () => {
         const { auth, tick, linkToken } = await setup();
         const r = await auth.requestLoginLink("a@example.com", "1.1.1.1");
-        const s = await auth.verifyLoginLink(
-          linkToken(r.devLink),
-          "1.1.1.1",
-          "",
-        );
+        const s = await verify(auth, linkToken(r.devLink), "1.1.1.1", "");
         expect(auth.isRecentAuth(s.session)).toBe(true);
         tick(11 * MINUTE);
         expect(auth.isRecentAuth(s.session)).toBe(false);
+      });
+    });
+
+    describe("アカウントの削除と取り消し（U8 §5・U8-SEC-7）", () => {
+      const signIn = async (t: Awaited<ReturnType<typeof setup>>) => {
+        const r = await t.auth.requestLoginLink("a@example.com", "1.1.1.1");
+        return t.auth.verifyLoginLink(t.linkToken(r.devLink), "1.1.1.1", "");
+      };
+
+      it("10分を過ぎたら、ログインし直さないと消せない。消すとすべての端末がログアウトする", async () => {
+        const t = await setup();
+        const s = (await signIn(t)) as NewSession;
+        t.tick(11 * MINUTE);
+        await expect(t.auth.deleteAccount(s.session)).rejects.toSatisfy(
+          (e) => code(e) === "reauth",
+        );
+        t.tick(-11 * MINUTE);
+        await t.auth.deleteAccount(s.session);
+        expect(await t.auth.getSession(s.token)).toBeUndefined();
+        expect(
+          (await t.store.getGuardian(s.session.guardianId))?.deletedAt,
+        ).toBeDefined();
+      });
+
+      it("7日のうちに同じメールでログインすると、取り消して続けられる。過ぎたら新しいアカウント", async () => {
+        const t = await setup();
+        const first = (await signIn(t)) as NewSession;
+        const id = first.session.guardianId;
+        await t.auth.deleteAccount(first.session);
+        t.tick(6 * DAY);
+        const pending = await signIn(t);
+        expect(pending).toMatchObject({
+          restore: { purgeDay: jstDay(Date.UTC(2026, 10, 22, 3, 0, 0)) },
+        });
+        if (!("restore" in pending)) throw new Error();
+        const back = await t.auth.restoreAccount(pending.restore.ticket, "");
+        expect(back.session.guardianId).toBe(id);
+        expect(await t.auth.getSession(back.token)).toBeDefined();
+        await expect(
+          t.auth.restoreAccount(pending.restore.ticket, ""),
+        ).rejects.toSatisfy((e) => code(e) === "invalid");
+
+        await t.auth.deleteAccount(back.session);
+        t.tick(8 * DAY);
+        const fresh = (await signIn(t)) as NewSession;
+        expect(fresh.session.guardianId).not.toBe(id);
+        expect(await t.store.getGuardian(id)).toBeUndefined();
+      });
+
+      it("消したアカウントの番号では、端末をつなげない", async () => {
+        const t = await setup();
+        const s = (await signIn(t)) as NewSession;
+        const { code: c } = await t.auth.createLinkCode(s.session);
+        await t.auth.deleteAccount(s.session);
+        await expect(t.auth.redeemLinkCode(c, "2.2.2.2", "")).rejects.toSatisfy(
+          (e) => code(e) === "invalid",
+        );
       });
     });
 
@@ -149,7 +206,8 @@ export function authSuite(name: string, makeStore: () => Promise<AuthStore>) {
       async function loggedIn() {
         const t = await setup();
         const r = await t.auth.requestLoginLink("a@example.com", "1.1.1.1");
-        const parent = await t.auth.verifyLoginLink(
+        const parent = await verify(
+          t.auth,
           t.linkToken(r.devLink),
           "1.1.1.1",
           "Mozilla/5.0 (iPhone; CPU iPhone OS 18_0) Version/18.0 Mobile Safari/604.1",
@@ -235,11 +293,7 @@ export function authSuite(name: string, makeStore: () => Promise<AuthStore>) {
       it("登録とログインのための値を出し、使う値は1回きり。パスキーがなければ確かめられない", async () => {
         const { auth, linkToken } = await setup();
         const r = await auth.requestLoginLink("a@example.com", "1.1.1.1");
-        const s = await auth.verifyLoginLink(
-          linkToken(r.devLink),
-          "1.1.1.1",
-          "",
-        );
+        const s = await verify(auth, linkToken(r.devLink), "1.1.1.1", "");
         const reg = await auth.passkeyRegistrationOptions(s.session);
         expect(reg.rp).toEqual({
           name: "かえりうち",

@@ -7,22 +7,26 @@ import type {
   Subject,
   VerifiedProblem,
 } from "@/shared/problem";
+import { readActiveChild } from "../store/active-child";
 import { getDB } from "../store/db";
+import { syncNow } from "../sync/engine";
 
 /**
  * AI の API を呼ぶ（画面から）。
- * 端末の ID は、1日の回数の制限に使うだけのランダムな値（子どもやプロフィールとは結びつけない）。
+ * 1日の回数は子どもごとに数えるので、いま使っている子どもの ID を付ける（U8 §6）。
+ * サーバーはその子がログインした保護者の子どもかを確かめるので、まだ送っていない子どもなら、先に同期する。
  */
 
-const DEVICE_KEY = "device-id";
-
-export async function deviceId(): Promise<string> {
-  const db = getDB();
-  const row = await db.meta.get(DEVICE_KEY);
-  if (typeof row?.value === "string") return row.value;
-  const id = crypto.randomUUID();
-  await db.meta.put({ key: DEVICE_KEY, value: id });
-  return id;
+async function childHeader(): Promise<Record<string, string>> {
+  const childId = readActiveChild();
+  if (!childId) return {};
+  const unsent = await getDB()
+    .outbox.where("entity")
+    .equals("child")
+    .filter((i) => i.id === childId)
+    .count();
+  if (unsent > 0) await syncNow().catch(() => {});
+  return { "x-child-id": childId };
 }
 
 export class ApiError extends Error {
@@ -65,7 +69,7 @@ async function send(
   try {
     res = await fetch(path, {
       method: "POST",
-      headers: { ...headers, "x-device-id": await deviceId() },
+      headers: { ...headers, ...(await childHeader()) },
       body,
       signal,
     });

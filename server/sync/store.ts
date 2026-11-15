@@ -39,6 +39,13 @@ export interface SyncTx {
   all(): Promise<StoredRecord[]>;
   /** 削除の印を付けた子ども（取り消しの一覧） */
   deletedChildren(): Promise<StoredRecord[]>;
+  /** AI の回数を1つ数える。上限に達していれば数えずに false（子どもごと・1日・API ごと） */
+  takeAiUsage(
+    childId: string,
+    day: string,
+    route: string,
+    limit: number,
+  ): Promise<boolean>;
 }
 
 export interface SyncStore {

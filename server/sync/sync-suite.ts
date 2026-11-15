@@ -191,7 +191,7 @@ export function syncSuite(name: string, makeStore: () => Promise<SyncStore>) {
           ...mistake("m1", "c1", "s1"),
           question: "あ".repeat(70_000),
         }),
-        { entity: "mistake", id: "m2", op: "delete" },
+        { entity: "child", id: "m2", op: "delete" },
         { entity: "child", id: "c3", op: "upsert", payload: child("c4") },
         { entity: "unknown", id: "x" } as unknown as SyncChange,
       ]);
@@ -209,8 +209,9 @@ export function syncSuite(name: string, makeStore: () => Promise<SyncStore>) {
         ...family(),
         up("child", child("c2")),
       ]);
+      await sync.deleteChild(G, "c1");
+      await sync.deleteChild(G, "c1");
       const del = await sync.sync(G, first.cursor, [
-        { entity: "child", id: "c1", op: "delete" },
         up("mistake", mistake("m1", "c1", "s1", 9)),
       ]);
       expect(del.changes.map((c) => `${c.id}:${c.deleted}`).sort()).toEqual([
@@ -251,7 +252,7 @@ export function syncSuite(name: string, makeStore: () => Promise<SyncStore>) {
 
     it("7日たつと取り消せず、毎日の処理で本当に消える", async () => {
       await sync.sync(G, 0, family());
-      await sync.sync(G, 0, [{ entity: "child", id: "c1", op: "delete" }]);
+      await sync.deleteChild(G, "c1");
       tick(6 * DAY);
       expect(await sync.purge()).toBe(0);
       expect(await sync.deletedChildren(G)).toHaveLength(1);
@@ -301,7 +302,7 @@ export function syncSuite(name: string, makeStore: () => Promise<SyncStore>) {
         up("child", child("c2")),
         up("guardianSettings", settings("2026-11-15T01:00:00.000Z")),
       ]);
-      await sync.sync(G, 0, [{ entity: "child", id: "c2", op: "delete" }]);
+      await sync.deleteChild(G, "c2");
       const out = await sync.exportAll(G);
       expect(out.children.map((c) => c.id)).toEqual(["c1"]);
       expect(out.mistakes).toHaveLength(1);
@@ -314,6 +315,26 @@ export function syncSuite(name: string, makeStore: () => Promise<SyncStore>) {
       expect((await sync.exportAll(G)).children.map((c) => c.id)).toEqual([
         "c1",
       ]);
+    });
+
+    it("AI の回数は、この保護者の子どもごとに数える。日付が変わると数え直す", async () => {
+      await sync.sync(G, 0, [
+        up("child", child("c1")),
+        up("child", child("c2")),
+      ]);
+      expect(await sync.takeAi(G, "c1", "analyze", 2)).toBe("ok");
+      expect(await sync.takeAi(G, "c1", "analyze", 2)).toBe("ok");
+      expect(await sync.takeAi(G, "c1", "analyze", 2)).toBe("limit");
+      expect(await sync.takeAi(G, "c1", "grade", 2)).toBe("ok");
+      expect(await sync.takeAi(G, "c2", "analyze", 2)).toBe("ok");
+      expect(await sync.takeAi(OTHER, "c1", "analyze", 2)).toBe(
+        "unknown_child",
+      );
+      expect(await sync.takeAi(G, "ghost", "analyze", 2)).toBe("unknown_child");
+      await sync.deleteChild(G, "c2");
+      expect(await sync.takeAi(G, "c2", "analyze", 2)).toBe("unknown_child");
+      tick(DAY);
+      expect(await sync.takeAi(G, "c1", "analyze", 2)).toBe("ok");
     });
   });
 }

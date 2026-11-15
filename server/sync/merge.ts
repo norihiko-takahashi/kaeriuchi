@@ -21,8 +21,11 @@ export const MERGE_RULES: Record<SyncEntity, MergeRule> = {
   regrade: "append",
 };
 
-/** 端末から消せる記録（子どもの削除。ほかは子どもを消したときに一緒に消える） */
-export const DELETABLE: ReadonlySet<SyncEntity> = new Set(["child"]);
+/**
+ * 同期で消せる記録。子どもの削除は、ログインし直してから（U8-SEC-7）アカウントの API で行うので、同期では何も消せない。
+ * ミスモン・テスト・バトルは、子どもを消したときに一緒に消える
+ */
+export const DELETABLE: ReadonlySet<SyncEntity> = new Set();
 
 export interface Comparable {
   version: number;

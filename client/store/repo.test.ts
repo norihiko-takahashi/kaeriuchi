@@ -77,17 +77,14 @@ describe("プロフィール", () => {
     expect(JSON.stringify(items)).not.toContain("secret");
   });
 
-  it("削除すると端末から消え、削除の変更が outbox に入る", async () => {
+  it("削除すると端末から消え、その子のまだ送っていない変更も送らない（クラウドの削除はアカウントの API）", async () => {
     const child = await createChild({ nickname: "a", grade: "e5", avatar });
     await deleteChild(child.id);
     expect(await getChild(child.id)).toBeUndefined();
     expect(await listChildren()).toHaveLength(0);
     const items = await pendingOutbox();
-    expect(items.at(-2)).toMatchObject({
-      entity: "child",
-      id: child.id,
-      op: "delete",
-    });
+    expect(items.some((i) => i.entity === "child")).toBe(false);
+    expect(items.at(-1)).toMatchObject({ entity: "guardianSettings" });
   });
 });
 

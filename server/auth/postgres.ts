@@ -86,6 +86,14 @@ export class PostgresAuthStore implements AuthStore {
       VALUES (${g.id}, ${g.email}, ${g.createdAt}, ${g.deletedAt ?? null})`;
   }
 
+  async setGuardianDeleted(id: string, at: number | null) {
+    await this.sql`UPDATE guardians SET deleted_at = ${at} WHERE id = ${id}`;
+  }
+  async deleteGuardian(id: string) {
+    // セッション・パスキー・番号・記録は、外部キーで一緒に消える
+    await this.sql`DELETE FROM guardians WHERE id = ${id}`;
+  }
+
   async saveLoginToken(t: { hash: string; email: string; expiresAt: number }) {
     await this.sql`
       INSERT INTO login_tokens (hash, email, expires_at) VALUES (${t.hash}, ${t.email}, ${t.expiresAt})`;

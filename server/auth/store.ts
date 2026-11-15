@@ -39,6 +39,10 @@ export interface AuthStore {
   findGuardianByEmail(email: string): Promise<StoredGuardian | undefined>;
   getGuardian(id: string): Promise<StoredGuardian | undefined>;
   createGuardian(g: StoredGuardian): Promise<void>;
+  /** アカウントの削除の印を付ける・外す（null） */
+  setGuardianDeleted(id: string, at: number | null): Promise<void>;
+  /** 本当に消す（セッション・パスキーも一緒に） */
+  deleteGuardian(id: string): Promise<void>;
 
   saveLoginToken(t: {
     hash: string;

@@ -9,6 +9,7 @@ import {
   useMemo,
   useState,
 } from "react";
+import { ACTIVE_CHILD_KEY, readActiveChild } from "@/client/store/active-child";
 import type { DisplayMode, Grade } from "@/shared/schemas";
 
 /** 画面の表示に使う、いま使っている子どもの学年と表示モード */
@@ -26,18 +27,8 @@ interface AppState {
 
 const Ctx = createContext<AppState | null>(null);
 
-const ACTIVE_CHILD_KEY = "kaeriuchi:active-child";
-
 /** 保護者の画面は、何も操作しないまま5分たつと閉じる（BR-2.5） */
 export const PARENT_IDLE_MS = 5 * 60_000;
-
-function readActiveChild(): string | null {
-  try {
-    return sessionStorage.getItem(ACTIVE_CHILD_KEY);
-  } catch {
-    return null;
-  }
-}
 
 export function AppStateProvider({ children }: { children: ReactNode }) {
   // 保護者向けの画面は中学生モード（ふりがななし）を基本にする

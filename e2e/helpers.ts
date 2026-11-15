@@ -58,14 +58,16 @@ export async function typePin(page: Page, label: string | RegExp, pin: string) {
 }
 
 /** ログイン → 同意 → 保護者の PIN → 学年 → 名前の説明 → ニックネーム → ホーム画面への追加の案内 */
-export async function onboard(page: Page, nickname = "ほのおのきつね") {
+export async function onboard(
+  page: Page,
+  nickname = "ほのおのきつね",
+): Promise<string> {
   await page.goto("/");
   await expect(page).toHaveURL(/\/login$/);
   await expectNoA11yViolations(page);
   // テストごとに別のアカウント（同じサーバーを並べて使うため）
-  await page
-    .getByLabel("メールアドレス")
-    .fill(`parent-${crypto.randomUUID().slice(0, 8)}@example.com`);
+  const email = `parent-${crypto.randomUUID().slice(0, 8)}@example.com`;
+  await page.getByLabel("メールアドレス").fill(email);
   await page.getByRole("button", { name: "ログイン用のリンクを送る" }).click();
   await expect(
     page.getByRole("heading", { name: "メールを送りました" }),
@@ -109,6 +111,7 @@ export async function onboard(page: Page, nickname = "ほのおのきつね") {
   await page.getByLabel(/ニックネーム/).fill(nickname);
   await page.getByText("めがね").click();
   await page.getByRole("button", { name: "できた！" }).click();
+  return email;
 }
 
 /** 初めて使う流れのあと、プロフィールを選んでホームまで進む */

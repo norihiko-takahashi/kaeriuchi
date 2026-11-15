@@ -14,7 +14,7 @@ import { runPipeline } from "@/server/problems/pipeline";
  * 最後の行は { done, meta }。通った数が2問より少なければ、端末は「うまく つくれなかった」を出す。
  */
 export async function POST(request: Request) {
-  const g = guard(request, "generate");
+  const g = await guard(request, "generate");
   if (g instanceof NextResponse) return g;
   const { requestId, config, signal } = g;
 

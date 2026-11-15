@@ -211,7 +211,7 @@ export async function deleteChild(id: string): Promise<void> {
     "rw",
     [db.children, db.mistakes, db.battles, db.sheets, db.outbox],
     async () => {
-      // 端末の中からはすぐに消す（BR-4.3）。クラウドの削除は U8 で outbox から行う
+      // 端末の中からはすぐに消す（BR-4.3）。クラウドの削除は、ログインし直してからアカウントの API で行う（U8-SEC-7）
       await db.children.delete(id);
       const mistakeIds = await db.mistakes
         .where("childId")
@@ -234,10 +234,10 @@ export async function deleteChild(id: string): Promise<void> {
           (i) =>
             (i.entity === "mistake" && mistakeIds.includes(i.id)) ||
             (i.entity === "battle" && battleIds.includes(i.id)) ||
-            (i.entity === "sheet" && sheetIds.includes(i.id)),
+            (i.entity === "sheet" && sheetIds.includes(i.id)) ||
+            (i.entity === "child" && i.id === id),
         )
         .delete();
-      await db.outbox.add(outboxItem("child", id, "delete"));
     },
   );
   await saveGuardian({ ...guardian, rules });

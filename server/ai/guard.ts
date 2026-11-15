@@ -1,5 +1,10 @@
 import { NextResponse } from "next/server";
+import { cookieName, readCookie } from "@/server/auth/http";
+import { getAuth } from "@/server/auth/registry";
+import type { StoredSession } from "@/server/auth/store";
 import { type Config, getConfig } from "@/server/config";
+import { getSync } from "@/server/sync/registry";
+import type { SyncService } from "@/server/sync/service";
 
 /**
  * AI の API の共通の処理（BR-U2-3・BR-U2-4、nfr-design.md §5・§6）。
@@ -12,6 +17,7 @@ export type ErrorCode =
   | "timeout"
   | "ai_unavailable"
   | "invalid_output"
+  | "unauthorized"
   | "disabled";
 
 const STATUS: Record<ErrorCode, number> = {
@@ -21,6 +27,7 @@ const STATUS: Record<ErrorCode, number> = {
   timeout: 504,
   ai_unavailable: 503,
   invalid_output: 502,
+  unauthorized: 401,
   disabled: 503,
 };
 
@@ -33,6 +40,7 @@ const MESSAGES: Record<ErrorCode, string> = {
   timeout: "じかんが かかりすぎちゃった。もう一回 ためしてね",
   ai_unavailable: "いまは つかえないよ。すこし まってから ためしてね",
   invalid_output: "うまく つくれなかったよ。もう一回 ためしてね",
+  unauthorized: "いまは つかえないよ。おうちの ひとに みてもらってね",
   disabled: "いまは つかえないよ",
 };
 
@@ -45,7 +53,7 @@ export function errorResponse(code: ErrorCode, requestId: string) {
 
 export type AiRoute = "analyze" | "classify" | "generate" | "grade";
 
-/** 1日の回数の上限（端末ごと・BR-U2-3）。U8 で保護者ごとに DB で数える形に変える */
+/** 1日の回数の上限（子どもごと・BR-U2-3、U8 §6）。ログインしていればデータベースで数える */
 export const DAILY_LIMITS: Record<AiRoute, number> = {
   analyze: 30,
   /** 手で入れた間違いの判定（U45-COST-1） */
@@ -69,7 +77,7 @@ function jstDay(now: Date): string {
 }
 
 /**
- * 回数の制限。サーバーのメモリに数える（nfr-design.md §5 の注意を参照）。
+ * 回数の制限をサーバーのメモリに数える。ログインしていないとき（開発・テスト・評価）だけ使う
  */
 export class DailyCounter {
   private counts = new Map<string, number>();
@@ -78,13 +86,13 @@ export class DailyCounter {
   constructor(private limits: Record<AiRoute, number> = DAILY_LIMITS) {}
 
   /** 使えれば数えて true、上限なら false */
-  take(deviceId: string, route: AiRoute, now = new Date()): boolean {
+  take(childId: string, route: AiRoute, now = new Date()): boolean {
     const today = jstDay(now);
     if (today !== this.day) {
       this.counts.clear();
       this.day = today;
     }
-    const key = `${route}:${deviceId}`;
+    const key = `${route}:${childId}`;
     const used = this.counts.get(key) ?? 0;
     if (used >= this.limits[route]) return false;
     this.counts.set(key, used + 1);
@@ -94,7 +102,7 @@ export class DailyCounter {
 
 const counter = new DailyCounter();
 
-const DEVICE_ID = /^[A-Za-z0-9-]{8,64}$/;
+const CHILD_ID = /^[A-Za-z0-9-]{8,64}$/;
 
 export interface GuardResult {
   requestId: string;
@@ -102,25 +110,50 @@ export interface GuardResult {
   signal: AbortSignal;
 }
 
+export interface GuardDeps {
+  config?: Config;
+  counter?: DailyCounter;
+  /** ログインしている保護者（Cookie から読む） */
+  session?: (request: Request) => Promise<StoredSession | undefined>;
+  sync?: () => SyncService;
+}
+
+async function sessionOf(request: Request) {
+  const { auth, config } = getAuth();
+  return auth.getSession(readCookie(request, cookieName(config)));
+}
+
 /**
  * どの AI の API でも、最初に呼ぶ。
- * - 本番の環境では、ログインができるまで（U8）動かさない（BR-U2-4）
- * - 端末の ID ごとに、1日の回数を数える
+ * - 子どもの ID ごとに、1日の回数を数える（U8 §6）。ログインしていれば、その子がこの保護者の子どもかを確かめ、
+ *   データベースで数える（サーバーが何台でも正しく数える）
+ * - 本番の環境では、ログインしていなければ動かさない（BR-U2-4）
  * - 時間切れの合図（AbortSignal）を作る
  */
-export function guard(
+export async function guard(
   request: Request,
   route: AiRoute,
-  deps: { config?: Config; counter?: DailyCounter } = {},
-): GuardResult | NextResponse {
+  deps: GuardDeps = {},
+): Promise<GuardResult | NextResponse> {
   const requestId = crypto.randomUUID();
   const config = deps.config ?? getConfig();
-  if (config.APP_ENV === "production")
-    return errorResponse("disabled", requestId);
 
-  const deviceId = request.headers.get("x-device-id") ?? "";
-  if (!DEVICE_ID.test(deviceId)) return errorResponse("bad_request", requestId);
-  if (!(deps.counter ?? counter).take(deviceId, route)) {
+  const childId = request.headers.get("x-child-id") ?? "";
+  if (!CHILD_ID.test(childId)) return errorResponse("bad_request", requestId);
+
+  const session = await (deps.session ?? sessionOf)(request);
+  if (session) {
+    const r = await (deps.sync ?? getSync)().takeAi(
+      session.guardianId,
+      childId,
+      route,
+      DAILY_LIMITS[route],
+    );
+    if (r === "unknown_child") return errorResponse("bad_request", requestId);
+    if (r === "limit") return errorResponse("rate_limited", requestId);
+  } else if (config.APP_ENV === "production") {
+    return errorResponse("unauthorized", requestId);
+  } else if (!(deps.counter ?? counter).take(childId, route)) {
     return errorResponse("rate_limited", requestId);
   }
   return { requestId, config, signal: AbortSignal.timeout(TIMEOUT_MS[route]) };

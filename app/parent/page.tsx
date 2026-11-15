@@ -10,6 +10,7 @@ import { Avatar } from "@/components/avatar";
 import { InstallSteps } from "@/components/install-guide";
 import { ParentGuard } from "@/components/parent-guard";
 import { useSwUpdate } from "@/components/sw-update";
+import { SyncStatusCard } from "@/components/sync-status";
 import { Button, ErrorText, LinkButton, Page } from "@/components/ui";
 import { validateChildPin } from "@/domain/parent/pin";
 import { GRADE_LABELS } from "@/domain/profile/grade";
@@ -206,6 +207,8 @@ export default function ParentMenu() {
               ログインしている端末
             </LinkButton>
           </nav>
+
+          <SyncStatusCard />
 
           <h2 className="text-lg font-bold">
             プロフィール（{children.length}/4）

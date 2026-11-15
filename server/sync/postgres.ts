@@ -83,6 +83,15 @@ export class PostgresSyncStore implements SyncStore {
             await tx<Row[]>`
               SELECT * FROM records WHERE guardian_id = ${g} AND NOT deleted ORDER BY seq`
           ).map(toRecord),
+        takeAiUsage: async (childId, day, route, limit) => {
+          const r = await tx`
+            INSERT INTO ai_usage (guardian_id, child_id, day, route, count)
+            VALUES (${g}, ${childId}, ${day}, ${route}, 1)
+            ON CONFLICT (guardian_id, child_id, day, route) DO UPDATE SET count = ai_usage.count + 1
+            WHERE ai_usage.count < ${limit}
+            RETURNING count`;
+          return r.length > 0;
+        },
         deletedChildren: async () =>
           (
             await tx<Row[]>`

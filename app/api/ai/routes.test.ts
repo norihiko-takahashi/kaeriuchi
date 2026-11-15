@@ -39,9 +39,9 @@ function tinyJpeg(extra: number[] = []) {
   ]);
 }
 
-let device = 0;
+let child = 0;
 const headers = () => ({
-  "x-device-id": `test-device-${String(++device).padStart(4, "0")}`,
+  "x-child-id": `test-child-${String(++child).padStart(4, "0")}`,
 });
 
 function analyzeRequest(image: Uint8Array, gradeValue = "e5") {
@@ -107,7 +107,7 @@ describe("POST /api/ai/analyze", () => {
     expect(res.status).toBe(400);
   });
 
-  it("本番の環境では動かさない", async () => {
+  it("本番の環境では、ログインしていなければ動かさない", async () => {
     process.env.APP_ENV = "production";
     process.env.SYNC_STORE = "postgres";
     process.env.DATABASE_URL = "postgres://app@db.example/kaeriuchi";
@@ -118,7 +118,7 @@ describe("POST /api/ai/analyze", () => {
     process.env.APP_URL = "https://example.jp";
     resetConfigForTesting();
     const res = await analyze(analyzeRequest(tinyJpeg()));
-    expect(res.status).toBe(503);
+    expect(res.status).toBe(401);
     for (const k of [
       "SYNC_STORE",
       "AUTH_PROVIDER",

@@ -11,12 +11,14 @@ import {
 } from "@/server/auth/http";
 import { getAuth } from "@/server/auth/registry";
 import { AuthError, type NewSession } from "@/server/auth/service";
+import { getSync } from "@/server/sync/registry";
 
 /**
  * ログインの API（U8、functional-design.md §1〜3）。/api/auth/<action>
  * GET  session                     いまのログイン
  * POST link {email}                ログイン用のリンクを送る
- * POST verify {token}              リンクを確かめてログインする
+ * POST verify {token}              リンクを確かめてログインする（削除の手続き中なら {restore}）
+ * POST restore {token}             アカウントの削除を取り消してログインする（7日のうち）
  * POST logout                      ログアウト
  * POST code                        端末をつなぐ番号を出す（ログインが要る）
  * POST redeem {code}               番号で端末をつなぐ
@@ -78,10 +80,19 @@ async function run(request: Request, action: string, ctx: AuthContext) {
     }
     case "POST verify": {
       const { token } = await body(request, Token);
-      return signedIn(
-        ctx,
-        await auth.verifyLoginLink(token, ctx.ip, userAgent(request)),
-      );
+      const r = await auth.verifyLoginLink(token, ctx.ip, userAgent(request));
+      // 削除の手続き中のアカウント：取り消すかどうかを選んでもらう（まだログインしない）
+      if ("restore" in r) return ok(r);
+      // この端末で、同じアカウントにログインし直したとき（削除・書き出しの前の確認）は、前のセッションを消す
+      if (ctx.token && ctx.session?.guardianId === r.session.guardianId)
+        await auth.signOut(ctx.token);
+      return signedIn(ctx, r);
+    }
+    case "POST restore": {
+      const { token } = await body(request, Token);
+      const r = await auth.restoreAccount(token, userAgent(request));
+      await getSync().restoreAccount(r.session.guardianId);
+      return signedIn(ctx, r);
     }
     case "POST logout": {
       if (ctx.token) await auth.signOut(ctx.token);

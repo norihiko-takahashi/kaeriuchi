@@ -46,7 +46,7 @@ export class SyncService {
             rejected.push({ entity: r.entity, id: r.id, reason: r.reason });
           continue;
         }
-        const reason = await this.apply(tx, r.change, today);
+        const reason = await this.apply(tx, r.change);
         if (reason)
           rejected.push({ entity: r.change.entity, id: r.change.id, reason });
       }
@@ -66,7 +66,6 @@ export class SyncService {
   private async apply(
     tx: SyncTx,
     c: CheckedChange,
-    today: string,
   ): Promise<string | undefined> {
     for (const ref of c.refs) {
       const parent = await tx.get(ref.entity, ref.id);
@@ -77,23 +76,6 @@ export class SyncService {
     const d = decide(c.entity, existing, c);
     // 古い・すでにある・消したものは、受け付けたことにする（端末は送信待ちから消し、pull で正しい版を受け取る）
     if (d.action === "skip") return undefined;
-
-    if (c.op === "delete") {
-      // 子どもを消す：その子の記録すべてに削除の印を付ける（すぐにすべての端末から消える）
-      const tag = childTag(c.id);
-      await tx.put({
-        entity: c.entity,
-        id: c.id,
-        version: existing?.version ?? 0,
-        updatedAt: existing?.updatedAt,
-        payload: existing?.payload ?? {},
-        deleted: true,
-        deletedDay: today,
-        deletedBy: tag,
-      });
-      await tx.markDeleted(today, tag, c.id);
-      return undefined;
-    }
 
     let payload = c.payload ?? {};
     if (c.entity === "guardianSettings") {
@@ -119,7 +101,51 @@ export class SyncService {
     return undefined;
   }
 
+  /**
+   * AI の1日の回数を、子どもごとに数える（U8 §6）。
+   * その子が、この保護者の子ども（同期した記録にあり、消していない）でなければ数えない
+   */
+  async takeAi(
+    guardianId: string,
+    childId: string,
+    route: string,
+    limit: number,
+  ): Promise<"ok" | "limit" | "unknown_child"> {
+    const day = this.today();
+    return this.store.transaction(guardianId, async (tx) => {
+      const child = await tx.get("child", childId);
+      if (!child || child.deleted) return "unknown_child";
+      return (await tx.takeAiUsage(childId, day, route, limit))
+        ? "ok"
+        : "limit";
+    });
+  }
+
   /* ---------- 削除の取り消し・書き出し（U8 §5） ---------- */
+
+  /**
+   * 子どもを消す：その子の記録すべてに削除の印を付ける（次の同期で、すべての端末から消える）。
+   * まだ同期していない子どもでも、印を残す（あとから古い端末が送ってきても戻さない）
+   */
+  async deleteChild(guardianId: string, childId: string) {
+    const today = this.today();
+    const tag = childTag(childId);
+    await this.store.transaction(guardianId, async (tx) => {
+      const existing = await tx.get("child", childId);
+      if (existing?.deleted) return;
+      await tx.put({
+        entity: "child",
+        id: childId,
+        version: existing?.version ?? 0,
+        updatedAt: existing?.updatedAt,
+        payload: existing?.payload ?? {},
+        deleted: true,
+        deletedDay: today,
+        deletedBy: tag,
+      });
+      await tx.markDeleted(today, tag, childId);
+    });
+  }
 
   /** 取り消せる、消した子ども */
   async deletedChildren(guardianId: string) {

@@ -116,6 +116,8 @@ describe("同期（端末）", () => {
     await updateChild(keep.id, { pinHash: "b-pin" });
 
     use(a);
+    // クラウドの削除（アカウントの API）のあと、端末からも消す
+    await server.deleteChild(ACCOUNT.guardianId, kid.id);
     await deleteChild(kid.id);
     await updateChild(keep.id, { nickname: "たぬきち" });
     await sync();
