@@ -23,6 +23,8 @@ const nextConfig: NextConfig = {
   // Node.js だけで動く形にビルドする（U1-PORT-1）
   output: "standalone",
   poweredByHeader: false,
+  // まとめずに node_modules に残す（データベースの移行・毎日の削除のスクリプトからも使うため・U8）
+  serverExternalPackages: ["postgres"],
   // ページのタイトルなどを、後から送らず最初の HTML の <head> に入れる。
   // 画面はリクエストのたびに描画するので、後から送るとタイトルがない瞬間ができ、
   // スクリーンリーダーやアクセシビリティのチェックで問題になる。メタデータは静的なので遅くならない

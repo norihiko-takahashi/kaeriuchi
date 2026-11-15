@@ -13,6 +13,7 @@
     "test:coverage": "vitest run --coverage",
     "e2e": "playwright test",
     "check:bundle": "node scripts/check-bundle-size.mjs",
+    "db:migrate": "node scripts/db-migrate.mjs",
     "eval": "tsx --conditions=react-server --tsconfig tsconfig.json evals/run.mts",
     "spike:r1": "tsx --tsconfig tsconfig.json spikes/r1/evaluate.mts"
   },
@@ -28,6 +29,7 @@
     "@simplewebauthn/server": "14.0.3",
     "dexie": "^4.4.7",
     "next": "16.4.5",
+    "postgres": "3.4.9",
     "react": "19.3.0",
     "react-dom": "19.3.0",
     "server-only": "^0.0.1",

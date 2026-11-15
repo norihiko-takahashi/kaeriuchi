@@ -28,6 +28,11 @@ ENV NODE_ENV=production NEXT_TELEMETRY_DISABLED=1 PORT=3000 HOSTNAME=0.0.0.0 GIT
 COPY --from=build --chown=node:node /app/.next/standalone ./
 COPY --from=build --chown=node:node /app/.next/static ./.next/static
 COPY --from=build --chown=node:node /app/public ./public
+# データベースの移行と毎日の削除（U8。ECS のタスクで、コマンドを差し替えて動かす）
+COPY --from=build --chown=node:node /app/scripts/db-migrate.mjs /app/scripts/db-purge.mjs ./scripts/
+COPY --from=build --chown=node:node /app/server/db/migrations ./server/db/migrations
+# スクリプトから import "postgres" で読めるように、standalone の中の postgres を指す
+RUN cd node_modules && ln -s "$(ls -d .pnpm/postgres@*/node_modules/postgres)" postgres
 USER node
 EXPOSE 3000
 HEALTHCHECK --interval=30s --timeout=3s --start-period=10s \

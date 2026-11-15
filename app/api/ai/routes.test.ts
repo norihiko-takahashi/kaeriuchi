@@ -110,6 +110,8 @@ describe("POST /api/ai/analyze", () => {
   it("本番の環境では動かさない", async () => {
     process.env.APP_ENV = "production";
     process.env.SYNC_STORE = "postgres";
+    process.env.DATABASE_URL = "postgres://app@db.example/kaeriuchi";
+    process.env.DATABASE_CA_FILE = "/etc/ssl/rds.pem";
     process.env.AUTH_PROVIDER = "native";
     process.env.MAIL_FROM = "login@example.jp";
     process.env.AI_PROVIDER = "anthropic";
@@ -117,7 +119,14 @@ describe("POST /api/ai/analyze", () => {
     resetConfigForTesting();
     const res = await analyze(analyzeRequest(tinyJpeg()));
     expect(res.status).toBe(503);
-    for (const k of ["SYNC_STORE", "AUTH_PROVIDER", "APP_URL", "MAIL_FROM"])
+    for (const k of [
+      "SYNC_STORE",
+      "AUTH_PROVIDER",
+      "APP_URL",
+      "MAIL_FROM",
+      "DATABASE_URL",
+      "DATABASE_CA_FILE",
+    ])
       delete process.env[k];
   });
 });

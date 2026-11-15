@@ -26,7 +26,12 @@ export default defineConfig({
         "server/auth/**/*.ts",
         "server/sync/**/*.ts",
       ],
-      exclude: ["**/*.test.ts", "**/*-suite.ts"],
+      exclude: [
+        "**/*.test.ts",
+        "**/*-suite.ts",
+        // Postgres の保存先は、テスト用のデータベースがあるときだけ数える（CI では必ずある）
+        ...(process.env.TEST_DATABASE_URL ? [] : ["**/postgres.ts"]),
+      ],
       thresholds: { lines: 90, functions: 90, branches: 90, statements: 90 },
     },
   },

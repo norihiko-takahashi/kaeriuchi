@@ -20,6 +20,18 @@ jobs:
   check:
     name: lint・型チェック・単体テスト
     runs-on: ubuntu-latest
+    # 同期とログインの保存先を、本物の Postgres でも確かめる（U8-TEST-1。RDS と同じ 16）
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: ci-only
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      TEST_DATABASE_URL: postgres://postgres:ci-only@127.0.0.1:5432/postgres
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
@@ -32,7 +44,7 @@ jobs:
         run: pnpm lint
       - name: 型チェック
         run: pnpm typecheck
-      - name: 単体テストとカバレッジ（domain/・server/ai/ は 90% 以上）
+      - name: 単体テストとカバレッジ（domain/・server/ は 90% 以上。Postgres の保存先も）
         run: pnpm test:coverage
       - name: 評価の仕組みが動くか（偽物の AI だけ。本物の Bedrock は使わない）
         run: |
@@ -76,6 +88,15 @@ jobs:
   docker:
     name: Docker のイメージ
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: ci-only
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready --health-interval 5s --health-timeout 5s --health-retries 10
     steps:
       - uses: actions/checkout@v4
       - name: ビルド（push はしない）
@@ -89,6 +110,15 @@ jobs:
           done
           docker logs app
           exit 1
+      - name: イメージの中から、データベースの移行と毎日の削除を動かす（U8）
+        run: |
+          docker run --rm --network host \
+            -e DATABASE_ADMIN_URL=postgres://postgres:ci-only@127.0.0.1:5432/postgres \
+            -e APP_DB_PASSWORD=ci-only-app \
+            kaeriuchi:ci node scripts/db-migrate.mjs
+          docker run --rm --network host \
+            -e DATABASE_URL=postgres://kaeriuchi_app:ci-only-app@127.0.0.1:5432/postgres \
+            kaeriuchi:ci node scripts/db-purge.mjs
 
   security:
     name: 脆弱性と秘密情報のスキャン

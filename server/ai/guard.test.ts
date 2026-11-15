@@ -15,6 +15,8 @@ describe("guard（BR-U2-3・BR-U2-4）", () => {
       APP_URL: "https://example.jp",
       AI_PROVIDER: "bedrock",
       SYNC_STORE: "postgres",
+      DATABASE_URL: "postgres://app@db.example/kaeriuchi",
+      DATABASE_CA_FILE: "/etc/ssl/rds.pem",
       AUTH_PROVIDER: "native",
       MAIL_FROM: "login@example.jp",
       BEDROCK_MODEL_ANALYZE: "anthropic.claude-sonnet-x",

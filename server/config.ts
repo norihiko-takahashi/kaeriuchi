@@ -31,6 +31,8 @@ const Env = z.object({
   MAIL_FROM: optionalString,
   /** Postgres の接続先（SYNC_STORE=postgres のとき。パスワードは Secrets Manager から入れる） */
   DATABASE_URL: optionalString,
+  /** RDS の証明書の束（PEM）の場所。本番は TLS で相手を確かめる（U8-PRIV-3） */
+  DATABASE_CA_FILE: optionalString,
 
   /* ---------- AWS・Bedrock（AI_PROVIDER=bedrock のとき） ---------- */
   /** 社用・個人用の切り替え（~/.aws/config のプロファイル名）。認証情報そのものは書かない */
@@ -74,6 +76,16 @@ export function parseConfig(env: Record<string, string | undefined>): Config {
       );
     }
   }
+  if (config.SYNC_STORE === "postgres" && !config.DATABASE_URL)
+    throw new Error("SYNC_STORE=postgres のときは DATABASE_URL が要ります");
+  if (
+    config.APP_ENV === "production" &&
+    config.SYNC_STORE === "postgres" &&
+    !config.DATABASE_CA_FILE
+  )
+    throw new Error(
+      "本番の環境では DATABASE_CA_FILE が要ります（データベースとは TLS で、相手を確かめてつなぐ）",
+    );
   if (config.AUTH_PROVIDER === "native" && !config.MAIL_FROM)
     throw new Error("AUTH_PROVIDER=native のときは MAIL_FROM が要ります");
   if (config.AI_PROVIDER === "bedrock") bedrockModels(config);
