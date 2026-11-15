@@ -52,7 +52,8 @@
 | `Ops` | 削除の処理（EventBridge）、Budgets、アラーム |
 
 - 環境は `beta`（まず1つ）。本番は同じスタックを別の名前で作る。
-- CI では `cdk synth` とスナップショットのテストだけを動かす（AWS には触らない）。実際に作る（`cdk deploy`）のは、AWS の準備のあと、あなたの手元か、承認つきの GitHub Actions から。
+- CI では `cdk synth` とスナップショットのテストだけを動かす（AWS には触らない。CI に AWS の認証情報を置かない）。
+- **デプロイは、いつもあなたの手元の PC から行う**（2026-11-15 に決定）：`cdk deploy`（構成）と、アプリの入れ替え（イメージを ECR に送ってサービスを更新する）を、`docs/deploy.md` の手順とスクリプト（`pnpm deploy:beta`）で行う。GitHub Actions からのデプロイは作らない。この作業環境（Claude）からも AWS には触らない
 
 ## 3. あなたに用意してもらうもの（AWS の準備のとき）
 
