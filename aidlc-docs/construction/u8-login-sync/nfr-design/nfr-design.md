@@ -4,7 +4,7 @@
 
 | ライブラリ | 用途 | 理由 |
 |---|---|---|
-| `drizzle-orm`・`drizzle-kit`・`postgres` | Postgres の読み書きと、表の形の移行 | 型が付き、SQL に近く、軽い（設計で想定していたもの） |
+| `postgres`（postgres.js） | Postgres の読み書き | 軽く、SQL をそのまま書ける。値は必ずプレースホルダーで渡る（2026-11-15 のコードで変更：表は records を中心に少なく、RLS の SQL を自分で書くので、Drizzle は入れない。移行は SQL のファイルと小さなスクリプト `scripts/db-migrate.mjs`） |
 | `@simplewebauthn/server`・`@simplewebauthn/browser` | パスキー（WebAuthn） | WebAuthn の定番。標準に沿っている |
 | `@aws-sdk/client-sesv2` | メールの送信 | AWS の公式 |
 | `aws-cdk-lib`・`constructs`（`infra/cdk/` だけ） | AWS の構成をコードで書く | 決定（CDK） |
@@ -23,10 +23,12 @@ server/auth/
 server/sync/
 ├─ store.ts           # SyncStore
 ├─ memory.ts          # テスト・開発用
-├─ postgres.ts        # 本番（Drizzle）
+├─ postgres.ts        # 本番（postgres.js）
 ├─ merge.ts           # まとめ方のルール（純粋な関数）
-└─ schema.ts          # Postgres の表（Drizzle）
-server/db/            # 接続、移行（drizzle-kit）、RLS の設定
+├─ validate.ts        # 送られた変更の形（Zod）
+└─ service.ts         # 同期・削除と取り消し・書き出し・AI の回数
+server/db/            # 接続、移行の SQL（migrations/）、RLS の設定
+scripts/db-migrate.mjs・db-purge.mjs  # 移行と毎日の削除（ECS のタスクで動かす）
 app/api/auth/*        # リンクの送信・確認、番号、パスキー、ログアウト、端末の一覧
 app/api/sync/route.ts # push と pull をまとめた1つの API
 app/api/account/*     # 書き出し、削除、削除の取り消し
@@ -66,3 +68,14 @@ infra/cdk/            # AWS の構成（インフラ設計）
 - `merge.ts`・`tokens.ts`・削除の期限は単体テスト。
 - `SyncStore` は、同じテストを `memory` と `postgres` の両方で通す（CI に Postgres のサービスを足す）。
 - E2E は開発用のログインと、メモリの保存先で動かす（CI に AWS は使わない）。
+
+## 7. コードで決めたこと（2026-11-15）
+
+- **削除は同期では行わない**：子どもの削除は `/api/account/delete-child` だけ（10分以内のログインのし直しが要る・U8-SEC-7）。同期で送られた削除は受け付けない。削除の印は、次の同期ですべての端末に届く
+- **バトルは版で比べる**：1回答えるごとに保存して版が上がるので、「足すだけ」ではなく版の大きいほう。消すことはできない（子どもと一緒に消える）
+- **報告は端末にも残す**：送信待ちから送ったあとも保護者メニューの一覧に出るように、端末の DB に報告の表を足す（IndexedDB v4）
+- **初めての同期**：その端末の記録をすべて送信待ちに入れ直してから送る（つなぐ前の記録・ID を付け替えた記録を、もれなく送る）
+- **保護者の設定の時刻**：新しい端末でつないだときは、いちばん古い時刻にしておき、クラウドの設定を採用する
+- **AI の回数**：画面は、いま使っている子どもの ID を `x-child-id` で送る。まだ送っていない子どもなら、先に同期する。ログインしていないとき（開発・テスト・評価）はメモリで数える。本番はログインが要る
+- **アプリの役割**：アプリは `kaeriuchi_app`（表の持ち主ではない）で入るので RLS が効く。毎日の削除は持ち主の権限で動く関数 `kaeriuchi_purge` を呼ぶ（アプリはほかの家庭の行を読めないまま）
+- **同じ保護者の同期は順番に**：トランザクションの中でアドバイザリーロックを取り、通し番号の順に書き込みが見えるようにする（pull の取りこぼしを防ぐ）
