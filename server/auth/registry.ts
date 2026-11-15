@@ -25,7 +25,16 @@ export function getAuth(): { auth: AuthService; config: Config } {
       ? new SesMailer(config.MAIL_FROM)
       : new DevMailer();
   cached = {
-    auth: new AuthService({ store, mailer, appUrl: config.APP_URL }),
+    auth: new AuthService({
+      store,
+      mailer,
+      appUrl: config.APP_URL,
+      // 開発用のログインでは上限をゆるめる（E2E はすべて同じ接続元から来る）。本番の設定では使わない
+      limitScale:
+        config.AUTH_PROVIDER === "dev" && config.APP_ENV !== "production"
+          ? 100
+          : 1,
+    }),
     config,
   };
   return cached;

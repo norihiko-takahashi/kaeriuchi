@@ -43,6 +43,11 @@ export interface AuthDeps {
   /** アプリの URL（例：https://kaeriuchi.example.jp）。リンクとパスキーの確認に使う */
   appUrl: string;
   now?: () => number;
+  /**
+   * 回数の上限を何倍にするか（初期値 1）。開発用のログインだけで使う
+   * （E2E では、すべてのテストが同じ接続元から来るため）
+   */
+  limitScale?: number;
 }
 
 export interface NewSession {
@@ -74,6 +79,7 @@ export class AuthService {
   private origin: string;
   private rpID: string;
   private now: () => number;
+  private scale: number;
 
   constructor(deps: AuthDeps) {
     this.store = deps.store;
@@ -82,11 +88,12 @@ export class AuthService {
     this.origin = url.origin;
     this.rpID = url.hostname;
     this.now = deps.now ?? Date.now;
+    this.scale = deps.limitScale ?? 1;
   }
 
   /** 回数の制限。超えたら rate_limited */
   private async limit(key: string, [max, windowMs]: readonly [number, number]) {
-    if ((await this.store.hit(key, windowMs, this.now())) > max)
+    if ((await this.store.hit(key, windowMs, this.now())) > max * this.scale)
       throw new AuthError("rate_limited");
   }
 
@@ -256,7 +263,10 @@ export class AuthService {
   ): Promise<NewSession> {
     const [max, windowMs] = LIMITS.codeFailPerIp;
     const failKey = `code-fail:${ip}`;
-    if ((await this.store.count(failKey, windowMs, this.now())) >= max)
+    if (
+      (await this.store.count(failKey, windowMs, this.now())) >=
+      max * this.scale
+    )
       throw new AuthError("rate_limited");
     const code = normalizeCode(rawCode);
     const guardianId =

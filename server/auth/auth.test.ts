@@ -276,3 +276,19 @@ describe("パスキーの準備（WebAuthn）", () => {
       .catch((e) => expect(code(e)).toBe("invalid"));
   });
 });
+
+describe("回数の上限の倍率", () => {
+  it("開発用のログインだけ、上限をゆるめられる（初期値は1倍）", async () => {
+    const auth = new AuthService({
+      store: new MemoryAuthStore(),
+      mailer: new DevMailer(() => {}),
+      appUrl: "http://localhost:3000",
+      limitScale: 2,
+    });
+    for (let i = 0; i < 40; i++)
+      await auth.requestLoginLink(`u${i}@example.com`, "1.2.3.4");
+    await expect(
+      auth.requestLoginLink("x@example.com", "1.2.3.4"),
+    ).rejects.toSatisfy((e) => code(e) === "rate_limited");
+  });
+});
