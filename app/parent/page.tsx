@@ -202,6 +202,9 @@ export default function ParentMenu() {
             <LinkButton href="/parent/reports" variant="secondary">
               問題の報告
             </LinkButton>
+            <LinkButton href="/parent/devices" variant="secondary">
+              ログインしている端末
+            </LinkButton>
           </nav>
 
           <h2 className="text-lg font-bold">

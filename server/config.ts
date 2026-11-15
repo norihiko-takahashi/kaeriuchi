@@ -25,9 +25,12 @@ const Env = z.object({
   APP_URL: z.url().default("http://localhost:3000"),
   AI_PROVIDER: z.enum(["mock", "bedrock", "anthropic"]).default("mock"),
   SYNC_STORE: z.enum(["memory", "postgres", "dynamo"]).default("memory"),
-  AUTH_PROVIDER: z
-    .enum(["dev", "authjs", "cognito", "supabase"])
-    .default("dev"),
+  /** dev：メールを送らず、リンクを画面とログに出す。native：自分たちのログイン（U8。メールは SES） */
+  AUTH_PROVIDER: z.enum(["dev", "native"]).default("dev"),
+  /** ログイン用のメールの送信元（AUTH_PROVIDER=native のとき。SES で確認したアドレス） */
+  MAIL_FROM: optionalString,
+  /** Postgres の接続先（SYNC_STORE=postgres のとき。パスワードは Secrets Manager から入れる） */
+  DATABASE_URL: optionalString,
 
   /* ---------- AWS・Bedrock（AI_PROVIDER=bedrock のとき） ---------- */
   /** 社用・個人用の切り替え（~/.aws/config のプロファイル名）。認証情報そのものは書かない */
@@ -71,6 +74,8 @@ export function parseConfig(env: Record<string, string | undefined>): Config {
       );
     }
   }
+  if (config.AUTH_PROVIDER === "native" && !config.MAIL_FROM)
+    throw new Error("AUTH_PROVIDER=native のときは MAIL_FROM が要ります");
   if (config.AI_PROVIDER === "bedrock") bedrockModels(config);
   return config;
 }

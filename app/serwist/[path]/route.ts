@@ -9,6 +9,8 @@ import { createSerwistRoute } from "@serwist/turbopack";
 const APP_ROUTES = [
   "/",
   "/login",
+  "/login/verify",
+  "/login/code",
   "/consent",
   "/parent/pin-setup",
   "/profiles",
@@ -22,6 +24,7 @@ const APP_ROUTES = [
   "/parent/rules",
   "/parent/data",
   "/parent/reports",
+  "/parent/devices",
   "/parent/insights",
   "/parent/insights/day",
   "/capture",

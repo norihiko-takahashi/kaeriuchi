@@ -62,8 +62,16 @@ export async function onboard(page: Page, nickname = "ほのおのきつね") {
   await page.goto("/");
   await expect(page).toHaveURL(/\/login$/);
   await expectNoA11yViolations(page);
-  await page.getByLabel("メールアドレス").fill("parent@example.com");
-  await page.getByRole("button", { name: "ログイン" }).click();
+  // テストごとに別のアカウント（同じサーバーを並べて使うため）
+  await page
+    .getByLabel("メールアドレス")
+    .fill(`parent-${crypto.randomUUID().slice(0, 8)}@example.com`);
+  await page.getByRole("button", { name: "ログイン用のリンクを送る" }).click();
+  await expect(
+    page.getByRole("heading", { name: "メールを送りました" }),
+  ).toBeVisible();
+  // 開発用：メールの代わりに、画面に出たリンクを開く
+  await page.getByRole("link", { name: "ここからリンクを開く" }).click();
 
   await expect(page).toHaveURL(/\/consent$/);
   await expectNoA11yViolations(page);

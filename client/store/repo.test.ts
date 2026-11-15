@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { hashPin, verifyPin } from "@/client/crypto/pin-hash";
 import { KaeriuchiDB, setDBForTesting } from "./db";
 import {
+  adoptAccount,
   applyGradePromotion,
   createChild,
   deleteAllLocalData,
@@ -9,6 +10,7 @@ import {
   devSignIn,
   exportData,
   getChild,
+  getGuardian,
   getRules,
   listChildren,
   MAX_CHILDREN,
@@ -146,5 +148,47 @@ describe("PIN のハッシュ", () => {
     expect(await hashPin("482915", 1000)).not.toBe(
       await hashPin("482915", 1000),
     );
+  });
+});
+
+describe("クラウドのアカウントにつなぐ（U8）", () => {
+  it("まだつないでいない記録は、ログインしたアカウントに付け替える（送信待ちも）", async () => {
+    const local = await getGuardian();
+    const child = await createChild({
+      nickname: "きつね",
+      grade: "e3",
+      avatar,
+    });
+    expect(
+      await adoptAccount({ guardianId: "server-1", email: "p@example.com" }),
+    ).toBe("ok");
+    const g = await getGuardian();
+    expect(g).toMatchObject({ id: "server-1", email: "p@example.com" });
+    expect(g?.accountLinkedAt).toBeTruthy();
+    expect(await db.guardian.get(local?.id ?? "")).toBeUndefined();
+    expect((await getChild(child.id))?.guardianId).toBe("server-1");
+    const outbox = await pendingOutbox();
+    expect(
+      outbox.every(
+        (o) => (o.payload as { guardianId?: string })?.guardianId !== local?.id,
+      ),
+    ).toBe(true);
+    // もう一度同じアカウントなら、そのまま
+    expect(
+      await adoptAccount({ guardianId: "server-1", email: "p@example.com" }),
+    ).toBe("ok");
+  });
+
+  it("別のアカウントにつないだ記録とは混ぜない。記録がなければ、そのアカウントで始める", async () => {
+    await adoptAccount({ guardianId: "server-1", email: "p@example.com" });
+    expect(
+      await adoptAccount({ guardianId: "server-2", email: "q@example.com" }),
+    ).toBe("conflict");
+    expect((await getGuardian())?.id).toBe("server-1");
+    await deleteAllLocalData();
+    expect(
+      await adoptAccount({ guardianId: "server-2", email: "q@example.com" }),
+    ).toBe("ok");
+    expect((await getGuardian())?.id).toBe("server-2");
   });
 });

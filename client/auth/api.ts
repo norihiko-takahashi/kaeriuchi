@@ -1,0 +1,110 @@
+/**
+ * ログインの API を呼ぶ（U8・保護者の画面から）。Cookie は同じ出どころで送られる。
+ */
+
+export class AuthApiError extends Error {
+  constructor(
+    readonly code: string,
+    /** 保護者に見せてよい文（サーバーが決めたもの） */
+    readonly userMessage: string,
+  ) {
+    super(code);
+    this.name = "AuthApiError";
+  }
+}
+
+const OFFLINE = new AuthApiError(
+  "offline",
+  "インターネットにつながっていません。つながってから、もう一度ためしてください",
+);
+
+async function call<T>(
+  method: string,
+  action: string,
+  body?: unknown,
+): Promise<T> {
+  if (typeof navigator !== "undefined" && !navigator.onLine) throw OFFLINE;
+  let res: Response;
+  try {
+    res = await fetch(`/api/auth/${action}`, {
+      method,
+      headers:
+        body === undefined ? undefined : { "content-type": "application/json" },
+      body: body === undefined ? undefined : JSON.stringify(body),
+      credentials: "same-origin",
+    });
+  } catch {
+    throw OFFLINE;
+  }
+  const json = await res.json().catch(() => ({}));
+  if (!res.ok)
+    throw new AuthApiError(
+      json?.error?.code ?? "error",
+      json?.error?.message ??
+        "うまくいきませんでした。もう一度ためしてください",
+    );
+  return json as T;
+}
+
+export interface SignedIn {
+  guardianId: string;
+  email: string;
+  deviceId: string;
+}
+
+export interface SessionInfo extends SignedIn {
+  hasPasskey: boolean;
+  recentAuth: boolean;
+}
+
+export interface Device {
+  deviceId: string;
+  deviceName: string;
+  createdDay: string;
+  lastSeenDay: string;
+  current: boolean;
+}
+
+export const sendLoginLink = (email: string) =>
+  call<{ devLink?: string }>("POST", "link", { email });
+export const verifyLoginLink = (token: string) =>
+  call<SignedIn>("POST", "verify", { token });
+export const redeemLinkCode = (code: string) =>
+  call<SignedIn>("POST", "redeem", { code });
+export const currentSession = () => call<SessionInfo>("GET", "session");
+export const signOut = () => call<object>("POST", "logout", {});
+export const createLinkCode = () =>
+  call<{ code: string; expiresAt: number }>("POST", "code", {});
+export const listDevices = async () =>
+  (await call<{ devices: Device[] }>("GET", "devices")).devices;
+export const renameDevice = (deviceId: string, name: string) =>
+  call<object>("PATCH", "devices", { deviceId, name });
+export const revokeDevice = (deviceId: string) =>
+  call<object>("DELETE", "devices", { deviceId });
+
+/** この端末のブラウザがパスキーに対応しているか */
+export const passkeySupported = () =>
+  typeof window !== "undefined" && "PublicKeyCredential" in window;
+
+/** パスキーを登録する（ブラウザの部品は、使うときだけ読み込む） */
+export async function registerPasskey(): Promise<void> {
+  const { startRegistration } = await import("@simplewebauthn/browser");
+  const optionsJSON = await call<
+    Parameters<typeof startRegistration>[0]["optionsJSON"]
+  >("POST", "passkey-register-options", {});
+  const response = await startRegistration({ optionsJSON });
+  await call<object>("POST", "passkey-register", { response });
+}
+
+/** パスキーでログインする。reauth なら、いまのログインで確かめ直す（削除・書き出しの前） */
+export async function loginWithPasskey(
+  reauth = false,
+): Promise<SignedIn | { recentAuth: true }> {
+  const { startAuthentication } = await import("@simplewebauthn/browser");
+  const { challengeId, options } = await call<{
+    challengeId: string;
+    options: Parameters<typeof startAuthentication>[0]["optionsJSON"];
+  }>("POST", "passkey-login-options", {});
+  const response = await startAuthentication({ optionsJSON: options });
+  return call("POST", "passkey-login", { challengeId, response, reauth });
+}

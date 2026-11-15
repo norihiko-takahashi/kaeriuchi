@@ -1,3 +1,4 @@
+import type Dexie from "dexie";
 import { CURRENT_CONSENT_VERSION } from "@/domain/consent";
 import type { LockoutState } from "@/domain/parent/pin";
 import { defaultRules } from "@/domain/parent/rules";
@@ -31,7 +32,7 @@ function outboxItem(
   return { entity, id, op, payload, clientUpdatedAt: t, createdAt: t };
 }
 
-/* ---------- 開発用のログイン（U8 でマジックリンク・パスキーに置き換える） ---------- */
+/* ---------- テスト用：保護者の記録を端末に作る（画面のログインは U8 の /login） ---------- */
 
 export async function devSignIn(email: string): Promise<Guardian> {
   const db = getDB();
@@ -303,6 +304,76 @@ export async function exportData(childId?: string): Promise<ExportData> {
     mistakes,
     battles,
   };
+}
+
+/* ---------- クラウドのアカウントにつなぐ（U8） ---------- */
+
+export type AdoptResult = "ok" | "conflict";
+
+/**
+ * ログインしたアカウントを、この端末の記録に結びつける（functional-design.md §4）。
+ * - 記録がない → そのアカウントの保護者として始める
+ * - 同じアカウント → そのまま
+ * - まだどのアカウントにもつないでいない記録 → その記録を、このアカウントに入れる（保護者の ID を付け替える）
+ * - 別のアカウントにつないだ記録 → 混ぜない（"conflict"。消すか、やめるかを選んでもらう）
+ */
+export async function adoptAccount(account: {
+  guardianId: string;
+  email: string;
+}): Promise<AdoptResult> {
+  const db = getDB();
+  const local = await getGuardian();
+  const linkedAt = nowIso();
+  if (!local) {
+    await db.guardian.put({
+      id: account.guardianId,
+      email: account.email,
+      rules: {},
+      accountLinkedAt: linkedAt,
+      updatedAt: linkedAt,
+    });
+    return "ok";
+  }
+  if (local.id === account.guardianId) {
+    if (!local.accountLinkedAt)
+      await db.guardian.update(local.id, {
+        accountLinkedAt: linkedAt,
+        email: account.email,
+      });
+    return "ok";
+  }
+  if (local.accountLinkedAt) return "conflict";
+
+  const from = local.id;
+  const to = account.guardianId;
+  const tables = [db.children, db.mistakes, db.battles, db.sheets] as const;
+  await db.transaction("rw", [db.guardian, db.outbox, ...tables], async () => {
+    for (const table of tables)
+      await (table as unknown as Dexie.Table<{ guardianId: string }>)
+        .filter((r) => r.guardianId === from)
+        .modify((r) => {
+          r.guardianId = to;
+        });
+    await db.outbox.toCollection().modify((item) => {
+      const p = item.payload as
+        | { guardianId?: string; id?: string }
+        | undefined;
+      if (p?.guardianId === from) p.guardianId = to;
+      if (item.entity === "guardianSettings" && item.id === from) {
+        item.id = to;
+        if (p?.id === from) p.id = to;
+      }
+    });
+    await db.guardian.delete(from);
+    await db.guardian.put({
+      ...local,
+      id: to,
+      email: account.email,
+      accountLinkedAt: linkedAt,
+      updatedAt: linkedAt,
+    });
+  });
+  return "ok";
 }
 
 /** 端末の中のデータをすべて消す */

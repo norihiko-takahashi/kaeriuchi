@@ -23,6 +23,7 @@ export default defineConfig({
         "domain/**/*.ts",
         "server/ai/**/*.ts",
         "server/problems/**/*.ts",
+        "server/auth/**/*.ts",
       ],
       exclude: ["**/*.test.ts"],
       thresholds: { lines: 90, functions: 90, branches: 90, statements: 90 },

@@ -110,13 +110,14 @@ describe("POST /api/ai/analyze", () => {
   it("本番の環境では動かさない", async () => {
     process.env.APP_ENV = "production";
     process.env.SYNC_STORE = "postgres";
-    process.env.AUTH_PROVIDER = "authjs";
+    process.env.AUTH_PROVIDER = "native";
+    process.env.MAIL_FROM = "login@example.jp";
     process.env.AI_PROVIDER = "anthropic";
     process.env.APP_URL = "https://example.jp";
     resetConfigForTesting();
     const res = await analyze(analyzeRequest(tinyJpeg()));
     expect(res.status).toBe(503);
-    for (const k of ["SYNC_STORE", "AUTH_PROVIDER", "APP_URL"])
+    for (const k of ["SYNC_STORE", "AUTH_PROVIDER", "APP_URL", "MAIL_FROM"])
       delete process.env[k];
   });
 });
