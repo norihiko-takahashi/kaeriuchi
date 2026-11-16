@@ -7,6 +7,9 @@ let sql: Sql | undefined;
 
 export function getSql(config: Config): Sql {
   if (!config.DATABASE_URL) throw new Error("DATABASE_URL がありません");
-  sql ??= connect(config.DATABASE_URL, { caFile: config.DATABASE_CA_FILE });
+  sql ??= connect(config.DATABASE_URL, {
+    caFile: config.DATABASE_CA_FILE,
+    password: config.DATABASE_PASSWORD,
+  });
   return sql;
 }

@@ -31,6 +31,8 @@ const Env = z.object({
   MAIL_FROM: optionalString,
   /** Postgres の接続先（SYNC_STORE=postgres のとき。パスワードは Secrets Manager から入れる） */
   DATABASE_URL: optionalString,
+  /** Postgres のパスワード（DATABASE_URL に入れずに、Secrets Manager から別に入れる） */
+  DATABASE_PASSWORD: optionalString,
   /** RDS の証明書の束（PEM）の場所。本番は TLS で相手を確かめる（U8-PRIV-3） */
   DATABASE_CA_FILE: optionalString,
 

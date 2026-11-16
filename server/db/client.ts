@@ -21,7 +21,7 @@ const types = {
 
 export function connect(
   url: string,
-  opts: { caFile?: string; max?: number } = {},
+  opts: { caFile?: string; max?: number; password?: string } = {},
 ): Sql {
   return postgres(url, {
     max: opts.max ?? 10,
@@ -29,6 +29,7 @@ export function connect(
     connect_timeout: 10,
     onnotice: () => {},
     types,
+    ...(opts.password ? { password: opts.password } : {}),
     ssl: opts.caFile
       ? // 場所は設定で決める（ビルドの依存の追跡から外す）
         { ca: readFileSync(/*turbopackIgnore: true*/ opts.caFile, "utf8") }

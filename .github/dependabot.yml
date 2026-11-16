@@ -15,6 +15,18 @@ updates:
     groups:
       minor-and-patch:
         update-types: [minor, patch]
+  # AWS の構成（CDK）。アプリとは別の依存
+  - package-ecosystem: npm
+    directory: /infra/cdk
+    schedule:
+      interval: weekly
+      day: monday
+      time: "06:00"
+      timezone: Asia/Tokyo
+    open-pull-requests-limit: 5
+    groups:
+      cdk-minor-and-patch:
+        update-types: [minor, patch]
   - package-ecosystem: github-actions
     directory: /
     schedule:

@@ -45,12 +45,24 @@
 
 | スタック | 中身 |
 |---|---|
-| `Network` | VPC（2つの AZ、公開・プライベート・隔離のサブネット）。本番だけ VPC エンドポイント |
-| `Data` | RDS、Secrets Manager、KMS の鍵 |
-| `App` | ECR、ECS のクラスター・サービス・タスク定義、ALB、ACM、WAF、ロール（Bedrock は `iam-policy-bedrock.json` と同じ最小の権限） |
-| `Dns` | サブドメインのホストゾーン（Route 53）、ACM の証明書、ALB への名前 |
-| `Mail` | SES の送信元の確認（DKIM）、送信の設定 |
-| `Ops` | 削除の処理（EventBridge）、Budgets、アラーム |
+| `Zone` | サブドメインのホストゾーン（Route 53）。最初にこれだけをデプロイし、NS を DNS に足す |
+| `Repo` | ECR（イメージを先に送れるように、ほかと分ける） |
+| `Network` | VPC（AZ は 1a・1c、公開・隔離のサブネット、NAT なし）、通信の許可。本番だけ VPC エンドポイント（6つ＋S3 のゲートウェイ） |
+| `Mail` | SES の送信元の確認（DKIM）・MAIL FROM・DMARC・送信の設定（届かないアドレスには送らない） |
+| `Data` | RDS for PostgreSQL 17（TLS だけ・KMS で暗号化・バックアップ 7日・削除保護）、パスワード（Secrets Manager） |
+| `App` | ECS のクラスター・サービス・タスク、ALB（HTTPS だけ）、ACM の証明書、ALB への名前、権限、毎日の削除（EventBridge Scheduler）、WAF（本番だけ） |
+| `Ops` | Budgets（月 65 USD ≒ 1万円）、アラーム（メール） |
+
+### コードで決めたこと（2026-11-16）
+
+- **スタックの分け方**：表の `Dns` を `Zone`（ホストゾーン）と `App`（証明書・名前）に分けた。NS を DNS に足す前に証明書を作ると、確認が終わらずデプロイが止まるため。ECR も `Repo` に分けた（サービスより先にイメージを送る）
+- **移行はタスクの中で**：同じタスクの中で、移行のコンテナ（`db-migrate`）が終わってからアプリが起動する。管理用のパスワードは移行のコンテナにだけ渡す。2台のときは、ロックで1台ずつ当てる
+- **データベースのパスワード**：Secrets Manager から、接続先（`DATABASE_URL`）とは別の環境変数で入れる。暗号化は Secrets Manager の AWS が管理する鍵（自分の鍵にすると、鍵の許可でスタックの参照が循環する）。データベースの保存は、自分の KMS の鍵
+- **PostgreSQL 17**：RDS で標準サポートのある版（14〜18）のうち、長く使える 17。CI の Postgres も 17 にそろえた
+- **AZ は名前で決める**（`ap-northeast-1a`・`1c`）：`cdk synth` が AWS を呼ばずに動く（CI に認証情報を置かない）
+- **アカウントの取り違えを防ぐ**：`KAERIUCHI_AWS_ACCOUNT` と、いまのプロファイルのアカウントが違えば止める
+- **本番の WAF**：AWS が管理するルールのうち、本文の大きさ（8KB）のルールは数えるだけにする（写真と同期の本文が大きいため）
+- **調べたこと**：AWS の文書のサイトはこの作業環境から開けないため、検索で確かめた（EventBridge Scheduler の Fargate のターゲットは CDK の安定版にある、RDS の PostgreSQL は 14〜18、Budgets はドルで数える）。東京の単価と db.t4g.micro の可否は、デプロイの前に確かめる（`docs/deploy.md`）
 
 - 環境は `beta`（まず1つ）。本番は同じスタックを別の名前で作る。
 - CI では `cdk synth` とスナップショットのテストだけを動かす（AWS には触らない。CI に AWS の認証情報を置かない）。

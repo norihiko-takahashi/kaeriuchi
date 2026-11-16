@@ -15,7 +15,7 @@ export default defineConfig({
   test: {
     environment: "node",
     include: ["**/*.test.{ts,tsx}"],
-    exclude: ["node_modules", ".next", "e2e"],
+    exclude: ["node_modules", ".next", "e2e", "infra/cdk"],
     setupFiles: ["./vitest.setup.ts"],
     coverage: {
       provider: "v8",

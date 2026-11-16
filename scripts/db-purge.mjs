@@ -17,6 +17,7 @@ if (!url) {
 const sql = postgres(url, {
   max: 1,
   onnotice: () => {},
+  password: process.env.DATABASE_PASSWORD || undefined,
   ssl: process.env.DATABASE_CA_FILE
     ? { ca: await readFile(process.env.DATABASE_CA_FILE, "utf8") }
     : undefined,

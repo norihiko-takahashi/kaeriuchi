@@ -20,10 +20,10 @@ jobs:
   check:
     name: lint・型チェック・単体テスト
     runs-on: ubuntu-latest
-    # 同期とログインの保存先を、本物の Postgres でも確かめる（U8-TEST-1。RDS と同じ 16）
+    # 同期とログインの保存先を、本物の Postgres でも確かめる（U8-TEST-1。RDS と同じ 17）
     services:
       postgres:
-        image: postgres:16
+        image: postgres:17
         env:
           POSTGRES_PASSWORD: ci-only
         ports:
@@ -85,12 +85,44 @@ jobs:
           path: test-results/
           retention-days: 7
 
+  infra:
+    name: AWS の構成（cdk synth とスナップショット。AWS には触らない）
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: infra/cdk
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+          cache-dependency-path: infra/cdk/pnpm-lock.yaml
+      - run: pnpm install --frozen-lockfile
+      - name: 型チェック
+        run: pnpm typecheck
+      - name: 構成のテストとスナップショット
+        run: pnpm test
+      - name: cdk synth（認証情報なし・決まったダミーの値）
+        run: pnpm synth
+        env:
+          KAERIUCHI_AWS_ACCOUNT: "123456789012"
+          KAERIUCHI_DOMAIN: kaeriuchi.example.jp
+          KAERIUCHI_ALERT_EMAIL: alerts@example.jp
+          BEDROCK_MODEL_ANALYZE: anthropic.dummy
+          BEDROCK_MODEL_GENERATE: anthropic.dummy
+          BEDROCK_MODEL_VERIFY: anthropic.dummy
+          BEDROCK_MODEL_GRADE: anthropic.dummy
+      - name: 依存ライブラリの脆弱性（high 以上で失敗）
+        run: pnpm audit --audit-level high
+
   docker:
     name: Docker のイメージ
     runs-on: ubuntu-latest
     services:
       postgres:
-        image: postgres:16
+        image: postgres:17
         env:
           POSTGRES_PASSWORD: ci-only
         ports:

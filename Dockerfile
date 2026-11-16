@@ -19,6 +19,8 @@ ENV GIT_SHA=${GIT_SHA} NEXT_TELEMETRY_DISABLED=1
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 RUN pnpm build
+# RDS の証明書の束（TLS でデータベースの相手を確かめる・U8-PRIV-3）。AWS が公開しているもの
+RUN mkdir -p certs && node -e "fetch('https://truststore.pki.rds.amazonaws.com/global/global-bundle.pem').then(async r=>{if(!r.ok)throw new Error(r.status);const t=await r.text();if(!t.includes('BEGIN CERTIFICATE'))throw new Error('bad bundle');require('fs').writeFileSync('certs/rds-global-bundle.pem',t)})"
 
 FROM node:${NODE_VERSION}-slim AS run
 WORKDIR /app
@@ -31,6 +33,7 @@ COPY --from=build --chown=node:node /app/public ./public
 # データベースの移行と毎日の削除（U8。ECS のタスクで、コマンドを差し替えて動かす）
 COPY --from=build --chown=node:node /app/scripts/db-migrate.mjs /app/scripts/db-purge.mjs ./scripts/
 COPY --from=build --chown=node:node /app/server/db/migrations ./server/db/migrations
+COPY --from=build --chown=node:node /app/certs ./certs
 # スクリプトから import "postgres" で読めるように、standalone の中の postgres を指す
 RUN cd node_modules && ln -s "$(ls -d .pnpm/postgres@*/node_modules/postgres)" postgres
 USER node

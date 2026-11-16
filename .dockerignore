@@ -7,3 +7,5 @@ playwright-report
 aidlc-docs
 *.md
 .env*
+**/node_modules
+infra/cdk

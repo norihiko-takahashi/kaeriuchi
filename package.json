@@ -14,6 +14,7 @@
     "e2e": "playwright test",
     "check:bundle": "node scripts/check-bundle-size.mjs",
     "db:migrate": "node scripts/db-migrate.mjs",
+    "deploy:beta": "bash scripts/deploy-beta.sh",
     "eval": "tsx --conditions=react-server --tsconfig tsconfig.json evals/run.mts",
     "spike:r1": "tsx --tsconfig tsconfig.json spikes/r1/evaluate.mts"
   },
