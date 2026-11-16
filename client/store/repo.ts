@@ -1,3 +1,4 @@
+import type Dexie from "dexie";
 import { CURRENT_CONSENT_VERSION } from "@/domain/consent";
 import type { LockoutState } from "@/domain/parent/pin";
 import { defaultRules } from "@/domain/parent/rules";
@@ -31,7 +32,7 @@ function outboxItem(
   return { entity, id, op, payload, clientUpdatedAt: t, createdAt: t };
 }
 
-/* ---------- 開発用のログイン（U8 でマジックリンク・パスキーに置き換える） ---------- */
+/* ---------- テスト用：保護者の記録を端末に作る（画面のログインは U8 の /login） ---------- */
 
 export async function devSignIn(email: string): Promise<Guardian> {
   const db = getDB();
@@ -56,8 +57,13 @@ async function saveGuardian(guardian: Guardian): Promise<void> {
   const next = { ...guardian, updatedAt: nowIso() };
   await db.transaction("rw", db.guardian, db.outbox, async () => {
     await db.guardian.put(next);
-    // PIN のハッシュは端末の中だけに置く（同期しない）
-    const { pinHash: _pinHash, ...syncable } = next;
+    // PIN のハッシュは端末の中だけに置く（同期しない）。メールアドレスも送信待ちに残さない（U8-PRIV-1）
+    const {
+      pinHash: _pinHash,
+      email: _email,
+      accountLinkedAt: _linked,
+      ...syncable
+    } = next;
     await db.outbox.add(
       outboxItem("guardianSettings", next.id, "upsert", syncable),
     );
@@ -205,7 +211,7 @@ export async function deleteChild(id: string): Promise<void> {
     "rw",
     [db.children, db.mistakes, db.battles, db.sheets, db.outbox],
     async () => {
-      // 端末の中からはすぐに消す（BR-4.3）。クラウドの削除は U8 で outbox から行う
+      // 端末の中からはすぐに消す（BR-4.3）。クラウドの削除は、ログインし直してからアカウントの API で行う（U8-SEC-7）
       await db.children.delete(id);
       const mistakeIds = await db.mistakes
         .where("childId")
@@ -228,10 +234,10 @@ export async function deleteChild(id: string): Promise<void> {
           (i) =>
             (i.entity === "mistake" && mistakeIds.includes(i.id)) ||
             (i.entity === "battle" && battleIds.includes(i.id)) ||
-            (i.entity === "sheet" && sheetIds.includes(i.id)),
+            (i.entity === "sheet" && sheetIds.includes(i.id)) ||
+            (i.entity === "child" && i.id === id),
         )
         .delete();
-      await db.outbox.add(outboxItem("child", id, "delete"));
     },
   );
   await saveGuardian({ ...guardian, rules });
@@ -305,6 +311,79 @@ export async function exportData(childId?: string): Promise<ExportData> {
   };
 }
 
+/* ---------- クラウドのアカウントにつなぐ（U8） ---------- */
+
+export type AdoptResult = "ok" | "conflict";
+
+/**
+ * ログインしたアカウントを、この端末の記録に結びつける（functional-design.md §4）。
+ * - 記録がない → そのアカウントの保護者として始める
+ * - 同じアカウント → そのまま
+ * - まだどのアカウントにもつないでいない記録 → その記録を、このアカウントに入れる（保護者の ID を付け替える）
+ * - 別のアカウントにつないだ記録 → 混ぜない（"conflict"。消すか、やめるかを選んでもらう）
+ */
+export async function adoptAccount(account: {
+  guardianId: string;
+  email: string;
+}): Promise<AdoptResult> {
+  const db = getDB();
+  const local = await getGuardian();
+  const linkedAt = nowIso();
+  // ログインし直したら、ほかの端末からログアウトさせられた印を消す
+  await db.meta.delete("signed-out");
+  if (!local) {
+    await db.guardian.put({
+      id: account.guardianId,
+      email: account.email,
+      rules: {},
+      accountLinkedAt: linkedAt,
+      // クラウドに設定があれば、そちらを採用する（更新の時刻で比べるため、いちばん古い時刻にする）
+      updatedAt: new Date(0).toISOString(),
+    });
+    return "ok";
+  }
+  if (local.id === account.guardianId) {
+    if (!local.accountLinkedAt)
+      await db.guardian.update(local.id, {
+        accountLinkedAt: linkedAt,
+        email: account.email,
+      });
+    return "ok";
+  }
+  if (local.accountLinkedAt) return "conflict";
+
+  const from = local.id;
+  const to = account.guardianId;
+  const tables = [db.children, db.mistakes, db.battles, db.sheets] as const;
+  await db.transaction("rw", [db.guardian, db.outbox, ...tables], async () => {
+    // 送信待ちは、初めての同期のときに端末の記録から作り直す（client/sync/engine.ts）
+    for (const table of tables)
+      await (table as unknown as Dexie.Table<{ guardianId: string }>)
+        .filter((r) => r.guardianId === from)
+        .modify((r) => {
+          r.guardianId = to;
+        });
+    await db.outbox.toCollection().modify((item) => {
+      const p = item.payload as
+        | { guardianId?: string; id?: string }
+        | undefined;
+      if (p?.guardianId === from) p.guardianId = to;
+      if (item.entity === "guardianSettings" && item.id === from) {
+        item.id = to;
+        if (p?.id === from) p.id = to;
+      }
+    });
+    await db.guardian.delete(from);
+    await db.guardian.put({
+      ...local,
+      id: to,
+      email: account.email,
+      accountLinkedAt: linkedAt,
+    });
+  });
+  return "ok";
+}
+
 /** 端末の中のデータをすべて消す */
 export async function deleteAllLocalData(): Promise<void> {
   const db = getDB();
@@ -319,6 +398,7 @@ export async function deleteAllLocalData(): Promise<void> {
       db.battles,
       db.regrades,
       db.sheets,
+      db.reports,
     ],
     async () => {
       await Promise.all([
@@ -330,6 +410,7 @@ export async function deleteAllLocalData(): Promise<void> {
         db.battles.clear(),
         db.regrades.clear(),
         db.sheets.clear(),
+        db.reports.clear(),
       ]);
     },
   );

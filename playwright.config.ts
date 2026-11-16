@@ -32,7 +32,11 @@ export default defineConfig({
     command: `node scripts/start-standalone.mjs`,
     url: `http://127.0.0.1:${PORT}/api/health`,
     reuseExistingServer: !process.env.CI,
-    env: { PORT: String(PORT) },
+    env: {
+      PORT: String(PORT),
+      // ログイン用のリンクとパスキーの確認に使う（U8）
+      APP_URL: `http://127.0.0.1:${PORT}`,
+    },
     timeout: 60_000,
   },
 });

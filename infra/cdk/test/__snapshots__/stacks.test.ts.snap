@@ -1,0 +1,3320 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`β版の構成 > スナップショット：app 1`] = `
+{
+  "Outputs": {
+    "ClusterName": {
+      "Value": {
+        "Ref": "ClusterEB0386A7",
+      },
+    },
+    "ExportsOutputFnGetAttAlbHttpsAppGroup506BD4E7TargetGroupFullName2B589A29": {
+      "Export": {
+        "Name": "KaeriuchiBeta-App:ExportsOutputFnGetAttAlbHttpsAppGroup506BD4E7TargetGroupFullName2B589A29",
+      },
+      "Value": {
+        "Fn::GetAtt": [
+          "AlbHttpsAppGroup506BD4E7",
+          "TargetGroupFullName",
+        ],
+      },
+    },
+    "ExportsOutputRefAlbHttpsB7CA700A38072FD0": {
+      "Export": {
+        "Name": "KaeriuchiBeta-App:ExportsOutputRefAlbHttpsB7CA700A38072FD0",
+      },
+      "Value": {
+        "Ref": "AlbHttpsB7CA700A",
+      },
+    },
+    "ServiceName": {
+      "Value": {
+        "Fn::GetAtt": [
+          "ServiceD69D759B",
+          "Name",
+        ],
+      },
+    },
+    "Url": {
+      "Value": "https://kaeriuchi.example.jp",
+    },
+  },
+  "Parameters": {
+    "BootstrapVersion": {
+      "Default": "/cdk-bootstrap/hnb659fds/version",
+      "Description": "Version of the CDK Bootstrap resources in this environment, automatically retrieved from SSM Parameter Store. [cdk:skip]",
+      "Type": "AWS::SSM::Parameter::Value<String>",
+    },
+  },
+  "Resources": {
+    "Alb16C2F182": {
+      "Properties": {
+        "LoadBalancerAttributes": [
+          {
+            "Key": "deletion_protection.enabled",
+            "Value": "false",
+          },
+          {
+            "Key": "routing.http.drop_invalid_header_fields.enabled",
+            "Value": "true",
+          },
+        ],
+        "Scheme": "internet-facing",
+        "SecurityGroups": [
+          {
+            "Fn::ImportValue": "KaeriuchiBeta-Network:ExportsOutputFnGetAttAlbSg1155C1BEGroupIdF2A72E65",
+          },
+        ],
+        "Subnets": [
+          {
+            "Fn::ImportValue": "KaeriuchiBeta-Network:ExportsOutputRefVpcpublicSubnet1Subnet2BB74ED74EB42ADC",
+          },
+          {
+            "Fn::ImportValue": "KaeriuchiBeta-Network:ExportsOutputRefVpcpublicSubnet2SubnetE34B022AC8BB6627",
+          },
+        ],
+        "Tags": [
+          {
+            "Key": "app",
+            "Value": "kaeriuchi",
+          },
+          {
+            "Key": "env",
+            "Value": "KaeriuchiBeta",
+          },
+        ],
+        "Type": "application",
+      },
+      "Type": "AWS::ElasticLoadBalancingV2::LoadBalancer",
+    },
+    "AlbHttpsAppGroup506BD4E7": {
+      "Properties": {
+        "HealthCheckIntervalSeconds": 15,
+        "HealthCheckPath": "/api/health",
+        "Matcher": {
+          "HttpCode": "200",
+        },
+        "Port": 3000,
+        "Protocol": "HTTP",
+        "Tags": [
+          {
+            "Key": "app",
+            "Value": "kaeriuchi",
+          },
+          {
+            "Key": "env",
+            "Value": "KaeriuchiBeta",
+          },
+        ],
+        "TargetGroupAttributes": [
+          {
+            "Key": "deregistration_delay.timeout_seconds",
+            "Value": "30",
+          },
+          {
+            "Key": "stickiness.enabled",
+            "Value": "false",
+          },
+        ],
+        "TargetType": "ip",
+        "VpcId": {
+          "Fn::ImportValue": "KaeriuchiBeta-Network:ExportsOutputRefVpc8378EB38272D6E3A",
+        },
+      },
+      "Type": "AWS::ElasticLoadBalancingV2::TargetGroup",
+    },
+    "AlbHttpsB7CA700A": {
+      "Properties": {
+        "Certificates": [
+          {
+            "CertificateArn": {
+              "Ref": "Cert5C9FAEC1",
+            },
+          },
+        ],
+        "DefaultActions": [
+          {
+            "TargetGroupArn": {
+              "Ref": "AlbHttpsAppGroup506BD4E7",
+            },
+            "Type": "forward",
+          },
+        ],
+        "LoadBalancerArn": {
+          "Ref": "Alb16C2F182",
+        },
+        "Port": 443,
+        "Protocol": "HTTPS",
+        "SslPolicy": "ELBSecurityPolicy-TLS13-1-2-2021-06",
+        "Tags": [
+          {
+            "Key": "app",
+            "Value": "kaeriuchi",
+          },
+          {
+            "Key": "env",
+            "Value": "KaeriuchiBeta",
+          },
+        ],
+      },
+      "Type": "AWS::ElasticLoadBalancingV2::Listener",
+    },
+    "AlbRedirect80To443C790C012": {
+      "Properties": {
+        "DefaultActions": [
+          {
+            "RedirectConfig": {
+              "Port": "443",
+              "Protocol": "HTTPS",
+              "StatusCode": "HTTP_301",
+            },
+            "Type": "redirect",
+          },
+        ],
+        "LoadBalancerArn": {
+          "Ref": "Alb16C2F182",
+        },
+        "Port": 80,
+        "Protocol": "HTTP",
+        "Tags": [
+          {
+            "Key": "app",
+            "Value": "kaeriuchi",
+          },
+          {
+            "Key": "env",
+            "Value": "KaeriuchiBeta",
+          },
+        ],
+      },
+      "Type": "AWS::ElasticLoadBalancingV2::Listener",
+    },
+    "Alias325C5727": {
+      "Properties": {
+        "AliasTarget": {
+          "DNSName": {
+            "Fn::Join": [
+              "",
+              [
+                "dualstack.",
+                {
+                  "Fn::GetAtt": [
+                    "Alb16C2F182",
+                    "DNSName",
+                  ],
+                },
+              ],
+            ],
+          },
+          "HostedZoneId": {
+            "Fn::GetAtt": [
+              "Alb16C2F182",
+              "CanonicalHostedZoneID",
+            ],
+          },
+        },
+        "HostedZoneId": {
+          "Fn::ImportValue": "KaeriuchiBeta-Zone:ExportsOutputRefZoneA5DE4B6864A9A0D8",
+        },
+        "Name": "kaeriuchi.example.jp.",
+        "Type": "A",
+      },
+      "Type": "AWS::Route53::RecordSet",
+    },
+    "Cert5C9FAEC1": {
+      "Properties": {
+        "DomainName": "kaeriuchi.example.jp",
+        "DomainValidationOptions": [
+          {
+            "DomainName": "kaeriuchi.example.jp",
+            "HostedZoneId": {
+              "Fn::ImportValue": "KaeriuchiBeta-Zone:ExportsOutputRefZoneA5DE4B6864A9A0D8",
+            },
+          },
+        ],
+        "Tags": [
+          {
+            "Key": "app",
+            "Value": "kaeriuchi",
+          },
+          {
+            "Key": "env",
+            "Value": "KaeriuchiBeta",
+          },
+          {
+            "Key": "Name",
+            "Value": "KaeriuchiBeta-App/Cert",
+          },
+        ],
+        "ValidationMethod": "DNS",
+      },
+      "Type": "AWS::CertificateManager::Certificate",
+    },
+    "ClusterEB0386A7": {
+      "Properties": {
+        "Tags": [
+          {
+            "Key": "app",
+            "Value": "kaeriuchi",
+          },
+          {
+            "Key": "env",
+            "Value": "KaeriuchiBeta",
+          },
+        ],
+      },
+      "Type": "AWS::ECS::Cluster",
+    },
+    "Logs6819BB44": {
+      "DeletionPolicy": "Retain",
+      "Properties": {
+        "RetentionInDays": 30,
+        "Tags": [
+          {
+            "Key": "app",
+            "Value": "kaeriuchi",
+          },
+          {
+            "Key": "env",
+            "Value": "KaeriuchiBeta",
+          },
+        ],
+      },
+      "Type": "AWS::Logs::LogGroup",
+      "UpdateReplacePolicy": "Retain",
+    },
+    "PurgeA5E825D9": {
+      "Properties": {
+        "Description": "kaeriuchi: purge records deleted 7+ days ago",
+        "FlexibleTimeWindow": {
+          "Mode": "OFF",
+        },
+        "ScheduleExpression": "cron(17 3 * * ? *)",
+        "ScheduleExpressionTimezone": "Asia/Tokyo",
+        "State": "ENABLED",
+        "Target": {
+          "Arn": {
+            "Fn::GetAtt": [
+              "ClusterEB0386A7",
+              "Arn",
+            ],
+          },
+          "EcsParameters": {
+            "LaunchType": "FARGATE",
+            "NetworkConfiguration": {
+              "AwsvpcConfiguration": {
+                "AssignPublicIp": "ENABLED",
+                "SecurityGroups": [
+                  {
+                    "Fn::ImportValue": "KaeriuchiBeta-Network:ExportsOutputFnGetAttAppSg898BCA4EGroupId325D937C",
+                  },
+                ],
+                "Subnets": [
+                  {
+                    "Fn::ImportValue": "KaeriuchiBeta-Network:ExportsOutputRefVpcpublicSubnet1Subnet2BB74ED74EB42ADC",
+                  },
+                  {
+                    "Fn::ImportValue": "KaeriuchiBeta-Network:ExportsOutputRefVpcpublicSubnet2SubnetE34B022AC8BB6627",
+                  },
+                ],
+              },
+            },
+            "TaskDefinitionArn": {
+              "Ref": "PurgeTaskF46E9A3E",
+            },
+          },
+          "RetryPolicy": {
+            "MaximumEventAgeInSeconds": 86400,
+            "MaximumRetryAttempts": 185,
+          },
+          "RoleArn": {
+            "Fn::GetAtt": [
+              "SchedulerRoleForTarget0173fd6BD2182B",
+              "Arn",
+            ],
+          },
+        },
+      },
+      "Type": "AWS::Scheduler::Schedule",
+    },
+    "PurgeTaskExecutionRoleDefaultPolicy06A272E5": {
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": [
+                "ecr:BatchCheckLayerAvailability",
+                "ecr:GetDownloadUrlForLayer",
+                "ecr:BatchGetImage",
+              ],
+              "Effect": "Allow",
+              "Resource": {
+                "Fn::ImportValue": "KaeriuchiBeta-Repo:ExportsOutputFnGetAttAppF1B96344Arn225FB554",
+              },
+            },
+            {
+              "Action": "ecr:GetAuthorizationToken",
+              "Effect": "Allow",
+              "Resource": "*",
+            },
+            {
+              "Action": [
+                "logs:CreateLogStream",
+                "logs:PutLogEvents",
+              ],
+              "Effect": "Allow",
+              "Resource": {
+                "Fn::GetAtt": [
+                  "Logs6819BB44",
+                  "Arn",
+                ],
+              },
+            },
+            {
+              "Action": [
+                "secretsmanager:GetSecretValue",
+                "secretsmanager:DescribeSecret",
+              ],
+              "Effect": "Allow",
+              "Resource": {
+                "Fn::ImportValue": "KaeriuchiBeta-Data:ExportsOutputRefAppDbPasswordFABE120375D800F9",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "PolicyName": "PurgeTaskExecutionRoleDefaultPolicy06A272E5",
+        "Roles": [
+          {
+            "Ref": "PurgeTaskExecutionRoleF0678756",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Policy",
+    },
+    "PurgeTaskExecutionRoleF0678756": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "ecs-tasks.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "Tags": [
+          {
+            "Key": "app",
+            "Value": "kaeriuchi",
+          },
+          {
+            "Key": "env",
+            "Value": "KaeriuchiBeta",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "PurgeTaskF46E9A3E": {
+      "Properties": {
+        "ContainerDefinitions": [
+          {
+            "Command": [
+              "node",
+              "scripts/db-purge.mjs",
+            ],
+            "Environment": [
+              {
+                "Name": "DATABASE_URL",
+                "Value": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "postgres://kaeriuchi_app@",
+                      {
+                        "Fn::ImportValue": "KaeriuchiBeta-Data:ExportsOutputFnGetAttDb5D02A0A9EndpointAddressCFF54B34",
+                      },
+                      ":",
+                      {
+                        "Fn::ImportValue": "KaeriuchiBeta-Data:ExportsOutputFnGetAttDb5D02A0A9EndpointPort83DD6BDC",
+                      },
+                      "/kaeriuchi",
+                    ],
+                  ],
+                },
+              },
+              {
+                "Name": "DATABASE_CA_FILE",
+                "Value": "/app/certs/rds-global-bundle.pem",
+              },
+            ],
+            "Essential": true,
+            "Image": {
+              "Fn::Join": [
+                "",
+                [
+                  {
+                    "Fn::Select": [
+                      4,
+                      {
+                        "Fn::Split": [
+                          ":",
+                          {
+                            "Fn::ImportValue": "KaeriuchiBeta-Repo:ExportsOutputFnGetAttAppF1B96344Arn225FB554",
+                          },
+                        ],
+                      },
+                    ],
+                  },
+                  ".dkr.ecr.",
+                  {
+                    "Fn::Select": [
+                      3,
+                      {
+                        "Fn::Split": [
+                          ":",
+                          {
+                            "Fn::ImportValue": "KaeriuchiBeta-Repo:ExportsOutputFnGetAttAppF1B96344Arn225FB554",
+                          },
+                        ],
+                      },
+                    ],
+                  },
+                  ".",
+                  {
+                    "Ref": "AWS::URLSuffix",
+                  },
+                  "/",
+                  {
+                    "Fn::ImportValue": "KaeriuchiBeta-Repo:ExportsOutputRefAppF1B96344AA101B85",
+                  },
+                  ":abc1234",
+                ],
+              ],
+            },
+            "LogConfiguration": {
+              "LogDriver": "awslogs",
+              "Options": {
+                "awslogs-group": {
+                  "Ref": "Logs6819BB44",
+                },
+                "awslogs-region": "ap-northeast-1",
+                "awslogs-stream-prefix": "purge",
+              },
+            },
+            "Name": "purge",
+            "Secrets": [
+              {
+                "Name": "DATABASE_PASSWORD",
+                "ValueFrom": {
+                  "Fn::ImportValue": "KaeriuchiBeta-Data:ExportsOutputRefAppDbPasswordFABE120375D800F9",
+                },
+              },
+            ],
+          },
+        ],
+        "Cpu": "256",
+        "ExecutionRoleArn": {
+          "Fn::GetAtt": [
+            "PurgeTaskExecutionRoleF0678756",
+            "Arn",
+          ],
+        },
+        "Family": "KaeriuchiBetaAppPurgeTaskC16443EE",
+        "Memory": "512",
+        "NetworkMode": "awsvpc",
+        "RequiresCompatibilities": [
+          "FARGATE",
+        ],
+        "RuntimePlatform": {
+          "CpuArchitecture": "ARM64",
+          "OperatingSystemFamily": "LINUX",
+        },
+        "Tags": [
+          {
+            "Key": "app",
+            "Value": "kaeriuchi",
+          },
+          {
+            "Key": "env",
+            "Value": "KaeriuchiBeta",
+          },
+        ],
+        "TaskRoleArn": {
+          "Fn::GetAtt": [
+            "PurgeTaskTaskRole3431FA38",
+            "Arn",
+          ],
+        },
+      },
+      "Type": "AWS::ECS::TaskDefinition",
+    },
+    "PurgeTaskTaskRole3431FA38": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "ecs-tasks.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "Tags": [
+          {
+            "Key": "app",
+            "Value": "kaeriuchi",
+          },
+          {
+            "Key": "env",
+            "Value": "KaeriuchiBeta",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "SchedulerRoleForTarget0173fd6BD2182B": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Condition": {
+                "StringEquals": {
+                  "aws:SourceAccount": "123456789012",
+                  "aws:SourceArn": {
+                    "Fn::Join": [
+                      "",
+                      [
+                        "arn:",
+                        {
+                          "Ref": "AWS::Partition",
+                        },
+                        ":scheduler:ap-northeast-1:123456789012:schedule-group/default",
+                      ],
+                    ],
+                  },
+                },
+              },
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "scheduler.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "Tags": [
+          {
+            "Key": "app",
+            "Value": "kaeriuchi",
+          },
+          {
+            "Key": "env",
+            "Value": "KaeriuchiBeta",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "SchedulerRoleForTarget0173fdDefaultPolicy84DEE8B2": {
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": "iam:PassRole",
+              "Condition": {
+                "StringLike": {
+                  "iam:PassedToService": "ecs-tasks.amazonaws.com",
+                },
+              },
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "PurgeTaskTaskRole3431FA38",
+                    "Arn",
+                  ],
+                },
+                {
+                  "Fn::GetAtt": [
+                    "PurgeTaskExecutionRoleF0678756",
+                    "Arn",
+                  ],
+                },
+              ],
+            },
+            {
+              "Action": "ecs:RunTask",
+              "Effect": "Allow",
+              "Resource": {
+                "Ref": "PurgeTaskF46E9A3E",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "PolicyName": "SchedulerRoleForTarget0173fdDefaultPolicy84DEE8B2",
+        "Roles": [
+          {
+            "Ref": "SchedulerRoleForTarget0173fd6BD2182B",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Policy",
+    },
+    "ServiceD69D759B": {
+      "DependsOn": [
+        "AlbHttpsAppGroup506BD4E7",
+        "AlbHttpsB7CA700A",
+        "TaskRoleDefaultPolicy07FC53DE",
+        "TaskRole30FC0FBB",
+      ],
+      "Properties": {
+        "Cluster": {
+          "Ref": "ClusterEB0386A7",
+        },
+        "DeploymentConfiguration": {
+          "Alarms": {
+            "AlarmNames": [],
+            "Enable": false,
+            "Rollback": false,
+          },
+          "DeploymentCircuitBreaker": {
+            "Enable": true,
+            "Rollback": true,
+          },
+          "MaximumPercent": 200,
+          "MinimumHealthyPercent": 100,
+        },
+        "DeploymentController": {
+          "Type": "ECS",
+        },
+        "DesiredCount": 1,
+        "EnableECSManagedTags": false,
+        "HealthCheckGracePeriodSeconds": 90,
+        "LaunchType": "FARGATE",
+        "LoadBalancers": [
+          {
+            "ContainerName": "app",
+            "ContainerPort": 3000,
+            "TargetGroupArn": {
+              "Ref": "AlbHttpsAppGroup506BD4E7",
+            },
+          },
+        ],
+        "NetworkConfiguration": {
+          "AwsvpcConfiguration": {
+            "AssignPublicIp": "ENABLED",
+            "SecurityGroups": [
+              {
+                "Fn::ImportValue": "KaeriuchiBeta-Network:ExportsOutputFnGetAttAppSg898BCA4EGroupId325D937C",
+              },
+            ],
+            "Subnets": [
+              {
+                "Fn::ImportValue": "KaeriuchiBeta-Network:ExportsOutputRefVpcpublicSubnet1Subnet2BB74ED74EB42ADC",
+              },
+              {
+                "Fn::ImportValue": "KaeriuchiBeta-Network:ExportsOutputRefVpcpublicSubnet2SubnetE34B022AC8BB6627",
+              },
+            ],
+          },
+        },
+        "Tags": [
+          {
+            "Key": "app",
+            "Value": "kaeriuchi",
+          },
+          {
+            "Key": "env",
+            "Value": "KaeriuchiBeta",
+          },
+        ],
+        "TaskDefinition": {
+          "Ref": "Task79114B6B",
+        },
+      },
+      "Type": "AWS::ECS::Service",
+    },
+    "Task79114B6B": {
+      "Properties": {
+        "ContainerDefinitions": [
+          {
+            "Command": [
+              "node",
+              "scripts/db-migrate.mjs",
+            ],
+            "Environment": [
+              {
+                "Name": "DATABASE_ADMIN_URL",
+                "Value": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "postgres://kaeriuchi_admin@",
+                      {
+                        "Fn::ImportValue": "KaeriuchiBeta-Data:ExportsOutputFnGetAttDb5D02A0A9EndpointAddressCFF54B34",
+                      },
+                      ":",
+                      {
+                        "Fn::ImportValue": "KaeriuchiBeta-Data:ExportsOutputFnGetAttDb5D02A0A9EndpointPort83DD6BDC",
+                      },
+                      "/kaeriuchi",
+                    ],
+                  ],
+                },
+              },
+              {
+                "Name": "DATABASE_CA_FILE",
+                "Value": "/app/certs/rds-global-bundle.pem",
+              },
+            ],
+            "Essential": false,
+            "Image": {
+              "Fn::Join": [
+                "",
+                [
+                  {
+                    "Fn::Select": [
+                      4,
+                      {
+                        "Fn::Split": [
+                          ":",
+                          {
+                            "Fn::ImportValue": "KaeriuchiBeta-Repo:ExportsOutputFnGetAttAppF1B96344Arn225FB554",
+                          },
+                        ],
+                      },
+                    ],
+                  },
+                  ".dkr.ecr.",
+                  {
+                    "Fn::Select": [
+                      3,
+                      {
+                        "Fn::Split": [
+                          ":",
+                          {
+                            "Fn::ImportValue": "KaeriuchiBeta-Repo:ExportsOutputFnGetAttAppF1B96344Arn225FB554",
+                          },
+                        ],
+                      },
+                    ],
+                  },
+                  ".",
+                  {
+                    "Ref": "AWS::URLSuffix",
+                  },
+                  "/",
+                  {
+                    "Fn::ImportValue": "KaeriuchiBeta-Repo:ExportsOutputRefAppF1B96344AA101B85",
+                  },
+                  ":abc1234",
+                ],
+              ],
+            },
+            "LogConfiguration": {
+              "LogDriver": "awslogs",
+              "Options": {
+                "awslogs-group": {
+                  "Ref": "Logs6819BB44",
+                },
+                "awslogs-region": "ap-northeast-1",
+                "awslogs-stream-prefix": "migrate",
+              },
+            },
+            "Name": "migrate",
+            "Secrets": [
+              {
+                "Name": "DATABASE_ADMIN_PASSWORD",
+                "ValueFrom": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::ImportValue": "KaeriuchiBeta-Data:ExportsOutputRefDbSecretAttachment7AED447C36A58A6F",
+                      },
+                      ":password::",
+                    ],
+                  ],
+                },
+              },
+              {
+                "Name": "APP_DB_PASSWORD",
+                "ValueFrom": {
+                  "Fn::ImportValue": "KaeriuchiBeta-Data:ExportsOutputRefAppDbPasswordFABE120375D800F9",
+                },
+              },
+            ],
+          },
+          {
+            "DependsOn": [
+              {
+                "Condition": "SUCCESS",
+                "ContainerName": "migrate",
+              },
+            ],
+            "Environment": [
+              {
+                "Name": "APP_ENV",
+                "Value": "production",
+              },
+              {
+                "Name": "APP_URL",
+                "Value": "https://kaeriuchi.example.jp",
+              },
+              {
+                "Name": "AI_PROVIDER",
+                "Value": "bedrock",
+              },
+              {
+                "Name": "SYNC_STORE",
+                "Value": "postgres",
+              },
+              {
+                "Name": "AUTH_PROVIDER",
+                "Value": "native",
+              },
+              {
+                "Name": "MAIL_FROM",
+                "Value": "login@kaeriuchi.example.jp",
+              },
+              {
+                "Name": "DATABASE_URL",
+                "Value": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "postgres://kaeriuchi_app@",
+                      {
+                        "Fn::ImportValue": "KaeriuchiBeta-Data:ExportsOutputFnGetAttDb5D02A0A9EndpointAddressCFF54B34",
+                      },
+                      ":",
+                      {
+                        "Fn::ImportValue": "KaeriuchiBeta-Data:ExportsOutputFnGetAttDb5D02A0A9EndpointPort83DD6BDC",
+                      },
+                      "/kaeriuchi",
+                    ],
+                  ],
+                },
+              },
+              {
+                "Name": "DATABASE_CA_FILE",
+                "Value": "/app/certs/rds-global-bundle.pem",
+              },
+              {
+                "Name": "AWS_REGION",
+                "Value": "ap-northeast-1",
+              },
+              {
+                "Name": "BEDROCK_MODEL_ANALYZE",
+                "Value": "anthropic.claude-sonnet-test-v1:0",
+              },
+              {
+                "Name": "BEDROCK_MODEL_GENERATE",
+                "Value": "anthropic.claude-sonnet-test-v1:0",
+              },
+              {
+                "Name": "BEDROCK_MODEL_VERIFY",
+                "Value": "anthropic.claude-haiku-test-v1:0",
+              },
+              {
+                "Name": "BEDROCK_MODEL_GRADE",
+                "Value": "anthropic.claude-haiku-test-v1:0",
+              },
+            ],
+            "Essential": true,
+            "HealthCheck": {
+              "Command": [
+                "CMD",
+                "node",
+                "-e",
+                "fetch('http://127.0.0.1:3000/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))",
+              ],
+              "Interval": 30,
+              "Retries": 3,
+              "StartPeriod": 30,
+              "Timeout": 5,
+            },
+            "Image": {
+              "Fn::Join": [
+                "",
+                [
+                  {
+                    "Fn::Select": [
+                      4,
+                      {
+                        "Fn::Split": [
+                          ":",
+                          {
+                            "Fn::ImportValue": "KaeriuchiBeta-Repo:ExportsOutputFnGetAttAppF1B96344Arn225FB554",
+                          },
+                        ],
+                      },
+                    ],
+                  },
+                  ".dkr.ecr.",
+                  {
+                    "Fn::Select": [
+                      3,
+                      {
+                        "Fn::Split": [
+                          ":",
+                          {
+                            "Fn::ImportValue": "KaeriuchiBeta-Repo:ExportsOutputFnGetAttAppF1B96344Arn225FB554",
+                          },
+                        ],
+                      },
+                    ],
+                  },
+                  ".",
+                  {
+                    "Ref": "AWS::URLSuffix",
+                  },
+                  "/",
+                  {
+                    "Fn::ImportValue": "KaeriuchiBeta-Repo:ExportsOutputRefAppF1B96344AA101B85",
+                  },
+                  ":abc1234",
+                ],
+              ],
+            },
+            "LogConfiguration": {
+              "LogDriver": "awslogs",
+              "Options": {
+                "awslogs-group": {
+                  "Ref": "Logs6819BB44",
+                },
+                "awslogs-region": "ap-northeast-1",
+                "awslogs-stream-prefix": "app",
+              },
+            },
+            "Name": "app",
+            "PortMappings": [
+              {
+                "ContainerPort": 3000,
+                "Protocol": "tcp",
+              },
+            ],
+            "Secrets": [
+              {
+                "Name": "DATABASE_PASSWORD",
+                "ValueFrom": {
+                  "Fn::ImportValue": "KaeriuchiBeta-Data:ExportsOutputRefAppDbPasswordFABE120375D800F9",
+                },
+              },
+            ],
+          },
+        ],
+        "Cpu": "256",
+        "ExecutionRoleArn": {
+          "Fn::GetAtt": [
+            "TaskExecutionRoleEF964934",
+            "Arn",
+          ],
+        },
+        "Family": "KaeriuchiBetaAppTask794D83EA",
+        "Memory": "1024",
+        "NetworkMode": "awsvpc",
+        "RequiresCompatibilities": [
+          "FARGATE",
+        ],
+        "RuntimePlatform": {
+          "CpuArchitecture": "ARM64",
+          "OperatingSystemFamily": "LINUX",
+        },
+        "Tags": [
+          {
+            "Key": "app",
+            "Value": "kaeriuchi",
+          },
+          {
+            "Key": "env",
+            "Value": "KaeriuchiBeta",
+          },
+        ],
+        "TaskRoleArn": {
+          "Fn::GetAtt": [
+            "TaskRole30FC0FBB",
+            "Arn",
+          ],
+        },
+      },
+      "Type": "AWS::ECS::TaskDefinition",
+    },
+    "TaskExecutionRoleDefaultPolicy72339918": {
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": [
+                "ecr:BatchCheckLayerAvailability",
+                "ecr:GetDownloadUrlForLayer",
+                "ecr:BatchGetImage",
+              ],
+              "Effect": "Allow",
+              "Resource": {
+                "Fn::ImportValue": "KaeriuchiBeta-Repo:ExportsOutputFnGetAttAppF1B96344Arn225FB554",
+              },
+            },
+            {
+              "Action": "ecr:GetAuthorizationToken",
+              "Effect": "Allow",
+              "Resource": "*",
+            },
+            {
+              "Action": [
+                "logs:CreateLogStream",
+                "logs:PutLogEvents",
+              ],
+              "Effect": "Allow",
+              "Resource": {
+                "Fn::GetAtt": [
+                  "Logs6819BB44",
+                  "Arn",
+                ],
+              },
+            },
+            {
+              "Action": [
+                "secretsmanager:GetSecretValue",
+                "secretsmanager:DescribeSecret",
+              ],
+              "Effect": "Allow",
+              "Resource": {
+                "Fn::ImportValue": "KaeriuchiBeta-Data:ExportsOutputRefDbSecretAttachment7AED447C36A58A6F",
+              },
+            },
+            {
+              "Action": [
+                "secretsmanager:GetSecretValue",
+                "secretsmanager:DescribeSecret",
+              ],
+              "Effect": "Allow",
+              "Resource": {
+                "Fn::ImportValue": "KaeriuchiBeta-Data:ExportsOutputRefAppDbPasswordFABE120375D800F9",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "PolicyName": "TaskExecutionRoleDefaultPolicy72339918",
+        "Roles": [
+          {
+            "Ref": "TaskExecutionRoleEF964934",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Policy",
+    },
+    "TaskExecutionRoleEF964934": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "ecs-tasks.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "Tags": [
+          {
+            "Key": "app",
+            "Value": "kaeriuchi",
+          },
+          {
+            "Key": "env",
+            "Value": "KaeriuchiBeta",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "TaskRole30FC0FBB": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "ecs-tasks.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "Description": "kaeriuchi app: Bedrock (Tokyo models) and SES only",
+        "Tags": [
+          {
+            "Key": "app",
+            "Value": "kaeriuchi",
+          },
+          {
+            "Key": "env",
+            "Value": "KaeriuchiBeta",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "TaskRoleDefaultPolicy07FC53DE": {
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": [
+                "bedrock:InvokeModel",
+                "bedrock:InvokeModelWithResponseStream",
+              ],
+              "Effect": "Allow",
+              "Resource": [
+                "arn:aws:bedrock:ap-northeast-1::foundation-model/anthropic.claude-sonnet-test-v1:0",
+                "arn:aws:bedrock:ap-northeast-1::foundation-model/anthropic.claude-haiku-test-v1:0",
+              ],
+              "Sid": "InvokeKaeriuchiModelsInTokyoOnly",
+            },
+            {
+              "Action": "bedrock:GetModelInvocationLoggingConfiguration",
+              "Effect": "Allow",
+              "Resource": "*",
+              "Sid": "ReadInvocationLoggingSettings",
+            },
+            {
+              "Action": "logs:DescribeLogGroups",
+              "Effect": "Allow",
+              "Resource": "arn:aws:logs:ap-northeast-1:123456789012:log-group:*",
+              "Sid": "ReadInvocationLogRetention",
+            },
+            {
+              "Action": "ses:SendEmail",
+              "Condition": {
+                "StringEquals": {
+                  "ses:FromAddress": "login@kaeriuchi.example.jp",
+                },
+              },
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "arn:",
+                      {
+                        "Ref": "AWS::Partition",
+                      },
+                      ":ses:ap-northeast-1:123456789012:identity/",
+                      {
+                        "Fn::ImportValue": "KaeriuchiBeta-Mail:ExportsOutputRefIdentity2D60E2CC5A4E614E",
+                      },
+                    ],
+                  ],
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "arn:",
+                      {
+                        "Ref": "AWS::Partition",
+                      },
+                      ":ses:ap-northeast-1:123456789012:configuration-set/",
+                      {
+                        "Fn::ImportValue": "KaeriuchiBeta-Mail:ExportsOutputRefConfig57D1D8948A167C64",
+                      },
+                    ],
+                  ],
+                },
+              ],
+              "Sid": "SendLoginMail",
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "PolicyName": "TaskRoleDefaultPolicy07FC53DE",
+        "Roles": [
+          {
+            "Ref": "TaskRole30FC0FBB",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Policy",
+    },
+  },
+  "Rules": {
+    "CheckBootstrapVersion": {
+      "Assertions": [
+        {
+          "Assert": {
+            "Fn::Not": [
+              {
+                "Fn::Contains": [
+                  [
+                    "1",
+                    "2",
+                    "3",
+                    "4",
+                    "5",
+                  ],
+                  {
+                    "Ref": "BootstrapVersion",
+                  },
+                ],
+              },
+            ],
+          },
+          "AssertDescription": "CDK bootstrap stack version 6 required. Please run 'cdk bootstrap' with a recent version of the CDK CLI.",
+        },
+      ],
+    },
+  },
+}
+`;
+
+exports[`β版の構成 > スナップショット：data 1`] = `
+{
+  "Outputs": {
+    "ExportsOutputFnGetAttDb5D02A0A9EndpointAddressCFF54B34": {
+      "Export": {
+        "Name": "KaeriuchiBeta-Data:ExportsOutputFnGetAttDb5D02A0A9EndpointAddressCFF54B34",
+      },
+      "Value": {
+        "Fn::GetAtt": [
+          "Db5D02A0A9",
+          "Endpoint.Address",
+        ],
+      },
+    },
+    "ExportsOutputFnGetAttDb5D02A0A9EndpointPort83DD6BDC": {
+      "Export": {
+        "Name": "KaeriuchiBeta-Data:ExportsOutputFnGetAttDb5D02A0A9EndpointPort83DD6BDC",
+      },
+      "Value": {
+        "Fn::GetAtt": [
+          "Db5D02A0A9",
+          "Endpoint.Port",
+        ],
+      },
+    },
+    "ExportsOutputRefAppDbPasswordFABE120375D800F9": {
+      "Export": {
+        "Name": "KaeriuchiBeta-Data:ExportsOutputRefAppDbPasswordFABE120375D800F9",
+      },
+      "Value": {
+        "Ref": "AppDbPasswordFABE1203",
+      },
+    },
+    "ExportsOutputRefDb5D02A0A92EB6BABB": {
+      "Export": {
+        "Name": "KaeriuchiBeta-Data:ExportsOutputRefDb5D02A0A92EB6BABB",
+      },
+      "Value": {
+        "Ref": "Db5D02A0A9",
+      },
+    },
+    "ExportsOutputRefDbSecretAttachment7AED447C36A58A6F": {
+      "Export": {
+        "Name": "KaeriuchiBeta-Data:ExportsOutputRefDbSecretAttachment7AED447C36A58A6F",
+      },
+      "Value": {
+        "Ref": "DbSecretAttachment7AED447C",
+      },
+    },
+  },
+  "Parameters": {
+    "BootstrapVersion": {
+      "Default": "/cdk-bootstrap/hnb659fds/version",
+      "Description": "Version of the CDK Bootstrap resources in this environment, automatically retrieved from SSM Parameter Store. [cdk:skip]",
+      "Type": "AWS::SSM::Parameter::Value<String>",
+    },
+  },
+  "Resources": {
+    "AppDbPasswordFABE1203": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "Description": "kaeriuchi: password of the app role (kaeriuchi_app)",
+        "GenerateSecretString": {
+          "ExcludePunctuation": true,
+          "PasswordLength": 40,
+        },
+        "Tags": [
+          {
+            "Key": "app",
+            "Value": "kaeriuchi",
+          },
+          {
+            "Key": "env",
+            "Value": "KaeriuchiBeta",
+          },
+        ],
+      },
+      "Type": "AWS::SecretsManager::Secret",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "Db5D02A0A9": {
+      "DeletionPolicy": "Snapshot",
+      "Properties": {
+        "AllocatedStorage": "20",
+        "AutoMinorVersionUpgrade": true,
+        "BackupRetentionPeriod": 7,
+        "CACertificateIdentifier": "rds-ca-rsa2048-g1",
+        "CopyTagsToSnapshot": true,
+        "DBInstanceClass": "db.t4g.micro",
+        "DBName": "kaeriuchi",
+        "DBParameterGroupName": {
+          "Ref": "ParamsA8366201",
+        },
+        "DBSubnetGroupName": {
+          "Ref": "DbSubnetGroup6F6C177A",
+        },
+        "DeletionProtection": true,
+        "EnableCloudwatchLogsExports": [
+          "postgresql",
+        ],
+        "EnablePerformanceInsights": false,
+        "Engine": "postgres",
+        "EngineVersion": "17",
+        "KmsKeyId": {
+          "Fn::GetAtt": [
+            "Key961B73FD",
+            "Arn",
+          ],
+        },
+        "MasterUserPassword": {
+          "Fn::Join": [
+            "",
+            [
+              "{{resolve:secretsmanager:",
+              {
+                "Ref": "KaeriuchiBetaDataDbSecretFBACA58C3fdaad7efa858a3daf9490cf0a702aeb",
+              },
+              ":SecretString:password::}}",
+            ],
+          ],
+        },
+        "MasterUsername": "kaeriuchi_admin",
+        "MaxAllocatedStorage": 50,
+        "MultiAZ": false,
+        "PreferredBackupWindow": "18:00-18:30",
+        "PreferredMaintenanceWindow": "sun:19:00-sun:19:30",
+        "PubliclyAccessible": false,
+        "StorageEncrypted": true,
+        "StorageType": "gp3",
+        "Tags": [
+          {
+            "Key": "app",
+            "Value": "kaeriuchi",
+          },
+          {
+            "Key": "env",
+            "Value": "KaeriuchiBeta",
+          },
+        ],
+        "VPCSecurityGroups": [
+          {
+            "Fn::ImportValue": "KaeriuchiBeta-Network:ExportsOutputFnGetAttDbSg495F8305GroupIdA39418C8",
+          },
+        ],
+      },
+      "Type": "AWS::RDS::DBInstance",
+      "UpdateReplacePolicy": "Snapshot",
+    },
+    "DbLogRetentionpostgresql52689C0A": {
+      "Properties": {
+        "LogGroupName": {
+          "Fn::Join": [
+            "",
+            [
+              "/aws/rds/instance/",
+              {
+                "Ref": "Db5D02A0A9",
+              },
+              "/postgresql",
+            ],
+          ],
+        },
+        "RetentionInDays": 30,
+        "ServiceToken": {
+          "Fn::GetAtt": [
+            "LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aFD4BFC8A",
+            "Arn",
+          ],
+        },
+      },
+      "Type": "Custom::LogRetention",
+    },
+    "DbSecretAttachment7AED447C": {
+      "Properties": {
+        "SecretId": {
+          "Ref": "KaeriuchiBetaDataDbSecretFBACA58C3fdaad7efa858a3daf9490cf0a702aeb",
+        },
+        "TargetId": {
+          "Ref": "Db5D02A0A9",
+        },
+        "TargetType": "AWS::RDS::DBInstance",
+      },
+      "Type": "AWS::SecretsManager::SecretTargetAttachment",
+    },
+    "DbSubnetGroup6F6C177A": {
+      "Properties": {
+        "DBSubnetGroupDescription": "Subnet group for Db database",
+        "SubnetIds": [
+          {
+            "Fn::ImportValue": "KaeriuchiBeta-Network:ExportsOutputRefVpcdataSubnet1SubnetE2B009FBB55CA7F1",
+          },
+          {
+            "Fn::ImportValue": "KaeriuchiBeta-Network:ExportsOutputRefVpcdataSubnet2SubnetAD08DFFF32CBCD48",
+          },
+        ],
+        "Tags": [
+          {
+            "Key": "app",
+            "Value": "kaeriuchi",
+          },
+          {
+            "Key": "env",
+            "Value": "KaeriuchiBeta",
+          },
+        ],
+      },
+      "Type": "AWS::RDS::DBSubnetGroup",
+    },
+    "KaeriuchiBetaDataDbSecretFBACA58C3fdaad7efa858a3daf9490cf0a702aeb": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "Description": {
+          "Fn::Join": [
+            "",
+            [
+              "Generated by the CDK for stack: ",
+              {
+                "Ref": "AWS::StackName",
+              },
+            ],
+          ],
+        },
+        "GenerateSecretString": {
+          "ExcludeCharacters": " %+~\`#$&*()|[]{}:;<>?!'/@"\\",
+          "GenerateStringKey": "password",
+          "PasswordLength": 30,
+          "SecretStringTemplate": "{"username":"kaeriuchi_admin"}",
+        },
+        "Tags": [
+          {
+            "Key": "app",
+            "Value": "kaeriuchi",
+          },
+          {
+            "Key": "env",
+            "Value": "KaeriuchiBeta",
+          },
+        ],
+      },
+      "Type": "AWS::SecretsManager::Secret",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "Key961B73FD": {
+      "DeletionPolicy": "Retain",
+      "Properties": {
+        "Description": "kaeriuchi: database storage",
+        "EnableKeyRotation": true,
+        "KeyPolicy": {
+          "Statement": [
+            {
+              "Action": "kms:*",
+              "Effect": "Allow",
+              "Principal": {
+                "AWS": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "arn:",
+                      {
+                        "Ref": "AWS::Partition",
+                      },
+                      ":iam::123456789012:root",
+                    ],
+                  ],
+                },
+              },
+              "Resource": "*",
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "Tags": [
+          {
+            "Key": "app",
+            "Value": "kaeriuchi",
+          },
+          {
+            "Key": "env",
+            "Value": "KaeriuchiBeta",
+          },
+        ],
+      },
+      "Type": "AWS::KMS::Key",
+      "UpdateReplacePolicy": "Retain",
+    },
+    "LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aFD4BFC8A": {
+      "DependsOn": [
+        "LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aServiceRoleDefaultPolicyADDA7DEB",
+        "LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aServiceRole9741ECFB",
+      ],
+      "Properties": {
+        "Code": {
+          "S3Bucket": "cdk-hnb659fds-assets-123456789012-ap-northeast-1",
+          "S3Key": "2819175352ad1ce0dae768e83fc328fb70fb5f10b4a8ff0ccbcb791f02b0716d.zip",
+        },
+        "Handler": "index.handler",
+        "Role": {
+          "Fn::GetAtt": [
+            "LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aServiceRole9741ECFB",
+            "Arn",
+          ],
+        },
+        "Runtime": "nodejs24.x",
+        "Tags": [
+          {
+            "Key": "app",
+            "Value": "kaeriuchi",
+          },
+          {
+            "Key": "env",
+            "Value": "KaeriuchiBeta",
+          },
+        ],
+        "Timeout": 900,
+      },
+      "Type": "AWS::Lambda::Function",
+    },
+    "LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aServiceRole9741ECFB": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "lambda.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "ManagedPolicyArns": [
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition",
+                },
+                ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole",
+              ],
+            ],
+          },
+        ],
+        "Tags": [
+          {
+            "Key": "app",
+            "Value": "kaeriuchi",
+          },
+          {
+            "Key": "env",
+            "Value": "KaeriuchiBeta",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aServiceRoleDefaultPolicyADDA7DEB": {
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": [
+                "logs:PutRetentionPolicy",
+                "logs:DeleteRetentionPolicy",
+              ],
+              "Effect": "Allow",
+              "Resource": "*",
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "PolicyName": "LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aServiceRoleDefaultPolicyADDA7DEB",
+        "Roles": [
+          {
+            "Ref": "LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aServiceRole9741ECFB",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Policy",
+    },
+    "ParamsA8366201": {
+      "Properties": {
+        "Description": "Parameter group for postgres17",
+        "Family": "postgres17",
+        "Parameters": {
+          "log_min_duration_statement": "1000",
+          "log_statement": "none",
+          "rds.force_ssl": "1",
+        },
+        "Tags": [
+          {
+            "Key": "app",
+            "Value": "kaeriuchi",
+          },
+          {
+            "Key": "env",
+            "Value": "KaeriuchiBeta",
+          },
+        ],
+      },
+      "Type": "AWS::RDS::DBParameterGroup",
+    },
+  },
+  "Rules": {
+    "CheckBootstrapVersion": {
+      "Assertions": [
+        {
+          "Assert": {
+            "Fn::Not": [
+              {
+                "Fn::Contains": [
+                  [
+                    "1",
+                    "2",
+                    "3",
+                    "4",
+                    "5",
+                  ],
+                  {
+                    "Ref": "BootstrapVersion",
+                  },
+                ],
+              },
+            ],
+          },
+          "AssertDescription": "CDK bootstrap stack version 6 required. Please run 'cdk bootstrap' with a recent version of the CDK CLI.",
+        },
+      ],
+    },
+  },
+}
+`;
+
+exports[`β版の構成 > スナップショット：mail 1`] = `
+{
+  "Outputs": {
+    "ExportsOutputRefConfig57D1D8948A167C64": {
+      "Export": {
+        "Name": "KaeriuchiBeta-Mail:ExportsOutputRefConfig57D1D8948A167C64",
+      },
+      "Value": {
+        "Ref": "Config57D1D894",
+      },
+    },
+    "ExportsOutputRefIdentity2D60E2CC5A4E614E": {
+      "Export": {
+        "Name": "KaeriuchiBeta-Mail:ExportsOutputRefIdentity2D60E2CC5A4E614E",
+      },
+      "Value": {
+        "Ref": "Identity2D60E2CC",
+      },
+    },
+  },
+  "Parameters": {
+    "BootstrapVersion": {
+      "Default": "/cdk-bootstrap/hnb659fds/version",
+      "Description": "Version of the CDK Bootstrap resources in this environment, automatically retrieved from SSM Parameter Store. [cdk:skip]",
+      "Type": "AWS::SSM::Parameter::Value<String>",
+    },
+  },
+  "Resources": {
+    "Config57D1D894": {
+      "Properties": {
+        "SendingOptions": {
+          "SendingEnabled": true,
+        },
+        "SuppressionOptions": {
+          "SuppressedReasons": [
+            "BOUNCE",
+            "COMPLAINT",
+          ],
+        },
+        "Tags": [
+          {
+            "Key": "app",
+            "Value": "kaeriuchi",
+          },
+          {
+            "Key": "env",
+            "Value": "KaeriuchiBeta",
+          },
+        ],
+      },
+      "Type": "AWS::SES::ConfigurationSet",
+    },
+    "Dmarc65510571": {
+      "Properties": {
+        "HostedZoneId": {
+          "Fn::ImportValue": "KaeriuchiBeta-Zone:ExportsOutputRefZoneA5DE4B6864A9A0D8",
+        },
+        "Name": "_dmarc.kaeriuchi.example.jp.",
+        "ResourceRecords": [
+          ""v=DMARC1; p=quarantine; adkim=s; aspf=s"",
+        ],
+        "TTL": "3600",
+        "Type": "TXT",
+      },
+      "Type": "AWS::Route53::RecordSet",
+    },
+    "Identity2D60E2CC": {
+      "Properties": {
+        "ConfigurationSetAttributes": {
+          "ConfigurationSetName": {
+            "Ref": "Config57D1D894",
+          },
+        },
+        "EmailIdentity": "kaeriuchi.example.jp",
+        "MailFromAttributes": {
+          "MailFromDomain": "mail.kaeriuchi.example.jp",
+        },
+        "Tags": [
+          {
+            "Key": "app",
+            "Value": "kaeriuchi",
+          },
+          {
+            "Key": "env",
+            "Value": "KaeriuchiBeta",
+          },
+        ],
+      },
+      "Type": "AWS::SES::EmailIdentity",
+    },
+    "IdentityDkimDnsToken133E6CCBA": {
+      "Properties": {
+        "HostedZoneId": {
+          "Fn::ImportValue": "KaeriuchiBeta-Zone:ExportsOutputRefZoneA5DE4B6864A9A0D8",
+        },
+        "Name": {
+          "Fn::GetAtt": [
+            "Identity2D60E2CC",
+            "DkimDNSTokenName1",
+          ],
+        },
+        "ResourceRecords": [
+          {
+            "Fn::GetAtt": [
+              "Identity2D60E2CC",
+              "DkimDNSTokenValue1",
+            ],
+          },
+        ],
+        "TTL": "1800",
+        "Type": "CNAME",
+      },
+      "Type": "AWS::Route53::RecordSet",
+    },
+    "IdentityDkimDnsToken2AD0AA6D9": {
+      "Properties": {
+        "HostedZoneId": {
+          "Fn::ImportValue": "KaeriuchiBeta-Zone:ExportsOutputRefZoneA5DE4B6864A9A0D8",
+        },
+        "Name": {
+          "Fn::GetAtt": [
+            "Identity2D60E2CC",
+            "DkimDNSTokenName2",
+          ],
+        },
+        "ResourceRecords": [
+          {
+            "Fn::GetAtt": [
+              "Identity2D60E2CC",
+              "DkimDNSTokenValue2",
+            ],
+          },
+        ],
+        "TTL": "1800",
+        "Type": "CNAME",
+      },
+      "Type": "AWS::Route53::RecordSet",
+    },
+    "IdentityDkimDnsToken3A6A24F78": {
+      "Properties": {
+        "HostedZoneId": {
+          "Fn::ImportValue": "KaeriuchiBeta-Zone:ExportsOutputRefZoneA5DE4B6864A9A0D8",
+        },
+        "Name": {
+          "Fn::GetAtt": [
+            "Identity2D60E2CC",
+            "DkimDNSTokenName3",
+          ],
+        },
+        "ResourceRecords": [
+          {
+            "Fn::GetAtt": [
+              "Identity2D60E2CC",
+              "DkimDNSTokenValue3",
+            ],
+          },
+        ],
+        "TTL": "1800",
+        "Type": "CNAME",
+      },
+      "Type": "AWS::Route53::RecordSet",
+    },
+    "IdentityMailFromMxRecord4D92B544": {
+      "Properties": {
+        "HostedZoneId": {
+          "Fn::ImportValue": "KaeriuchiBeta-Zone:ExportsOutputRefZoneA5DE4B6864A9A0D8",
+        },
+        "Name": "mail.kaeriuchi.example.jp.",
+        "ResourceRecords": [
+          "10 feedback-smtp.ap-northeast-1.amazonses.com",
+        ],
+        "TTL": "1800",
+        "Type": "MX",
+      },
+      "Type": "AWS::Route53::RecordSet",
+    },
+    "IdentityMailFromTxtRecord8A2CF0BC": {
+      "Properties": {
+        "HostedZoneId": {
+          "Fn::ImportValue": "KaeriuchiBeta-Zone:ExportsOutputRefZoneA5DE4B6864A9A0D8",
+        },
+        "Name": "mail.kaeriuchi.example.jp.",
+        "ResourceRecords": [
+          ""v=spf1 include:amazonses.com ~all"",
+        ],
+        "TTL": "1800",
+        "Type": "TXT",
+      },
+      "Type": "AWS::Route53::RecordSet",
+    },
+  },
+  "Rules": {
+    "CheckBootstrapVersion": {
+      "Assertions": [
+        {
+          "Assert": {
+            "Fn::Not": [
+              {
+                "Fn::Contains": [
+                  [
+                    "1",
+                    "2",
+                    "3",
+                    "4",
+                    "5",
+                  ],
+                  {
+                    "Ref": "BootstrapVersion",
+                  },
+                ],
+              },
+            ],
+          },
+          "AssertDescription": "CDK bootstrap stack version 6 required. Please run 'cdk bootstrap' with a recent version of the CDK CLI.",
+        },
+      ],
+    },
+  },
+}
+`;
+
+exports[`β版の構成 > スナップショット：network 1`] = `
+{
+  "Outputs": {
+    "ExportsOutputFnGetAttAlbSg1155C1BEGroupIdF2A72E65": {
+      "Export": {
+        "Name": "KaeriuchiBeta-Network:ExportsOutputFnGetAttAlbSg1155C1BEGroupIdF2A72E65",
+      },
+      "Value": {
+        "Fn::GetAtt": [
+          "AlbSg1155C1BE",
+          "GroupId",
+        ],
+      },
+    },
+    "ExportsOutputFnGetAttAppSg898BCA4EGroupId325D937C": {
+      "Export": {
+        "Name": "KaeriuchiBeta-Network:ExportsOutputFnGetAttAppSg898BCA4EGroupId325D937C",
+      },
+      "Value": {
+        "Fn::GetAtt": [
+          "AppSg898BCA4E",
+          "GroupId",
+        ],
+      },
+    },
+    "ExportsOutputFnGetAttDbSg495F8305GroupIdA39418C8": {
+      "Export": {
+        "Name": "KaeriuchiBeta-Network:ExportsOutputFnGetAttDbSg495F8305GroupIdA39418C8",
+      },
+      "Value": {
+        "Fn::GetAtt": [
+          "DbSg495F8305",
+          "GroupId",
+        ],
+      },
+    },
+    "ExportsOutputRefVpc8378EB38272D6E3A": {
+      "Export": {
+        "Name": "KaeriuchiBeta-Network:ExportsOutputRefVpc8378EB38272D6E3A",
+      },
+      "Value": {
+        "Ref": "Vpc8378EB38",
+      },
+    },
+    "ExportsOutputRefVpcdataSubnet1SubnetE2B009FBB55CA7F1": {
+      "Export": {
+        "Name": "KaeriuchiBeta-Network:ExportsOutputRefVpcdataSubnet1SubnetE2B009FBB55CA7F1",
+      },
+      "Value": {
+        "Ref": "VpcdataSubnet1SubnetE2B009FB",
+      },
+    },
+    "ExportsOutputRefVpcdataSubnet2SubnetAD08DFFF32CBCD48": {
+      "Export": {
+        "Name": "KaeriuchiBeta-Network:ExportsOutputRefVpcdataSubnet2SubnetAD08DFFF32CBCD48",
+      },
+      "Value": {
+        "Ref": "VpcdataSubnet2SubnetAD08DFFF",
+      },
+    },
+    "ExportsOutputRefVpcpublicSubnet1Subnet2BB74ED74EB42ADC": {
+      "Export": {
+        "Name": "KaeriuchiBeta-Network:ExportsOutputRefVpcpublicSubnet1Subnet2BB74ED74EB42ADC",
+      },
+      "Value": {
+        "Ref": "VpcpublicSubnet1Subnet2BB74ED7",
+      },
+    },
+    "ExportsOutputRefVpcpublicSubnet2SubnetE34B022AC8BB6627": {
+      "Export": {
+        "Name": "KaeriuchiBeta-Network:ExportsOutputRefVpcpublicSubnet2SubnetE34B022AC8BB6627",
+      },
+      "Value": {
+        "Ref": "VpcpublicSubnet2SubnetE34B022A",
+      },
+    },
+  },
+  "Parameters": {
+    "BootstrapVersion": {
+      "Default": "/cdk-bootstrap/hnb659fds/version",
+      "Description": "Version of the CDK Bootstrap resources in this environment, automatically retrieved from SSM Parameter Store. [cdk:skip]",
+      "Type": "AWS::SSM::Parameter::Value<String>",
+    },
+  },
+  "Resources": {
+    "AlbSg1155C1BE": {
+      "Properties": {
+        "GroupDescription": "ALB: HTTPS from the internet",
+        "SecurityGroupIngress": [
+          {
+            "CidrIp": "0.0.0.0/0",
+            "Description": "HTTPS",
+            "FromPort": 443,
+            "IpProtocol": "tcp",
+            "ToPort": 443,
+          },
+          {
+            "CidrIp": "0.0.0.0/0",
+            "Description": "HTTP (redirect to HTTPS)",
+            "FromPort": 80,
+            "IpProtocol": "tcp",
+            "ToPort": 80,
+          },
+        ],
+        "Tags": [
+          {
+            "Key": "app",
+            "Value": "kaeriuchi",
+          },
+          {
+            "Key": "env",
+            "Value": "KaeriuchiBeta",
+          },
+        ],
+        "VpcId": {
+          "Ref": "Vpc8378EB38",
+        },
+      },
+      "Type": "AWS::EC2::SecurityGroup",
+    },
+    "AlbSgtoKaeriuchiBetaNetworkAppSg8CAC560F300074E0F883": {
+      "Properties": {
+        "Description": "To app",
+        "DestinationSecurityGroupId": {
+          "Fn::GetAtt": [
+            "AppSg898BCA4E",
+            "GroupId",
+          ],
+        },
+        "FromPort": 3000,
+        "GroupId": {
+          "Fn::GetAtt": [
+            "AlbSg1155C1BE",
+            "GroupId",
+          ],
+        },
+        "IpProtocol": "tcp",
+        "ToPort": 3000,
+      },
+      "Type": "AWS::EC2::SecurityGroupEgress",
+    },
+    "AppSg898BCA4E": {
+      "Properties": {
+        "GroupDescription": "App: only from the ALB",
+        "SecurityGroupEgress": [
+          {
+            "CidrIp": "0.0.0.0/0",
+            "Description": "HTTPS to AWS services",
+            "FromPort": 443,
+            "IpProtocol": "tcp",
+            "ToPort": 443,
+          },
+        ],
+        "Tags": [
+          {
+            "Key": "app",
+            "Value": "kaeriuchi",
+          },
+          {
+            "Key": "env",
+            "Value": "KaeriuchiBeta",
+          },
+        ],
+        "VpcId": {
+          "Ref": "Vpc8378EB38",
+        },
+      },
+      "Type": "AWS::EC2::SecurityGroup",
+    },
+    "AppSgfromKaeriuchiBetaNetworkAlbSg73CFCA2A300029102B36": {
+      "Properties": {
+        "Description": "From ALB",
+        "FromPort": 3000,
+        "GroupId": {
+          "Fn::GetAtt": [
+            "AppSg898BCA4E",
+            "GroupId",
+          ],
+        },
+        "IpProtocol": "tcp",
+        "SourceSecurityGroupId": {
+          "Fn::GetAtt": [
+            "AlbSg1155C1BE",
+            "GroupId",
+          ],
+        },
+        "ToPort": 3000,
+      },
+      "Type": "AWS::EC2::SecurityGroupIngress",
+    },
+    "AppSgtoKaeriuchiBetaNetworkDbSg19D16DB95432306E3121": {
+      "Properties": {
+        "Description": "To database",
+        "DestinationSecurityGroupId": {
+          "Fn::GetAtt": [
+            "DbSg495F8305",
+            "GroupId",
+          ],
+        },
+        "FromPort": 5432,
+        "GroupId": {
+          "Fn::GetAtt": [
+            "AppSg898BCA4E",
+            "GroupId",
+          ],
+        },
+        "IpProtocol": "tcp",
+        "ToPort": 5432,
+      },
+      "Type": "AWS::EC2::SecurityGroupEgress",
+    },
+    "CustomVpcRestrictDefaultSGCustomResourceProviderHandlerDC833E5E": {
+      "DependsOn": [
+        "CustomVpcRestrictDefaultSGCustomResourceProviderRole26592FE0",
+      ],
+      "Properties": {
+        "Code": {
+          "S3Bucket": "cdk-hnb659fds-assets-123456789012-ap-northeast-1",
+          "S3Key": "f178182c7c3aac6ad18bdaae53a2d38f72b2cf690d17b9efa635c7ce37f77d71.zip",
+        },
+        "Description": "Lambda function for removing all inbound/outbound rules from the VPC default security group",
+        "Handler": "__entrypoint__.handler",
+        "MemorySize": 128,
+        "Role": {
+          "Fn::GetAtt": [
+            "CustomVpcRestrictDefaultSGCustomResourceProviderRole26592FE0",
+            "Arn",
+          ],
+        },
+        "Runtime": "nodejs24.x",
+        "Timeout": 900,
+      },
+      "Type": "AWS::Lambda::Function",
+    },
+    "CustomVpcRestrictDefaultSGCustomResourceProviderRole26592FE0": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "lambda.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "ManagedPolicyArns": [
+          {
+            "Fn::Sub": "arn:\${AWS::Partition}:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole",
+          },
+        ],
+        "Policies": [
+          {
+            "PolicyDocument": {
+              "Statement": [
+                {
+                  "Action": [
+                    "ec2:AuthorizeSecurityGroupIngress",
+                    "ec2:AuthorizeSecurityGroupEgress",
+                    "ec2:RevokeSecurityGroupIngress",
+                    "ec2:RevokeSecurityGroupEgress",
+                  ],
+                  "Effect": "Allow",
+                  "Resource": [
+                    {
+                      "Fn::Join": [
+                        "",
+                        [
+                          "arn:",
+                          {
+                            "Ref": "AWS::Partition",
+                          },
+                          ":ec2:ap-northeast-1:123456789012:security-group/",
+                          {
+                            "Fn::GetAtt": [
+                              "Vpc8378EB38",
+                              "DefaultSecurityGroup",
+                            ],
+                          },
+                        ],
+                      ],
+                    },
+                  ],
+                },
+              ],
+              "Version": "2012-10-17",
+            },
+            "PolicyName": "Inline",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "DbSg495F8305": {
+      "Properties": {
+        "GroupDescription": "Database: only from the app",
+        "SecurityGroupEgress": [
+          {
+            "CidrIp": "255.255.255.255/32",
+            "Description": "Disallow all traffic",
+            "FromPort": 252,
+            "IpProtocol": "icmp",
+            "ToPort": 86,
+          },
+        ],
+        "Tags": [
+          {
+            "Key": "app",
+            "Value": "kaeriuchi",
+          },
+          {
+            "Key": "env",
+            "Value": "KaeriuchiBeta",
+          },
+        ],
+        "VpcId": {
+          "Ref": "Vpc8378EB38",
+        },
+      },
+      "Type": "AWS::EC2::SecurityGroup",
+    },
+    "DbSgfromKaeriuchiBetaNetworkAppSg8CAC560F5432C6FE070E": {
+      "Properties": {
+        "Description": "From app",
+        "FromPort": 5432,
+        "GroupId": {
+          "Fn::GetAtt": [
+            "DbSg495F8305",
+            "GroupId",
+          ],
+        },
+        "IpProtocol": "tcp",
+        "SourceSecurityGroupId": {
+          "Fn::GetAtt": [
+            "AppSg898BCA4E",
+            "GroupId",
+          ],
+        },
+        "ToPort": 5432,
+      },
+      "Type": "AWS::EC2::SecurityGroupIngress",
+    },
+    "Vpc8378EB38": {
+      "Properties": {
+        "CidrBlock": "10.40.0.0/16",
+        "EnableDnsHostnames": true,
+        "EnableDnsSupport": true,
+        "InstanceTenancy": "default",
+        "Tags": [
+          {
+            "Key": "app",
+            "Value": "kaeriuchi",
+          },
+          {
+            "Key": "env",
+            "Value": "KaeriuchiBeta",
+          },
+          {
+            "Key": "Name",
+            "Value": "KaeriuchiBeta-Network/Vpc",
+          },
+        ],
+      },
+      "Type": "AWS::EC2::VPC",
+    },
+    "VpcIGWD7BA715C": {
+      "Properties": {
+        "Tags": [
+          {
+            "Key": "app",
+            "Value": "kaeriuchi",
+          },
+          {
+            "Key": "env",
+            "Value": "KaeriuchiBeta",
+          },
+          {
+            "Key": "Name",
+            "Value": "KaeriuchiBeta-Network/Vpc",
+          },
+        ],
+      },
+      "Type": "AWS::EC2::InternetGateway",
+    },
+    "VpcRestrictDefaultSecurityGroupCustomResourceC73DA2BE": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "Account": "123456789012",
+        "DefaultSecurityGroupId": {
+          "Fn::GetAtt": [
+            "Vpc8378EB38",
+            "DefaultSecurityGroup",
+          ],
+        },
+        "ServiceToken": {
+          "Fn::GetAtt": [
+            "CustomVpcRestrictDefaultSGCustomResourceProviderHandlerDC833E5E",
+            "Arn",
+          ],
+        },
+      },
+      "Type": "Custom::VpcRestrictDefaultSG",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "VpcVPCGWBF912B6E": {
+      "Properties": {
+        "InternetGatewayId": {
+          "Ref": "VpcIGWD7BA715C",
+        },
+        "VpcId": {
+          "Ref": "Vpc8378EB38",
+        },
+      },
+      "Type": "AWS::EC2::VPCGatewayAttachment",
+    },
+    "VpcdataSubnet1RouteTableAF5F53E0": {
+      "Properties": {
+        "Tags": [
+          {
+            "Key": "app",
+            "Value": "kaeriuchi",
+          },
+          {
+            "Key": "env",
+            "Value": "KaeriuchiBeta",
+          },
+          {
+            "Key": "Name",
+            "Value": "KaeriuchiBeta-Network/Vpc/dataSubnet1",
+          },
+        ],
+        "VpcId": {
+          "Ref": "Vpc8378EB38",
+        },
+      },
+      "Type": "AWS::EC2::RouteTable",
+    },
+    "VpcdataSubnet1RouteTableAssociation9E9FDBBB": {
+      "Properties": {
+        "RouteTableId": {
+          "Ref": "VpcdataSubnet1RouteTableAF5F53E0",
+        },
+        "SubnetId": {
+          "Ref": "VpcdataSubnet1SubnetE2B009FB",
+        },
+      },
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+    },
+    "VpcdataSubnet1SubnetE2B009FB": {
+      "Properties": {
+        "AvailabilityZone": "ap-northeast-1a",
+        "CidrBlock": "10.40.2.0/24",
+        "MapPublicIpOnLaunch": false,
+        "Tags": [
+          {
+            "Key": "app",
+            "Value": "kaeriuchi",
+          },
+          {
+            "Key": "aws-cdk:subnet-name",
+            "Value": "data",
+          },
+          {
+            "Key": "aws-cdk:subnet-type",
+            "Value": "Isolated",
+          },
+          {
+            "Key": "env",
+            "Value": "KaeriuchiBeta",
+          },
+          {
+            "Key": "Name",
+            "Value": "KaeriuchiBeta-Network/Vpc/dataSubnet1",
+          },
+        ],
+        "VpcId": {
+          "Ref": "Vpc8378EB38",
+        },
+      },
+      "Type": "AWS::EC2::Subnet",
+    },
+    "VpcdataSubnet2RouteTable94FA483A": {
+      "Properties": {
+        "Tags": [
+          {
+            "Key": "app",
+            "Value": "kaeriuchi",
+          },
+          {
+            "Key": "env",
+            "Value": "KaeriuchiBeta",
+          },
+          {
+            "Key": "Name",
+            "Value": "KaeriuchiBeta-Network/Vpc/dataSubnet2",
+          },
+        ],
+        "VpcId": {
+          "Ref": "Vpc8378EB38",
+        },
+      },
+      "Type": "AWS::EC2::RouteTable",
+    },
+    "VpcdataSubnet2RouteTableAssociation6C8F2058": {
+      "Properties": {
+        "RouteTableId": {
+          "Ref": "VpcdataSubnet2RouteTable94FA483A",
+        },
+        "SubnetId": {
+          "Ref": "VpcdataSubnet2SubnetAD08DFFF",
+        },
+      },
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+    },
+    "VpcdataSubnet2SubnetAD08DFFF": {
+      "Properties": {
+        "AvailabilityZone": "ap-northeast-1c",
+        "CidrBlock": "10.40.3.0/24",
+        "MapPublicIpOnLaunch": false,
+        "Tags": [
+          {
+            "Key": "app",
+            "Value": "kaeriuchi",
+          },
+          {
+            "Key": "aws-cdk:subnet-name",
+            "Value": "data",
+          },
+          {
+            "Key": "aws-cdk:subnet-type",
+            "Value": "Isolated",
+          },
+          {
+            "Key": "env",
+            "Value": "KaeriuchiBeta",
+          },
+          {
+            "Key": "Name",
+            "Value": "KaeriuchiBeta-Network/Vpc/dataSubnet2",
+          },
+        ],
+        "VpcId": {
+          "Ref": "Vpc8378EB38",
+        },
+      },
+      "Type": "AWS::EC2::Subnet",
+    },
+    "VpcpublicSubnet1DefaultRouteB88F9E93": {
+      "DependsOn": [
+        "VpcVPCGWBF912B6E",
+      ],
+      "Properties": {
+        "DestinationCidrBlock": "0.0.0.0/0",
+        "GatewayId": {
+          "Ref": "VpcIGWD7BA715C",
+        },
+        "RouteTableId": {
+          "Ref": "VpcpublicSubnet1RouteTable15C15F8E",
+        },
+      },
+      "Type": "AWS::EC2::Route",
+    },
+    "VpcpublicSubnet1RouteTable15C15F8E": {
+      "Properties": {
+        "Tags": [
+          {
+            "Key": "app",
+            "Value": "kaeriuchi",
+          },
+          {
+            "Key": "env",
+            "Value": "KaeriuchiBeta",
+          },
+          {
+            "Key": "Name",
+            "Value": "KaeriuchiBeta-Network/Vpc/publicSubnet1",
+          },
+        ],
+        "VpcId": {
+          "Ref": "Vpc8378EB38",
+        },
+      },
+      "Type": "AWS::EC2::RouteTable",
+    },
+    "VpcpublicSubnet1RouteTableAssociation4E83B6E4": {
+      "Properties": {
+        "RouteTableId": {
+          "Ref": "VpcpublicSubnet1RouteTable15C15F8E",
+        },
+        "SubnetId": {
+          "Ref": "VpcpublicSubnet1Subnet2BB74ED7",
+        },
+      },
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+    },
+    "VpcpublicSubnet1Subnet2BB74ED7": {
+      "Properties": {
+        "AvailabilityZone": "ap-northeast-1a",
+        "CidrBlock": "10.40.0.0/24",
+        "MapPublicIpOnLaunch": true,
+        "Tags": [
+          {
+            "Key": "app",
+            "Value": "kaeriuchi",
+          },
+          {
+            "Key": "aws-cdk:subnet-name",
+            "Value": "public",
+          },
+          {
+            "Key": "aws-cdk:subnet-type",
+            "Value": "Public",
+          },
+          {
+            "Key": "env",
+            "Value": "KaeriuchiBeta",
+          },
+          {
+            "Key": "Name",
+            "Value": "KaeriuchiBeta-Network/Vpc/publicSubnet1",
+          },
+        ],
+        "VpcId": {
+          "Ref": "Vpc8378EB38",
+        },
+      },
+      "Type": "AWS::EC2::Subnet",
+    },
+    "VpcpublicSubnet2DefaultRoute732F0BEB": {
+      "DependsOn": [
+        "VpcVPCGWBF912B6E",
+      ],
+      "Properties": {
+        "DestinationCidrBlock": "0.0.0.0/0",
+        "GatewayId": {
+          "Ref": "VpcIGWD7BA715C",
+        },
+        "RouteTableId": {
+          "Ref": "VpcpublicSubnet2RouteTableC5A6DF77",
+        },
+      },
+      "Type": "AWS::EC2::Route",
+    },
+    "VpcpublicSubnet2RouteTableAssociationCCE257FF": {
+      "Properties": {
+        "RouteTableId": {
+          "Ref": "VpcpublicSubnet2RouteTableC5A6DF77",
+        },
+        "SubnetId": {
+          "Ref": "VpcpublicSubnet2SubnetE34B022A",
+        },
+      },
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+    },
+    "VpcpublicSubnet2RouteTableC5A6DF77": {
+      "Properties": {
+        "Tags": [
+          {
+            "Key": "app",
+            "Value": "kaeriuchi",
+          },
+          {
+            "Key": "env",
+            "Value": "KaeriuchiBeta",
+          },
+          {
+            "Key": "Name",
+            "Value": "KaeriuchiBeta-Network/Vpc/publicSubnet2",
+          },
+        ],
+        "VpcId": {
+          "Ref": "Vpc8378EB38",
+        },
+      },
+      "Type": "AWS::EC2::RouteTable",
+    },
+    "VpcpublicSubnet2SubnetE34B022A": {
+      "Properties": {
+        "AvailabilityZone": "ap-northeast-1c",
+        "CidrBlock": "10.40.1.0/24",
+        "MapPublicIpOnLaunch": true,
+        "Tags": [
+          {
+            "Key": "app",
+            "Value": "kaeriuchi",
+          },
+          {
+            "Key": "aws-cdk:subnet-name",
+            "Value": "public",
+          },
+          {
+            "Key": "aws-cdk:subnet-type",
+            "Value": "Public",
+          },
+          {
+            "Key": "env",
+            "Value": "KaeriuchiBeta",
+          },
+          {
+            "Key": "Name",
+            "Value": "KaeriuchiBeta-Network/Vpc/publicSubnet2",
+          },
+        ],
+        "VpcId": {
+          "Ref": "Vpc8378EB38",
+        },
+      },
+      "Type": "AWS::EC2::Subnet",
+    },
+  },
+  "Rules": {
+    "CheckBootstrapVersion": {
+      "Assertions": [
+        {
+          "Assert": {
+            "Fn::Not": [
+              {
+                "Fn::Contains": [
+                  [
+                    "1",
+                    "2",
+                    "3",
+                    "4",
+                    "5",
+                  ],
+                  {
+                    "Ref": "BootstrapVersion",
+                  },
+                ],
+              },
+            ],
+          },
+          "AssertDescription": "CDK bootstrap stack version 6 required. Please run 'cdk bootstrap' with a recent version of the CDK CLI.",
+        },
+      ],
+    },
+  },
+}
+`;
+
+exports[`β版の構成 > スナップショット：ops 1`] = `
+{
+  "Parameters": {
+    "BootstrapVersion": {
+      "Default": "/cdk-bootstrap/hnb659fds/version",
+      "Description": "Version of the CDK Bootstrap resources in this environment, automatically retrieved from SSM Parameter Store. [cdk:skip]",
+      "Type": "AWS::SSM::Parameter::Value<String>",
+    },
+  },
+  "Resources": {
+    "Alarms04B5A0BF": {
+      "Properties": {
+        "DisplayName": "kaeriuchi alarms",
+        "Tags": [
+          {
+            "Key": "app",
+            "Value": "kaeriuchi",
+          },
+          {
+            "Key": "env",
+            "Value": "KaeriuchiBeta",
+          },
+        ],
+      },
+      "Type": "AWS::SNS::Topic",
+    },
+    "AlarmsPolicy5C860CFE": {
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sns:Publish",
+              "Condition": {
+                "Bool": {
+                  "aws:SecureTransport": "false",
+                },
+              },
+              "Effect": "Deny",
+              "Principal": "*",
+              "Resource": {
+                "Ref": "Alarms04B5A0BF",
+              },
+              "Sid": "AllowPublishThroughSSLOnly",
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "Topics": [
+          {
+            "Ref": "Alarms04B5A0BF",
+          },
+        ],
+      },
+      "Type": "AWS::SNS::TopicPolicy",
+    },
+    "Alarmsalertsexamplejp8FF85C74": {
+      "Properties": {
+        "Endpoint": "alerts@example.jp",
+        "Protocol": "email",
+        "TopicArn": {
+          "Ref": "Alarms04B5A0BF",
+        },
+      },
+      "Type": "AWS::SNS::Subscription",
+    },
+    "App5xx6814A30C": {
+      "Properties": {
+        "AlarmActions": [
+          {
+            "Ref": "Alarms04B5A0BF",
+          },
+        ],
+        "AlarmDescription": "アプリの 5xx が5分に10回以上",
+        "ComparisonOperator": "GreaterThanOrEqualToThreshold",
+        "DatapointsToAlarm": 2,
+        "Dimensions": [
+          {
+            "Name": "LoadBalancer",
+            "Value": {
+              "Fn::Join": [
+                "",
+                [
+                  {
+                    "Fn::Select": [
+                      1,
+                      {
+                        "Fn::Split": [
+                          "/",
+                          {
+                            "Fn::ImportValue": "KaeriuchiBeta-App:ExportsOutputRefAlbHttpsB7CA700A38072FD0",
+                          },
+                        ],
+                      },
+                    ],
+                  },
+                  "/",
+                  {
+                    "Fn::Select": [
+                      2,
+                      {
+                        "Fn::Split": [
+                          "/",
+                          {
+                            "Fn::ImportValue": "KaeriuchiBeta-App:ExportsOutputRefAlbHttpsB7CA700A38072FD0",
+                          },
+                        ],
+                      },
+                    ],
+                  },
+                  "/",
+                  {
+                    "Fn::Select": [
+                      3,
+                      {
+                        "Fn::Split": [
+                          "/",
+                          {
+                            "Fn::ImportValue": "KaeriuchiBeta-App:ExportsOutputRefAlbHttpsB7CA700A38072FD0",
+                          },
+                        ],
+                      },
+                    ],
+                  },
+                ],
+              ],
+            },
+          },
+          {
+            "Name": "TargetGroup",
+            "Value": {
+              "Fn::ImportValue": "KaeriuchiBeta-App:ExportsOutputFnGetAttAlbHttpsAppGroup506BD4E7TargetGroupFullName2B589A29",
+            },
+          },
+        ],
+        "EvaluationPeriods": 3,
+        "MetricName": "HTTPCode_Target_5XX_Count",
+        "Namespace": "AWS/ApplicationELB",
+        "Period": 300,
+        "Statistic": "Sum",
+        "Tags": [
+          {
+            "Key": "app",
+            "Value": "kaeriuchi",
+          },
+          {
+            "Key": "env",
+            "Value": "KaeriuchiBeta",
+          },
+        ],
+        "Threshold": 10,
+        "TreatMissingData": "notBreaching",
+      },
+      "Type": "AWS::CloudWatch::Alarm",
+    },
+    "Budget": {
+      "Properties": {
+        "Budget": {
+          "BudgetLimit": {
+            "Amount": 65,
+            "Unit": "USD",
+          },
+          "BudgetName": "KaeriuchiBeta-monthly",
+          "BudgetType": "COST",
+          "TimeUnit": "MONTHLY",
+        },
+        "NotificationsWithSubscribers": [
+          {
+            "Notification": {
+              "ComparisonOperator": "GREATER_THAN",
+              "NotificationType": "ACTUAL",
+              "Threshold": 80,
+              "ThresholdType": "PERCENTAGE",
+            },
+            "Subscribers": [
+              {
+                "Address": "alerts@example.jp",
+                "SubscriptionType": "EMAIL",
+              },
+            ],
+          },
+          {
+            "Notification": {
+              "ComparisonOperator": "GREATER_THAN",
+              "NotificationType": "ACTUAL",
+              "Threshold": 100,
+              "ThresholdType": "PERCENTAGE",
+            },
+            "Subscribers": [
+              {
+                "Address": "alerts@example.jp",
+                "SubscriptionType": "EMAIL",
+              },
+            ],
+          },
+          {
+            "Notification": {
+              "ComparisonOperator": "GREATER_THAN",
+              "NotificationType": "FORECASTED",
+              "Threshold": 100,
+              "ThresholdType": "PERCENTAGE",
+            },
+            "Subscribers": [
+              {
+                "Address": "alerts@example.jp",
+                "SubscriptionType": "EMAIL",
+              },
+            ],
+          },
+        ],
+        "ResourceTags": [
+          {
+            "Key": "app",
+            "Value": "kaeriuchi",
+          },
+          {
+            "Key": "env",
+            "Value": "KaeriuchiBeta",
+          },
+        ],
+      },
+      "Type": "AWS::Budgets::Budget",
+    },
+    "DbCpu36960AD8": {
+      "Properties": {
+        "AlarmActions": [
+          {
+            "Ref": "Alarms04B5A0BF",
+          },
+        ],
+        "AlarmDescription": "データベースの CPU が 80% 以上",
+        "ComparisonOperator": "GreaterThanOrEqualToThreshold",
+        "DatapointsToAlarm": 2,
+        "Dimensions": [
+          {
+            "Name": "DBInstanceIdentifier",
+            "Value": {
+              "Fn::ImportValue": "KaeriuchiBeta-Data:ExportsOutputRefDb5D02A0A92EB6BABB",
+            },
+          },
+        ],
+        "EvaluationPeriods": 3,
+        "MetricName": "CPUUtilization",
+        "Namespace": "AWS/RDS",
+        "Period": 300,
+        "Statistic": "Average",
+        "Tags": [
+          {
+            "Key": "app",
+            "Value": "kaeriuchi",
+          },
+          {
+            "Key": "env",
+            "Value": "KaeriuchiBeta",
+          },
+        ],
+        "Threshold": 80,
+        "TreatMissingData": "notBreaching",
+      },
+      "Type": "AWS::CloudWatch::Alarm",
+    },
+    "DbStorageC16BA7DF": {
+      "Properties": {
+        "AlarmActions": [
+          {
+            "Ref": "Alarms04B5A0BF",
+          },
+        ],
+        "AlarmDescription": "データベースの空きが 2GB を下回った",
+        "ComparisonOperator": "LessThanOrEqualToThreshold",
+        "DatapointsToAlarm": 2,
+        "Dimensions": [
+          {
+            "Name": "DBInstanceIdentifier",
+            "Value": {
+              "Fn::ImportValue": "KaeriuchiBeta-Data:ExportsOutputRefDb5D02A0A92EB6BABB",
+            },
+          },
+        ],
+        "EvaluationPeriods": 3,
+        "MetricName": "FreeStorageSpace",
+        "Namespace": "AWS/RDS",
+        "Period": 300,
+        "Statistic": "Average",
+        "Tags": [
+          {
+            "Key": "app",
+            "Value": "kaeriuchi",
+          },
+          {
+            "Key": "env",
+            "Value": "KaeriuchiBeta",
+          },
+        ],
+        "Threshold": 2147483648,
+        "TreatMissingData": "notBreaching",
+      },
+      "Type": "AWS::CloudWatch::Alarm",
+    },
+    "Unhealthy9594204A": {
+      "Properties": {
+        "AlarmActions": [
+          {
+            "Ref": "Alarms04B5A0BF",
+          },
+        ],
+        "AlarmDescription": "ヘルスチェックに通らないアプリがある",
+        "ComparisonOperator": "GreaterThanOrEqualToThreshold",
+        "DatapointsToAlarm": 2,
+        "Dimensions": [
+          {
+            "Name": "LoadBalancer",
+            "Value": {
+              "Fn::Join": [
+                "",
+                [
+                  {
+                    "Fn::Select": [
+                      1,
+                      {
+                        "Fn::Split": [
+                          "/",
+                          {
+                            "Fn::ImportValue": "KaeriuchiBeta-App:ExportsOutputRefAlbHttpsB7CA700A38072FD0",
+                          },
+                        ],
+                      },
+                    ],
+                  },
+                  "/",
+                  {
+                    "Fn::Select": [
+                      2,
+                      {
+                        "Fn::Split": [
+                          "/",
+                          {
+                            "Fn::ImportValue": "KaeriuchiBeta-App:ExportsOutputRefAlbHttpsB7CA700A38072FD0",
+                          },
+                        ],
+                      },
+                    ],
+                  },
+                  "/",
+                  {
+                    "Fn::Select": [
+                      3,
+                      {
+                        "Fn::Split": [
+                          "/",
+                          {
+                            "Fn::ImportValue": "KaeriuchiBeta-App:ExportsOutputRefAlbHttpsB7CA700A38072FD0",
+                          },
+                        ],
+                      },
+                    ],
+                  },
+                ],
+              ],
+            },
+          },
+          {
+            "Name": "TargetGroup",
+            "Value": {
+              "Fn::ImportValue": "KaeriuchiBeta-App:ExportsOutputFnGetAttAlbHttpsAppGroup506BD4E7TargetGroupFullName2B589A29",
+            },
+          },
+        ],
+        "EvaluationPeriods": 3,
+        "MetricName": "UnHealthyHostCount",
+        "Namespace": "AWS/ApplicationELB",
+        "Period": 300,
+        "Statistic": "Average",
+        "Tags": [
+          {
+            "Key": "app",
+            "Value": "kaeriuchi",
+          },
+          {
+            "Key": "env",
+            "Value": "KaeriuchiBeta",
+          },
+        ],
+        "Threshold": 1,
+        "TreatMissingData": "notBreaching",
+      },
+      "Type": "AWS::CloudWatch::Alarm",
+    },
+  },
+  "Rules": {
+    "CheckBootstrapVersion": {
+      "Assertions": [
+        {
+          "Assert": {
+            "Fn::Not": [
+              {
+                "Fn::Contains": [
+                  [
+                    "1",
+                    "2",
+                    "3",
+                    "4",
+                    "5",
+                  ],
+                  {
+                    "Ref": "BootstrapVersion",
+                  },
+                ],
+              },
+            ],
+          },
+          "AssertDescription": "CDK bootstrap stack version 6 required. Please run 'cdk bootstrap' with a recent version of the CDK CLI.",
+        },
+      ],
+    },
+  },
+}
+`;
+
+exports[`β版の構成 > スナップショット：repo 1`] = `
+{
+  "Outputs": {
+    "ExportsOutputFnGetAttAppF1B96344Arn225FB554": {
+      "Export": {
+        "Name": "KaeriuchiBeta-Repo:ExportsOutputFnGetAttAppF1B96344Arn225FB554",
+      },
+      "Value": {
+        "Fn::GetAtt": [
+          "AppF1B96344",
+          "Arn",
+        ],
+      },
+    },
+    "ExportsOutputRefAppF1B96344AA101B85": {
+      "Export": {
+        "Name": "KaeriuchiBeta-Repo:ExportsOutputRefAppF1B96344AA101B85",
+      },
+      "Value": {
+        "Ref": "AppF1B96344",
+      },
+    },
+    "RepositoryUri": {
+      "Value": {
+        "Fn::Join": [
+          "",
+          [
+            {
+              "Fn::Select": [
+                4,
+                {
+                  "Fn::Split": [
+                    ":",
+                    {
+                      "Fn::GetAtt": [
+                        "AppF1B96344",
+                        "Arn",
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+            ".dkr.ecr.",
+            {
+              "Fn::Select": [
+                3,
+                {
+                  "Fn::Split": [
+                    ":",
+                    {
+                      "Fn::GetAtt": [
+                        "AppF1B96344",
+                        "Arn",
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+            ".",
+            {
+              "Ref": "AWS::URLSuffix",
+            },
+            "/",
+            {
+              "Ref": "AppF1B96344",
+            },
+          ],
+        ],
+      },
+    },
+  },
+  "Parameters": {
+    "BootstrapVersion": {
+      "Default": "/cdk-bootstrap/hnb659fds/version",
+      "Description": "Version of the CDK Bootstrap resources in this environment, automatically retrieved from SSM Parameter Store. [cdk:skip]",
+      "Type": "AWS::SSM::Parameter::Value<String>",
+    },
+  },
+  "Resources": {
+    "AppF1B96344": {
+      "DeletionPolicy": "Retain",
+      "Properties": {
+        "ImageScanningConfiguration": {
+          "ScanOnPush": true,
+        },
+        "ImageTagMutability": "IMMUTABLE",
+        "LifecyclePolicy": {
+          "LifecyclePolicyText": "{"rules":[{"rulePriority":1,"description":"古いイメージは20個まで残す","selection":{"tagStatus":"any","countType":"imageCountMoreThan","countNumber":20},"action":{"type":"expire"}}]}",
+        },
+        "Tags": [
+          {
+            "Key": "app",
+            "Value": "kaeriuchi",
+          },
+          {
+            "Key": "env",
+            "Value": "KaeriuchiBeta",
+          },
+        ],
+      },
+      "Type": "AWS::ECR::Repository",
+      "UpdateReplacePolicy": "Retain",
+    },
+  },
+  "Rules": {
+    "CheckBootstrapVersion": {
+      "Assertions": [
+        {
+          "Assert": {
+            "Fn::Not": [
+              {
+                "Fn::Contains": [
+                  [
+                    "1",
+                    "2",
+                    "3",
+                    "4",
+                    "5",
+                  ],
+                  {
+                    "Ref": "BootstrapVersion",
+                  },
+                ],
+              },
+            ],
+          },
+          "AssertDescription": "CDK bootstrap stack version 6 required. Please run 'cdk bootstrap' with a recent version of the CDK CLI.",
+        },
+      ],
+    },
+  },
+}
+`;
+
+exports[`β版の構成 > スナップショット：zone 1`] = `
+{
+  "Outputs": {
+    "ExportsOutputRefZoneA5DE4B6864A9A0D8": {
+      "Export": {
+        "Name": "KaeriuchiBeta-Zone:ExportsOutputRefZoneA5DE4B6864A9A0D8",
+      },
+      "Value": {
+        "Ref": "ZoneA5DE4B68",
+      },
+    },
+    "NameServers": {
+      "Description": "いまの DNS に、このサブドメインの NS レコードとして足す",
+      "Value": {
+        "Fn::Join": [
+          " ",
+          {
+            "Fn::GetAtt": [
+              "ZoneA5DE4B68",
+              "NameServers",
+            ],
+          },
+        ],
+      },
+    },
+  },
+  "Parameters": {
+    "BootstrapVersion": {
+      "Default": "/cdk-bootstrap/hnb659fds/version",
+      "Description": "Version of the CDK Bootstrap resources in this environment, automatically retrieved from SSM Parameter Store. [cdk:skip]",
+      "Type": "AWS::SSM::Parameter::Value<String>",
+    },
+  },
+  "Resources": {
+    "ZoneA5DE4B68": {
+      "Properties": {
+        "HostedZoneConfig": {
+          "Comment": "kaeriuchi",
+        },
+        "HostedZoneTags": [
+          {
+            "Key": "app",
+            "Value": "kaeriuchi",
+          },
+          {
+            "Key": "env",
+            "Value": "KaeriuchiBeta",
+          },
+        ],
+        "Name": "kaeriuchi.example.jp.",
+      },
+      "Type": "AWS::Route53::HostedZone",
+    },
+  },
+  "Rules": {
+    "CheckBootstrapVersion": {
+      "Assertions": [
+        {
+          "Assert": {
+            "Fn::Not": [
+              {
+                "Fn::Contains": [
+                  [
+                    "1",
+                    "2",
+                    "3",
+                    "4",
+                    "5",
+                  ],
+                  {
+                    "Ref": "BootstrapVersion",
+                  },
+                ],
+              },
+            ],
+          },
+          "AssertDescription": "CDK bootstrap stack version 6 required. Please run 'cdk bootstrap' with a recent version of the CDK CLI.",
+        },
+      ],
+    },
+  },
+}
+`;

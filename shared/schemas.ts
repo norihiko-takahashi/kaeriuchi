@@ -57,6 +57,8 @@ export const Guardian = z.object({
   rules: z.record(z.string(), UsageRules),
   /** ホーム画面への追加の案内を「あとで」にしたか */
   installPromptDismissedAt: z.string().optional(),
+  /** クラウドのアカウントにつないだ日時（U8）。ないものは、端末の中だけの記録 */
+  accountLinkedAt: z.string().optional(),
   updatedAt: z.string(),
 });
 export type Guardian = z.infer<typeof Guardian>;

@@ -26,6 +26,9 @@ const KID_ROUTES = [
 ];
 const OTHER_ROUTES = [
   "login",
+  "login/verify",
+  "login/code",
+  "parent/devices",
   "consent",
   "parent",
   "parent/rules",

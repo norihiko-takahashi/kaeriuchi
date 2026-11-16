@@ -4,7 +4,7 @@
       "startServerCommand": "PORT=3200 node scripts/start-standalone.mjs",
       "startServerReadyPattern": "Ready",
       "url": ["http://127.0.0.1:3200/login"],
-      "numberOfRuns": 1,
+      "numberOfRuns": 3,
       "settings": {
         "formFactor": "mobile",
         "onlyCategories": ["performance", "accessibility"],
@@ -16,7 +16,8 @@
         "largest-contentful-paint": [
           "error",
           {
-            "maxNumericValue": 2500
+            "maxNumericValue": 2500,
+            "aggregationMethod": "median"
           }
         ],
         "categories:accessibility": [

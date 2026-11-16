@@ -15,7 +15,7 @@ export default defineConfig({
   test: {
     environment: "node",
     include: ["**/*.test.{ts,tsx}"],
-    exclude: ["node_modules", ".next", "e2e"],
+    exclude: ["node_modules", ".next", "e2e", "infra/cdk"],
     setupFiles: ["./vitest.setup.ts"],
     coverage: {
       provider: "v8",
@@ -23,8 +23,15 @@ export default defineConfig({
         "domain/**/*.ts",
         "server/ai/**/*.ts",
         "server/problems/**/*.ts",
+        "server/auth/**/*.ts",
+        "server/sync/**/*.ts",
       ],
-      exclude: ["**/*.test.ts"],
+      exclude: [
+        "**/*.test.ts",
+        "**/*-suite.ts",
+        // Postgres の保存先は、テスト用のデータベースがあるときだけ数える（CI では必ずある）
+        ...(process.env.TEST_DATABASE_URL ? [] : ["**/postgres.ts"]),
+      ],
       thresholds: { lines: 90, functions: 90, branches: 90, statements: 90 },
     },
   },

@@ -24,13 +24,40 @@ describe("設定（U1-PORT-3）", () => {
         APP_URL: "https://kaeriuchi.example",
         AI_PROVIDER: "bedrock",
         SYNC_STORE: "postgres",
-        AUTH_PROVIDER: "authjs",
+        DATABASE_URL: "postgres://app@db.example/kaeriuchi",
+        DATABASE_CA_FILE: "/etc/ssl/rds.pem",
+        AUTH_PROVIDER: "native",
+        MAIL_FROM: "login@kaeriuchi.example",
         BEDROCK_MODEL_ANALYZE: "anthropic.claude-sonnet-x",
         BEDROCK_MODEL_GENERATE: "anthropic.claude-sonnet-x",
         BEDROCK_MODEL_VERIFY: "anthropic.claude-haiku-x",
         BEDROCK_MODEL_GRADE: "anthropic.claude-haiku-x",
       }).AI_PROVIDER,
     ).toBe("bedrock");
+  });
+
+  it("Postgres には接続先が要り、本番では証明書の場所も要る", () => {
+    expect(() => parseConfig({ SYNC_STORE: "postgres" })).toThrow(
+      /DATABASE_URL/,
+    );
+    expect(
+      parseConfig({ SYNC_STORE: "postgres", DATABASE_URL: "postgres://x/y" })
+        .SYNC_STORE,
+    ).toBe("postgres");
+    expect(() =>
+      parseConfig({
+        APP_ENV: "production",
+        AI_PROVIDER: "bedrock",
+        SYNC_STORE: "postgres",
+        DATABASE_URL: "postgres://x/y",
+        AUTH_PROVIDER: "native",
+        MAIL_FROM: "a@b.jp",
+        BEDROCK_MODEL_ANALYZE: "anthropic.a",
+        BEDROCK_MODEL_GENERATE: "anthropic.a",
+        BEDROCK_MODEL_VERIFY: "anthropic.a",
+        BEDROCK_MODEL_GRADE: "anthropic.a",
+      }),
+    ).toThrow(/DATABASE_CA_FILE/);
   });
 
   it("知らない値はエラー", () => {

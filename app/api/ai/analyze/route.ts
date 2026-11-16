@@ -14,7 +14,7 @@ import { logAiCall } from "@/server/ai/telemetry";
  * 画像はメモリ上だけで扱い、保存しない（NFR-P2）。
  */
 export async function POST(request: Request) {
-  const g = guard(request, "analyze");
+  const g = await guard(request, "analyze");
   if (g instanceof NextResponse) return g;
   const { requestId, config, signal } = g;
 

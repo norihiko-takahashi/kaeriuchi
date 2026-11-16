@@ -11,7 +11,7 @@ import { logAiCall } from "@/server/ai/telemetry";
  * 入れた文は保存しない。ログにも出さない（U45-PRIV-1）。
  */
 export async function POST(request: Request) {
-  const g = guard(request, "classify");
+  const g = await guard(request, "classify");
   if (g instanceof NextResponse) return g;
   const { requestId, config, signal } = g;
 
