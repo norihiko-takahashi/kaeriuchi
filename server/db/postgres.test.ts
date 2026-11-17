@@ -31,7 +31,10 @@ run("Postgres", () => {
     const url = new URL(ADMIN_URL as string);
     url.pathname = `/${dbName}`;
     admin = postgres(url.toString(), { max: 1, onnotice: () => {} });
-    expect(await migrate(admin)).toEqual(["0001_init.sql"]);
+    expect(await migrate(admin)).toEqual([
+      "0001_init.sql",
+      "0002_purge_reports.sql",
+    ]);
     expect(await migrate(admin)).toEqual([]);
     await setAppPassword(admin, PASSWORD);
     url.username = "kaeriuchi_app";
@@ -97,7 +100,7 @@ run("Postgres", () => {
         VALUES ('old', 'o@x', 0, ${now - 8 * 86_400_000}), ('new', 'n@x', 0, ${now - 86_400_000}), ('live', 'l@x', 0, NULL)`;
       await admin`INSERT INTO login_tokens (hash, email, expires_at) VALUES ('t1', 'a@x', ${now - 1}), ('t2', 'a@x', ${now + 60_000})`;
       const [r] =
-        await app`SELECT * FROM kaeriuchi_purge('2026-01-01', ${now - 7 * 86_400_000}, ${now})`;
+        await app`SELECT * FROM kaeriuchi_purge('2026-01-01', ${now - 7 * 86_400_000}, ${now}, '2025-01-01')`;
       expect(r).toEqual({ records: 0, guardians: 1 });
       expect(
         (await admin`SELECT id FROM guardians ORDER BY id`).map((x) => x.id),

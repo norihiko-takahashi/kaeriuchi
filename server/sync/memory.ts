@@ -82,11 +82,17 @@ export class MemorySyncStore implements SyncStore {
     return result;
   }
 
-  async purge(beforeDay: string): Promise<number> {
+  async purge(beforeDay: string, reportBeforeDay: string): Promise<number> {
     let n = 0;
+    const oldReport = (r: StoredRecord) =>
+      (r.entity === "report" || r.entity === "regrade") &&
+      String(r.payload.createdDay ?? "") <= reportBeforeDay;
     for (const rows of this.rows.values())
       for (const [k, r] of rows)
-        if (r.deleted && r.deletedDay && r.deletedDay <= beforeDay) {
+        if (
+          (r.deleted && r.deletedDay && r.deletedDay <= beforeDay) ||
+          oldReport(r)
+        ) {
           rows.delete(k);
           n++;
         }

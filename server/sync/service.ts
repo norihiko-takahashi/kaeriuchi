@@ -1,5 +1,5 @@
 import type { PulledChange, RejectedChange, SyncResponse } from "@/shared/sync";
-import { SYNC_BATCH, UNDO_DAYS } from "@/shared/sync";
+import { REPORT_KEEP_DAYS, SYNC_BATCH, UNDO_DAYS } from "@/shared/sync";
 import { addDays, decide } from "./merge";
 import type { StoredRecord, SyncStore, SyncTx } from "./store";
 import { type CheckedChange, checkChange } from "./validate";
@@ -209,7 +209,10 @@ export class SyncService {
 
   /** 毎日1回：削除の印から7日たった記録を本当に消す（U8-PRIV-2） */
   async purge(): Promise<number> {
-    return this.store.purge(addDays(this.today(), -UNDO_DAYS));
+    return this.store.purge(
+      addDays(this.today(), -UNDO_DAYS),
+      addDays(this.today(), -REPORT_KEEP_DAYS),
+    );
   }
 }
 
