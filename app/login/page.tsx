@@ -120,6 +120,12 @@ export default function Login() {
       >
         子ども用の端末を、番号でつなぐ
       </Link>
+      <Link
+        href="/privacy"
+        className="tap flex items-center justify-center text-sm underline"
+      >
+        プライバシーポリシー
+      </Link>
     </Page>
   );
 }

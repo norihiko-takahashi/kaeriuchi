@@ -30,6 +30,7 @@ const OTHER_ROUTES = [
   "login/code",
   "parent/devices",
   "consent",
+  "privacy",
   "parent",
   "parent/rules",
   "parent/data",

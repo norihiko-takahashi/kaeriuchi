@@ -12,6 +12,7 @@ const APP_ROUTES = [
   "/login/verify",
   "/login/code",
   "/consent",
+  "/privacy",
   "/parent/pin-setup",
   "/profiles",
   "/profiles/new",

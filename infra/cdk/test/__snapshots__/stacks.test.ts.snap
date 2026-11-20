@@ -888,6 +888,14 @@ exports[`β版の構成 > スナップショット：app 1`] = `
                 "Value": "login@kaeriuchi.example.jp",
               },
               {
+                "Name": "OPERATOR_NAME",
+                "Value": "運営者テスト",
+              },
+              {
+                "Name": "SUPPORT_EMAIL",
+                "Value": "support@kaeriuchi.example.jp",
+              },
+              {
                 "Name": "DATABASE_URL",
                 "Value": {
                   "Fn::Join": [

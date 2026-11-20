@@ -21,6 +21,8 @@ export interface EnvConfig {
   domain: string;
   /** 費用とアラームの知らせを受けるメールアドレス */
   alertEmail: string;
+  /** 同意の文・プライバシーポリシーに出す運営者の名前（個人。リポジトリには書かない） */
+  operatorName: string;
   /**
    * アプリから AWS のサービスへの出口（2026-11-14 に決定）。
    * public：公開サブネットに置く（β版）／endpoints：VPC エンドポイントだけ（本番）
@@ -78,6 +80,7 @@ export function betaConfigFromEnv(
     account: need("KAERIUCHI_AWS_ACCOUNT"),
     domain: need("KAERIUCHI_DOMAIN").toLowerCase(),
     alertEmail: need("KAERIUCHI_ALERT_EMAIL"),
+    operatorName: need("KAERIUCHI_OPERATOR_NAME"),
     bedrockModels: models,
     imageTag: env.KAERIUCHI_IMAGE_TAG?.trim() || "bootstrap",
   };

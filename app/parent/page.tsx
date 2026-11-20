@@ -206,6 +206,9 @@ export default function ParentMenu() {
             <LinkButton href="/parent/devices" variant="secondary">
               ログインしている端末
             </LinkButton>
+            <LinkButton href="/privacy" variant="secondary">
+              プライバシーポリシー
+            </LinkButton>
           </nav>
 
           <SyncStatusCard />

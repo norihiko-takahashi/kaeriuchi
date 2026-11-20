@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { parseConfig } from "./config";
+import { operatorOf, parseConfig } from "./config";
 
 describe("設定（U1-PORT-3）", () => {
   it("何も指定しなければ、開発用の設定になる", () => {
@@ -28,6 +28,8 @@ describe("設定（U1-PORT-3）", () => {
         DATABASE_CA_FILE: "/etc/ssl/rds.pem",
         AUTH_PROVIDER: "native",
         MAIL_FROM: "login@kaeriuchi.example",
+        OPERATOR_NAME: "運営者",
+        SUPPORT_EMAIL: "support@kaeriuchi.example",
         BEDROCK_MODEL_ANALYZE: "anthropic.claude-sonnet-x",
         BEDROCK_MODEL_GENERATE: "anthropic.claude-sonnet-x",
         BEDROCK_MODEL_VERIFY: "anthropic.claude-haiku-x",
@@ -52,12 +54,33 @@ describe("設定（U1-PORT-3）", () => {
         DATABASE_URL: "postgres://x/y",
         AUTH_PROVIDER: "native",
         MAIL_FROM: "a@b.jp",
+        OPERATOR_NAME: "運営者",
+        SUPPORT_EMAIL: "support@b.jp",
         BEDROCK_MODEL_ANALYZE: "anthropic.a",
         BEDROCK_MODEL_GENERATE: "anthropic.a",
         BEDROCK_MODEL_VERIFY: "anthropic.a",
         BEDROCK_MODEL_GRADE: "anthropic.a",
       }),
     ).toThrow(/DATABASE_CA_FILE/);
+  });
+
+  it("本番では、同意の文に出す運営者と問い合わせ先が要る", () => {
+    expect(() =>
+      parseConfig({
+        APP_ENV: "production",
+        AI_PROVIDER: "bedrock",
+        SYNC_STORE: "postgres",
+        DATABASE_URL: "postgres://x/y",
+        DATABASE_CA_FILE: "/ca.pem",
+        AUTH_PROVIDER: "native",
+        MAIL_FROM: "a@b.jp",
+        BEDROCK_MODEL_ANALYZE: "anthropic.a",
+        BEDROCK_MODEL_GENERATE: "anthropic.a",
+        BEDROCK_MODEL_VERIFY: "anthropic.a",
+        BEDROCK_MODEL_GRADE: "anthropic.a",
+      }),
+    ).toThrow(/OPERATOR_NAME/);
+    expect(operatorOf(parseConfig({})).name).toContain("開発用");
   });
 
   it("知らない値はエラー", () => {
