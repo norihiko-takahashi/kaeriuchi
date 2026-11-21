@@ -12,6 +12,8 @@ export const SYNC_ITEM_MAX_BYTES = 64 * 1024;
 export const SYNC_BODY_MAX_BYTES = 1024 * 1024;
 /** 削除してから取り消せる日数（決定 2） */
 export const UNDO_DAYS = 7;
+/** 報告・採点し直しを残す日数（2026-11-17 に決定：最長1年） */
+export const REPORT_KEEP_DAYS = 365;
 
 export interface SyncChange {
   entity: SyncEntity;

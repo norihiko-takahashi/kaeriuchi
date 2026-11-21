@@ -103,10 +103,10 @@ export class PostgresSyncStore implements SyncStore {
   }
 
   /** 毎日の削除。持ち主の権限で動く関数で消す（アプリの役割は、ほかの家庭の行を見られない） */
-  async purge(beforeDay: string): Promise<number> {
+  async purge(beforeDay: string, reportBeforeDay: string): Promise<number> {
     const now = Date.now();
     const [r] = await this.sql<{ records: number }[]>`
-      SELECT * FROM kaeriuchi_purge(${beforeDay}, ${now - 7 * 86_400_000}, ${now})`;
+      SELECT * FROM kaeriuchi_purge(${beforeDay}, ${now - 7 * 86_400_000}, ${now}, ${reportBeforeDay})`;
     return r.records;
   }
 }

@@ -30,6 +30,22 @@ test("初めて使うときの流れで、ホームまで進める", async ({ pa
   await expect(page.locator("html")).toHaveAttribute("data-mode", "lower");
 });
 
+test("プライバシーポリシーは、ログインの前から読める（運営者と問い合わせ先が出る）", async ({
+  page,
+}) => {
+  await page.goto("/login");
+  await page.getByRole("link", { name: "プライバシーポリシー" }).click();
+  await expect(page).toHaveURL(/\/privacy$/);
+  await expect(
+    page.getByRole("heading", { name: "プライバシーポリシー", level: 1 }),
+  ).toBeVisible();
+  await expect(page.getByText(/運営者：.+（個人）/)).toBeVisible();
+  await expect(
+    page.getByText("住所：お問い合わせいただければ、遅滞なくお答えします。"),
+  ).toBeVisible();
+  await expectNoA11yViolations(page);
+});
+
 test("本名らしいニックネームは、やさしく確認する（保存は止めない）", async ({
   page,
 }) => {

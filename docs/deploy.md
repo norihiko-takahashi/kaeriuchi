@@ -24,6 +24,7 @@ export AWS_PROFILE=personal
 export KAERIUCHI_AWS_ACCOUNT=123456789012        # 個人のアカウントの番号（12けた）
 export KAERIUCHI_DOMAIN=kaeriuchi.example.jp     # かえりうち用のサブドメイン
 export KAERIUCHI_ALERT_EMAIL=you@example.jp      # 費用とアラームの知らせの宛先
+export KAERIUCHI_OPERATOR_NAME="（あなたの名前）"        # 同意の文とプライバシーポリシーに出す運営者の名前（個人）
 export BEDROCK_MODEL_ANALYZE=anthropic.claude-...   # 東京で使えるモデル ID（apac. などで始まるものは使わない）
 export BEDROCK_MODEL_GENERATE=anthropic.claude-...
 export BEDROCK_MODEL_VERIFY=anthropic.claude-...

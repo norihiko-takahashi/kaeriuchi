@@ -114,6 +114,8 @@ describe("POST /api/ai/analyze", () => {
     process.env.DATABASE_CA_FILE = "/etc/ssl/rds.pem";
     process.env.AUTH_PROVIDER = "native";
     process.env.MAIL_FROM = "login@example.jp";
+    process.env.OPERATOR_NAME = "運営者";
+    process.env.SUPPORT_EMAIL = "support@example.jp";
     process.env.AI_PROVIDER = "anthropic";
     process.env.APP_URL = "https://example.jp";
     resetConfigForTesting();
@@ -126,6 +128,8 @@ describe("POST /api/ai/analyze", () => {
       "MAIL_FROM",
       "DATABASE_URL",
       "DATABASE_CA_FILE",
+      "OPERATOR_NAME",
+      "SUPPORT_EMAIL",
     ])
       delete process.env[k];
   });

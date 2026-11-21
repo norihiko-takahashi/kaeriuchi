@@ -17,6 +17,7 @@ const env = {
   KAERIUCHI_AWS_ACCOUNT: "123456789012",
   KAERIUCHI_DOMAIN: "kaeriuchi.example.jp",
   KAERIUCHI_ALERT_EMAIL: "alerts@example.jp",
+  KAERIUCHI_OPERATOR_NAME: "運営者テスト",
   BEDROCK_MODEL_ANALYZE: "anthropic.claude-sonnet-test-v1:0",
   BEDROCK_MODEL_GENERATE: "anthropic.claude-sonnet-test-v1:0",
   BEDROCK_MODEL_VERIFY: "anthropic.claude-haiku-test-v1:0",

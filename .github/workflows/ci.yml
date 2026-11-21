@@ -110,6 +110,7 @@ jobs:
           KAERIUCHI_AWS_ACCOUNT: "123456789012"
           KAERIUCHI_DOMAIN: kaeriuchi.example.jp
           KAERIUCHI_ALERT_EMAIL: alerts@example.jp
+          KAERIUCHI_OPERATOR_NAME: dummy
           BEDROCK_MODEL_ANALYZE: anthropic.dummy
           BEDROCK_MODEL_GENERATE: anthropic.dummy
           BEDROCK_MODEL_VERIFY: anthropic.dummy

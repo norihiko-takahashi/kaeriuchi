@@ -33,6 +33,8 @@ describe("guard（BR-U2-3・BR-U2-4・U8 §6）", () => {
       DATABASE_CA_FILE: "/etc/ssl/rds.pem",
       AUTH_PROVIDER: "native",
       MAIL_FROM: "login@example.jp",
+      OPERATOR_NAME: "運営者",
+      SUPPORT_EMAIL: "support@example.jp",
       BEDROCK_MODEL_ANALYZE: "anthropic.claude-sonnet-x",
       BEDROCK_MODEL_GENERATE: "anthropic.claude-sonnet-x",
       BEDROCK_MODEL_VERIFY: "anthropic.claude-haiku-x",

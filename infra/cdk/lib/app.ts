@@ -167,6 +167,9 @@ export class AppStack extends Stack {
         SYNC_STORE: "postgres",
         AUTH_PROVIDER: "native",
         MAIL_FROM: deps.mail.mailFrom,
+        OPERATOR_NAME: config.operatorName,
+        // 問い合わせは、サブドメインの専用のアドレス（2026-11-17 に決定）
+        SUPPORT_EMAIL: `support@${config.domain}`,
         DATABASE_URL: dbUrl(APP_USER),
         DATABASE_CA_FILE,
         AWS_REGION: REGION,

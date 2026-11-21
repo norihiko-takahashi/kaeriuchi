@@ -29,6 +29,9 @@ const Env = z.object({
   AUTH_PROVIDER: z.enum(["dev", "native"]).default("dev"),
   /** ログイン用のメールの送信元（AUTH_PROVIDER=native のとき。SES で確認したアドレス） */
   MAIL_FROM: optionalString,
+  /** 運営者の名前と問い合わせのアドレス（同意の文・プライバシーポリシーに出す。リポジトリには書かない） */
+  OPERATOR_NAME: optionalString,
+  SUPPORT_EMAIL: optionalString,
   /** Postgres の接続先（SYNC_STORE=postgres のとき。パスワードは Secrets Manager から入れる） */
   DATABASE_URL: optionalString,
   /** Postgres のパスワード（DATABASE_URL に入れずに、Secrets Manager から別に入れる） */
@@ -78,6 +81,13 @@ export function parseConfig(env: Record<string, string | undefined>): Config {
       );
     }
   }
+  if (
+    config.APP_ENV === "production" &&
+    (!config.OPERATOR_NAME || !config.SUPPORT_EMAIL)
+  )
+    throw new Error(
+      "本番の環境では OPERATOR_NAME と SUPPORT_EMAIL が要ります（同意の文に出す）",
+    );
   if (config.SYNC_STORE === "postgres" && !config.DATABASE_URL)
     throw new Error("SYNC_STORE=postgres のときは DATABASE_URL が要ります");
   if (
@@ -134,4 +144,12 @@ export function getConfig(): Config {
 /** テスト用 */
 export function resetConfigForTesting() {
   cached = undefined;
+}
+
+/** 同意の文に出す運営者（開発では仮の値） */
+export function operatorOf(config: Config) {
+  return {
+    name: config.OPERATOR_NAME ?? "（開発用の運営者）",
+    supportEmail: config.SUPPORT_EMAIL ?? "support@example.invalid",
+  };
 }

@@ -296,6 +296,20 @@ export function syncSuite(name: string, makeStore: () => Promise<SyncStore>) {
       expect(r.cursor).toBeGreaterThan(0);
     });
 
+    it("報告と採点し直しは、作った日から1年で、毎日の処理で消える", async () => {
+      await sync.sync(G, 0, [
+        up("report", { id: "r1", reason: "unclear", createdDay: "2026-11-15" }),
+        up("regrade", { id: "g1", createdDay: "2026-11-15" }),
+        up("child", child("c1")),
+      ]);
+      tick(364 * DAY);
+      expect(await sync.purge()).toBe(0);
+      tick(DAY);
+      expect(await sync.purge()).toBe(2);
+      // 学習の記録は残る
+      expect((await sync.exportAll(G)).children).toHaveLength(1);
+    });
+
     it("アカウントの削除はすべてに印を付け、取り消すと戻る。書き出しは消していない記録だけ", async () => {
       await sync.sync(G, 0, [
         ...family(),

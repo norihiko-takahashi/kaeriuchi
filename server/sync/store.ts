@@ -54,6 +54,9 @@ export interface SyncStore {
     guardianId: string,
     fn: (tx: SyncTx) => Promise<T>,
   ): Promise<T>;
-  /** 削除の印を付けた日が beforeDay 以前の記録を、本当に消す。消した数を返す（U8-PRIV-2） */
-  purge(beforeDay: string): Promise<number>;
+  /**
+   * 削除の印を付けた日が beforeDay 以前の記録と、作った日が reportBeforeDay 以前の報告・採点し直しを、
+   * 本当に消す。消した数を返す（U8-PRIV-2）
+   */
+  purge(beforeDay: string, reportBeforeDay: string): Promise<number>;
 }
